@@ -1,0 +1,23 @@
+
+int[int] labs=[10,20,30,40];// bot., right, top, left labels
+mesh Th1 =  square(10,10,label=labs,region=0,[x,y]); //  
+plot(Th1,wait=1);
+for(int i =0; i<100; ++i)
+{
+	real  li = int1d(Th1,i)(1.); 
+	if( li != 0) cout << i << " "<< li << endl;  
+}
+int[int] old2newlabs=[10,11,  30,31]; //  10 -> 11 and 30 -> 31
+Th1=change(Th1,label=old2newlabs) ;// [,region= old2newregion]);
+//do Change in 2d or in 3d. 
+// second a L shape domain $]0,1[^2 \backslash  [\frac{1}{2},1[^2$
+
+ mesh Th =  trunc(Th1,(x<0.5) | (y < 0.5),label=1);  // 
+ plot(Th,cmm="Th",wait=1);
+ mesh Thh = movemesh(Th,[-x,y]);
+ mesh  Th3  = Th+movemesh(Th,[-x,y]);
+ plot(Th3,cmm="Th3",wait=1);
+ cout << " before " <<  int1d(Th3)(1.) << endl; 
+ Th3=change(Th3,	rmInternalEdges =1); 
+cout << " after  " <<  int1d(Th3)(1.) << endl; 
+ 

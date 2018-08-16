@@ -1,0 +1,26 @@
+//  Fluid-structure interaction for a weighting beam sitting on a
+// square cavity filled with a fluid.
+load "iohdf5"
+load "iovtk"
+exec("mkdir d");
+
+mesh Th= square(50,50,[2*x-1,2*y-1]);
+savemesh(Th,"d.h5");
+fespace Vh(Th,P1);
+Vh u;
+real R=0.5;
+real x0,y0; 
+func r0= (x-x0)^2+(y-y0)^2;
+func f = exp(-10*r0);
+real dtetha = 2*pi/100;
+for( int i=0 ; i< 100; ++i)
+{
+    x0 = R*cos(i*dtetha);
+    y0 = R*sin(i*dtetha);
+  
+    u=f;
+    plot(u,dim=3,fill=1); 
+    savevtk("d/d"+i+".vtu",Th,u,dataname ="u",bin = false); 
+}
+//savemesh(th1,"beam-2d-def.mesh.h5");
+//savehdf5sol("beam-2d-def.sol.h5",th1,uu,"uu",[uu,vv],"U",//(epsilon(uu,vv)),"eps");

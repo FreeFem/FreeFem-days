@@ -1,0 +1,83 @@
+real LL=10;
+real HH=40;
+real xe= 0, ye = -3, aa=0.5,bb=2,theta=pi/3.;
+real cost=cos(theta), sint=sin(theta); 
+real[int,int]  P = 
+   [  [-LL/2,-HH],[+LL/2,-HH],
+      [+LL/2,0],[-LL/2,0] ]; 
+   cout << P << endl;
+border sides(t=0,1;i) {
+    real t1= 1-t; 
+    int i1= (i+1)%4; 
+    x= P(i,0)*t1+P(i1,0)*t;
+    y= P(i,1)*t1+P(i1,1)*t;
+    label=1;
+};
+border ellipse(t=0, 2*pi) { 
+       label=2; 
+       real xx = aa*cos(t);
+       real yy = bb*sin(t); 
+       real xr =  cost*xx+ sint*yy;
+       real yr = -sint*xx+ cost*yy;
+       
+       x = xe + xr ;
+       y = ye+ yr; 
+}
+real meshsize  = 0.5; 
+int[int]  NN=[ LL/meshsize, HH/meshsize,
+LL/meshsize, HH/meshsize]; 
+int  NNE= 4*(aa+bb)*pi/meshsize;
+plot(sides(NN)+ellipse(NNE));  
+
+mesh Th= buildmesh(sides(NN)+ellipse(NNE));
+plot(Th,wait=1); 
+int rege = Th(xe,ye).region;
+int rego = Th(0,-0.001).region; 
+cout << " rege = " << rege << " rego = " << rego << endl; 
+
+real[int]  nu(10),rho(10); 
+
+fespace Wh(Th,[P2,P2,P1]); 
+
+real nus = 1e6;
+real nuf = 0.01; 
+real rhos= 10;
+real rhof =1; 
+nu[rege]= nus; 
+nu[rego]= nuf; 
+rho[rege]= rhos; 
+rho[rego]= rhof; 
+
+func Nu = nu[region];
+func Rho = rho[region]; 
+
+macro DD(u1,u2) [ dx(u1),(dy(u1)+dx(u2))*0.5,
+                  (dy(u1)+dx(u2))*0.5 , dy(u2)] //
+macro div(u1,u2) (dx(u1)+dy(u2)) //
+macro ugrad(u1,u2,v) ([u1,u2]'*[dx(v),dy(v)]) //
+macro Ugrad(u1,u2,v1,v2) [ugrad(u1,u2,v1),ugrad(u1,u2,v2)]//
+
+Wh [u1,u2,p]; 
+Wh [up1,up2,pp]; 
+Wh [v1,v2,q];
+real g = 9.81; 
+[u1,u2,p] = [0,0,0] ; 
+
+up1[]=u1[]; // here: up1, up2, pp are set to  [u1[],u2[],p[] resp. 
+real dt = 0.1; 
+real epsr =1e-6; 
+solve NS([u1,u2,p],[v1,v2,q]) = 
+int2d(Th)( [u1,u2]'*[v1,v2]*Rho /dt 
+      + Ugrad(up1,up2,u1,u2)'*[v1,v2]*Rho
+      + 2*Nu*DD(u1,u2)'*DD(v1,v2) 
+      - div(v1,v2)*p -div(u1,u2)*q 
+      - epsr *p*q // regularisation term
+      )
+-int2d(Th) ( [up1,up2]'*[v1,v2]*Rho /dt  
+     + Rho*g *([0,-1]'*[v1,v2]) )
+ + on(1,u1=0,u2=0); 
+ 
+ plot([u1,u2], wait=1,cmm=" u1,u2 ");
+ plot(p, wait=1,cmm="p");     
+       
+                  

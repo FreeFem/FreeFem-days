@@ -1,0 +1,21 @@
+/* Mesh of a rectangle   */
+macro Bsegment(bname,xP1,yP1,xP2,yP2,Ls,labelm)
+      real Ls=sqrt((xP1-xP2)^2+(yP1-yP2)^2);
+      border bname(t=0,Ls)
+      {label=labelm; x=xP1+t*(xP2-xP1)/Ls;y=yP1+t*(yP2-yP1)/Ls;}//EOM
+// Parameters
+int nbseg=10;
+real L=2,H=1;
+real xc1=0,    yc1=0,
+     xc2=xc1+L,yc2=yc1,
+     xc3=xc2,  yc3=yc2+H,
+     xc4=xc1,  yc4=yc3;
+//borders
+Bsegment(bs1,xc1,yc1,xc2,yc2,Ls1,1);
+Bsegment(bs2,xc2,yc2,xc3,yc3,Ls2,2);
+Bsegment(bs3,xc3,yc3,xc4,yc4,Ls3,3);
+Bsegment(bs4,xc4,yc4,xc1,yc1,Ls4,4);
+plot(bs1(nbseg*Ls1)+bs2(nbseg*Ls2)+bs3(nbseg*Ls3)+bs4(nbseg*Ls4));
+// FE mesh
+mesh Th = buildmesh(bs1(nbseg*Ls1)+bs2(nbseg*Ls2)+bs3(nbseg*Ls3)+bs4(nbseg*Ls4));
+plot(Th, cmm="mesh of a rectangle");

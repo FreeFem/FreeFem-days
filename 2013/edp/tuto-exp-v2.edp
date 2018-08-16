@@ -1,0 +1,61 @@
+load "MUMPS_seq" // good sparse linear solver 
+load "msh3" //  3d mesh tools buildlayer mesher .. 
+load "medit"
+
+macro carre(A,L,lab,N)  
+border A#1(t=-L,+L){ x= t; y =-L; label = lab;}
+border A#2(t=-L,+L){ x= +L; y =t; label = lab;}
+border A#3(t=L,-L){ x= t; y =+L; label = lab;}
+border A#4(t=L,-L){ x= -L ; y =t; label = lab;}
+func A = A#1(N)+A#2(N)+A#3(N)+A#4(N);
+plot(A); 
+// EOM
+
+carre(small,0.1,0,10)
+carre(med,.5,0,20)
+carre(big,5,1,20)
+
+
+plot( small, med, big ); 
+mesh Th2 =buildmesh(small+ med+ big);
+int regs = Th2(0,0).region; 
+int regm = Th2(0,.3).region; 
+int regb = Th2(0,3).region;  
+cout << " reg number = " << regs << " " << regm << " " << regb << endl; 
+int[int] old2newreg = [regs, 1, regm, 2, regb ,  3]; 
+cout << " 0  len 000 != " << int1d(Th2,0)(1.) << endl; 
+plot(Th2,wait=1);
+Th2=change(Th2,region = old2newreg,rmInternalEdges=1);
+cout << " 0  len 000 = " << int1d(Th2,0)(1.) << endl; 
+
+ regs = Th2(0,0).region; 
+ regm = Th2(0,.3).region; 
+ regb = Th2(0,3).region;  
+cout << " new  reg number = " << regs << " " << regm << " " << regb << endl; 
+
+plot(Th2,wait=1);
+int ny = 10; 
+real L = 5;
+mesh3 Th3; 
+{
+int[int] rtet=[1,1,2,2,3,1];
+int[int] rtet2=[1,1,2,1,3,1];
+int[int] labelmid=[1,1];
+int[int] labelup=[1,1,2,1,3,1];
+int[int] labeldown =[1,2,2,2,3,2];
+mesh3 Th31 = buildlayers(Th2, ny  , zbound=[0, L], 
+        region=rtet,
+        labelmid=labelmid,
+        labelup = labelup,
+        labeldown = labeldown);
+mesh3 Th32 = buildlayers(Th2, ny  , zbound=[L, 2*L], 
+        region=rtet2,
+        labelmid=labelmid,
+        labelup = labelup,
+        labeldown = labeldown);
+ Th3 = Th32+Th31;     
+}   // clean all local varaible ..
+Th3 = movemesh3(Th3,transfo=[z,x,y]);       
+        
+ medit("TH3",Th3);        
+        

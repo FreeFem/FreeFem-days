@@ -1,0 +1,487 @@
+// Macro Definition for Preform ,Stiffness and Stack files
+// real mp=0.7;
+real mp=1.4;
+real ms=0.2;
+real mStiff=.1;
+bool Wait=1;
+macro GenBorderPref(i)
+  string FilePref#i = "Preform Files/"+i+".txt";
+   /*cout<<"FilePref#i= "<<FilePref#i<<endl;*/
+   ifstream fPref#i(FilePref#i) ;
+   int NbPtOnPref#i ;
+   fPref#i >> NbPtOnPref#i ;
+   real[int] LabelPref#i(NbPtOnPref#i) ;
+   real[int] xPref#i(NbPtOnPref#i) ;
+   real[int] yPref#i(NbPtOnPref#i) ;
+   for (int k = 0 ; k < NbPtOnPref#i ; k++) {
+      fPref#i >> xPref#i[k] >> yPref#i[k] >> LabelPref#i[k] ;
+   }
+
+     border PrefBorder#i(s=0,NbPtOnPref#i-1) {
+      int  k  = min(int(s),xPref#i.n - 2) ;
+      real s1 = s - k ;
+      real s0 = 1.0 - s1 ;
+      x = xPref#i[k]*s0 + xPref#i[k+1]*s1 ;
+      y = yPref#i[k]*s0 + yPref#i[k+1]*s1 ;
+      label = LabelPref#i[k];
+   }
+   real NumberOfPointsPref#i=mp*NbPtOnPref#i;
+   //
+
+macro GenBorderStiff(i)
+   string FileStiff#i ="Preform Files/S"+i+".txt"  ;
+   ifstream fStiff#i(FileStiff#i) ;
+   int NbPtOnStiff#i ;
+   fStiff#i >> NbPtOnStiff#i ;
+   real[int] LabelStiff#i(NbPtOnStiff#i) ;
+   real[int] xStiff#i(NbPtOnStiff#i) ;
+   real[int] yStiff#i(NbPtOnStiff#i) ;
+   for (int k = 0 ; k < NbPtOnStiff#i ; k++) {
+      fStiff#i >> xStiff#i[k] >> yStiff#i[k] >> LabelStiff#i[k] ;
+   }
+   real[int] xStiff2#i(2);xStiff2#i[0]= xStiff#i[0];xStiff2#i[1]= xStiff#i[NbPtOnStiff#i-1];
+   real[int] yStiff2#i(2);yStiff2#i[0]= yStiff#i[0];yStiff2#i[1]= yStiff#i[NbPtOnStiff#i-1];
+   real[int] LabelStiff2#i(2);LabelStiff2#i[0]= LabelStiff#i[0];LabelStiff2#i[1]= LabelStiff#i[NbPtOnStiff#i-1];
+
+     border StiffBorder#i(s=0,2-1) {
+      int  k  = min(int(s),xStiff2#i.n - 2) ;
+      real s1 = s - k ;
+      real s0 = 1.0 - s1 ;
+      x = xStiff2#i[k]*s0 + xStiff2#i[k+1]*s1 ;
+      y = yStiff2#i[k]*s0 + yStiff2#i[k+1]*s1 ;
+      label = LabelStiff2#i[k];
+   }
+   /*real NumberOfPointsStiff#i=10*NbPtOnStiff#i;*/
+   real NumberOfPointsStiff#i=(((xStiff2#i(1)-xStiff2#i(0))^2+(yStiff2#i(1)-yStiff2#i(0))^2)^0.5)/mStiff;
+   //
+
+ macro GenBorderThread(i)
+   string FileThread#i = "Preform Files/Thread.txt" ;
+   /*cout<<"FileThread#i= "<<FileThread#i<<endl;*/
+   ifstream fThread#i(FileThread#i) ;
+   int NbPtOnThread#i ;
+   fThread#i >> NbPtOnThread#i ;
+   real[int] LabelThread#i(NbPtOnThread#i) ;
+   real[int] xThread#i(NbPtOnThread#i) ;
+   real[int] yThread#i(NbPtOnThread#i) ;
+   for (int k = 0 ; k < NbPtOnThread#i ; k++) {
+      fThread#i >> xThread#i[k] >> yThread#i[k] >> LabelThread#i[k] ;
+   }
+
+     border ThreadBorder#i(s=0,NbPtOnThread#i-1) {
+      int  k  = min(int(s),xThread#i.n - 2) ;
+      real s1 = s - k ;
+      real s0 = 1.0 - s1 ;
+      x = xThread#i[k]*s0 + xThread#i[k+1]*s1 ;
+      y = yThread#i[k]*s0 + yThread#i[k+1]*s1 ;
+      label = LabelThread#i[k];
+   }
+   real NumberOfPointsThread#i=mp*NbPtOnThread#i;
+   //
+// /*
+macro GenBorderStack(i)
+   string FileStack#i = "Stack Files/Stack"+i+".txt" ;
+   ifstream fStack#i(FileStack#i) ;
+   int NbPtOnStack#i ;
+   fStack#i >> NbPtOnStack#i ;
+   real[int] LabelStack#i(NbPtOnStack#i) ;
+   real[int] xStack#i(NbPtOnStack#i) ;
+   real[int] yStack#i(NbPtOnStack#i) ;
+   for (int k = 0 ; k < NbPtOnStack#i ; k++) {
+      fStack#i >> xStack#i[k] >> yStack#i[k] >> LabelStack#i[k] ;
+   }
+
+     border StackBorder#i(s=0,NbPtOnStack#i-1) {
+      int  k  = min(int(s),xStack#i.n - 2) ;
+      real s1 = s - k ;
+      real s0 = 1.0 - s1 ;
+      x = xStack#i[k]*s0 + xStack#i[k+1]*s1 ;
+      y = yStack#i[k]*s0 + yStack#i[k+1]*s1 ;
+      label = LabelStack#i[k];
+   }
+   real NumberOfPointsStack#i=ms*NbPtOnStack#i;
+   //
+   // */
+
+
+// +--------------------------------+
+// |								|
+// | Reading Preform Geometry Files	|
+// |								|
+// +--------------------------------+
+
+border GIPoint (t=0,1){x=133.84;y=5.60301;};
+border CAVPoint1 (t=0,1){x=109.998  ;y= 14.1735;};
+border CAVPoint2 (t=0,1){x=68.4767  ;y= 14.3517;};
+border TRANSPoint (t=0,1){x=25.8716 ;y= 13.0063;};
+border THREADPoint (t=0,1){x=12.2612 ;y= 12.855;};
+border TSSPoint (t=0,1){x=0.251493  ;y= 12.3495;};
+
+GenBorderPref(1);
+GenBorderPref(2);
+GenBorderPref(3);
+GenBorderPref(4);
+GenBorderPref(5);
+GenBorderPref(6);
+GenBorderPref(7);
+GenBorderPref(8);
+GenBorderPref(9);
+GenBorderPref(10);
+GenBorderPref(11);
+GenBorderPref(12);
+GenBorderPref(13);
+GenBorderPref(14);
+GenBorderPref(15);
+GenBorderPref(16);
+GenBorderPref(17);
+GenBorderPref(18);
+GenBorderPref(19);
+GenBorderPref(20);
+GenBorderPref(21);
+GenBorderPref(22);
+
+
+
+// GenBorderPref(99);
+// mesh Threadd=buildmesh(PrefBorder99(NumberOfPointsPref99));
+// plot(Threadd,wait=1);
+
+GenBorderStiff(1);
+GenBorderStiff(2);
+GenBorderStiff(3);
+GenBorderStiff(4);
+GenBorderStiff(5);
+
+GenBorderThread(1);
+// +--------------------------------+
+// |								|
+// |  Building Mesh from Borders	|
+// |								|
+// +--------------------------------+
+
+
+   // ---Mesh Preform---
+
+// plot(PrefBorder99(NumberOfPointsPref99),wait=1);
+
+plot(
+PrefBorder1(NumberOfPointsPref1)
++PrefBorder2(NumberOfPointsPref2)
++PrefBorder3(NumberOfPointsPref3)
++PrefBorder4(NumberOfPointsPref4)
++PrefBorder5(NumberOfPointsPref5)
++PrefBorder6(NumberOfPointsPref6)
++PrefBorder7(NumberOfPointsPref7)
++PrefBorder8(NumberOfPointsPref8)
++PrefBorder9(NumberOfPointsPref9)
++PrefBorder10(NumberOfPointsPref10)
++PrefBorder11(NumberOfPointsPref11)
++PrefBorder12(NumberOfPointsPref12)
++PrefBorder13(NumberOfPointsPref13)
++PrefBorder14(NumberOfPointsPref14)
++PrefBorder15(NumberOfPointsPref15)
++PrefBorder16(NumberOfPointsPref16)
++PrefBorder17(NumberOfPointsPref17)
++PrefBorder18(NumberOfPointsPref18)
++PrefBorder19(NumberOfPointsPref19)
++PrefBorder20(NumberOfPointsPref20)
++PrefBorder21(NumberOfPointsPref21)
++PrefBorder22(NumberOfPointsPref22)
++StiffBorder1(NumberOfPointsStiff1)
++StiffBorder2(NumberOfPointsStiff2)
++StiffBorder3(NumberOfPointsStiff3)
++StiffBorder4(NumberOfPointsStiff4)
++StiffBorder5(NumberOfPointsStiff5)
++GIPoint(1)
++CAVPoint1(1)
++CAVPoint2(1)
++TRANSPoint(1)
++THREADPoint(1)
++TSSPoint(1)
+,wait=Wait);
+
+/*plot(
+ThreadBorder1(NumberOfPointsThread1)
+,wait=Wait);*/
+
+mesh PreformMesh=buildmesh(
+PrefBorder1(NumberOfPointsPref1)
++PrefBorder2(NumberOfPointsPref2)
++PrefBorder3(NumberOfPointsPref3)
++PrefBorder4(NumberOfPointsPref4)
++PrefBorder5(NumberOfPointsPref5)
++PrefBorder6(NumberOfPointsPref6)
++PrefBorder7(NumberOfPointsPref7)
++PrefBorder8(NumberOfPointsPref8)
++PrefBorder9(NumberOfPointsPref9)
++PrefBorder10(NumberOfPointsPref10)
++PrefBorder11(NumberOfPointsPref11)
++PrefBorder12(NumberOfPointsPref12)
++PrefBorder13(NumberOfPointsPref13)
++PrefBorder14(NumberOfPointsPref14)
++PrefBorder15(NumberOfPointsPref15)
++PrefBorder16(NumberOfPointsPref16)
++PrefBorder17(NumberOfPointsPref17)
++PrefBorder18(NumberOfPointsPref18)
++PrefBorder19(NumberOfPointsPref19)
++PrefBorder20(NumberOfPointsPref20)
++PrefBorder21(NumberOfPointsPref21)
++PrefBorder22(NumberOfPointsPref22)
++StiffBorder1(NumberOfPointsStiff1)
++StiffBorder2(NumberOfPointsStiff2)
++StiffBorder3(NumberOfPointsStiff3)
++StiffBorder4(NumberOfPointsStiff4)
++StiffBorder5(NumberOfPointsStiff5)
+,fixeborder=1);
+
+plot(PreformMesh,wait=Wait);
+PreformMesh=change(PreformMesh,fregion=1);
+
+   // ---Mesh Cavity---
+GenBorderStack(1);
+GenBorderStack(2);
+plot(
+StackBorder1(NumberOfPointsStack1)
++StackBorder2(NumberOfPointsStack2)
++PrefBorder3(-NumberOfPointsPref3)
++PrefBorder4(-NumberOfPointsPref4)
++PrefBorder5(-NumberOfPointsPref5)
++CAVPoint1(1)
++CAVPoint2(1)
+,wait=Wait);
+
+mesh CavityMesh=buildmesh(
+StackBorder1(-NumberOfPointsStack1)
++StackBorder2(-NumberOfPointsStack2)
++PrefBorder3(-NumberOfPointsPref3)
++PrefBorder4(-NumberOfPointsPref4)
++PrefBorder5(-NumberOfPointsPref5)
+,fixeborder=1);
+/*plot(CavityMesh,wait=Wait);*/
+CavityMesh=change(CavityMesh,fregion=2);
+
+
+   // ---Mesh Gate Insert---
+
+// GenBorderStack(2);
+GenBorderStack(3);
+/*plot(
+// StackBorder2(-NumberOfPointsStack2)
+StackBorder3(NumberOfPointsStack3)
++PrefBorder1(-NumberOfPointsPref1)
++PrefBorder2(-NumberOfPointsPref2)
+,wait=Wait);*/
+mesh GateInsertMesh=buildmesh(
+// StackBorder2(-NumberOfPointsStack2)
+StackBorder3(-NumberOfPointsStack3)
++PrefBorder1(-NumberOfPointsPref1)
++PrefBorder2(-NumberOfPointsPref2)
+,fixeborder=1);
+// plot(GateInsertMesh,wait=Wait);
+GateInsertMesh=change(GateInsertMesh,fregion=3);
+
+
+   // ---Mesh Neck Ring---
+
+GenBorderStack(4);
+GenBorderStack(5);
+GenBorderStack(8);
+plot(
+StackBorder1(NumberOfPointsStack1)
++StackBorder4(-NumberOfPointsStack4)
++StackBorder5(NumberOfPointsStack5)
++StackBorder8(-NumberOfPointsStack8)
+// +StackBorder6(NumberOfPointsStack6)
+// +PrefBorder5(-NumberOfPointsPref5)
++PrefBorder6(-NumberOfPointsPref6)
++PrefBorder7(-NumberOfPointsPref7)
++PrefBorder8(-NumberOfPointsPref8)
++PrefBorder9(-NumberOfPointsPref9)
++PrefBorder10(-NumberOfPointsPref10)
++TRANSPoint(1)
++THREADPoint(1)
+,wait=Wait);
+
+mesh NeckRingMesh=buildmesh(
+StackBorder1(NumberOfPointsStack1)
++StackBorder4(-NumberOfPointsStack4)
++StackBorder5(NumberOfPointsStack5)
++StackBorder8(-NumberOfPointsStack8)
+// +StackBorder6(-NumberOfPointsStack6)
+// +PrefBorder5(-NumberOfPointsPref5)
++PrefBorder6(-NumberOfPointsPref6)
++PrefBorder7(-NumberOfPointsPref7)
++PrefBorder8(-NumberOfPointsPref8)
++PrefBorder9(-NumberOfPointsPref9)
++PrefBorder10(-NumberOfPointsPref10)
+,fixeborder=1);
+// plot(NeckRingMesh,wait=Wait);
+NeckRingMesh=change(NeckRingMesh,fregion=4);
+
+
+   // ---Mesh Core---
+
+GenBorderStack(6);
+GenBorderStack(7);
+/*plot(
+StackBorder6(NumberOfPointsStack6)
++StackBorder7(NumberOfPointsStack7)
++PrefBorder12(-NumberOfPointsPref12)
++PrefBorder13(-NumberOfPointsPref13)
++PrefBorder14(-NumberOfPointsPref14)
++PrefBorder15(-NumberOfPointsPref15)
++PrefBorder16(-NumberOfPointsPref16)
++PrefBorder17(-NumberOfPointsPref17)
++PrefBorder18(-NumberOfPointsPref18)
++PrefBorder19(-NumberOfPointsPref19)
++PrefBorder20(-NumberOfPointsPref20)
+,wait=Wait);*/
+mesh CoreMesh=buildmesh(
+StackBorder6(-NumberOfPointsStack6)
++StackBorder7(-NumberOfPointsStack7)
++PrefBorder12(-NumberOfPointsPref12)
++PrefBorder13(-NumberOfPointsPref13)
++PrefBorder14(-NumberOfPointsPref14)
++PrefBorder15(-NumberOfPointsPref15)
++PrefBorder16(-NumberOfPointsPref16)
++PrefBorder17(-NumberOfPointsPref17)
++PrefBorder18(-NumberOfPointsPref18)
++PrefBorder19(-NumberOfPointsPref19)
++PrefBorder20(-NumberOfPointsPref20)
+,fixeborder=1);
+// plot(CoreMesh,wait=Wait);
+CoreMesh=change(CoreMesh,fregion=5);
+
+
+   // ---Lock Ring---
+
+GenBorderStack(9);
+
+/*plot(
+StackBorder4(NumberOfPointsStack8)
++StackBorder9(-NumberOfPointsStack9)
++StackBorder7(NumberOfPointsStack7)
++PrefBorder11(-NumberOfPointsPref11)
+,wait=Wait);*/
+
+mesh LockRingMesh=buildmesh(
+StackBorder4(NumberOfPointsStack8)
++StackBorder9(-NumberOfPointsStack9)
++StackBorder7(NumberOfPointsStack7)
++PrefBorder11(-NumberOfPointsPref11)
+,fixeborder=1);
+// plot(LockRingMesh,wait=Wait);
+LockRingMesh=change(LockRingMesh,fregion=6);
+
+
+
+
+   // ---Mesh Stack Assembly---
+mesh StackAssembly=PreformMesh+CavityMesh+GateInsertMesh+NeckRingMesh+CoreMesh+LockRingMesh;
+plot(StackAssembly,wait=Wait);
+// savemesh(StackAssembly,"StackAssembly.msh");
+
+
+
+   // ---Mesh Stack Only---
+mesh StackOnly=CavityMesh+GateInsertMesh+NeckRingMesh+CoreMesh+LockRingMesh;
+// plot(StackOnly,wait=Wait);
+// savemesh(StackOnly,"StackOnly.msh");
+
+
+   // ---Mesh Mold Open - Core Side---
+mesh StackCoreSide=PreformMesh+NeckRingMesh+CoreMesh+LockRingMesh;
+// plot(StackCoreSide,wait=Wait);
+// savemesh(StackCoreSide,"StackCoreSide.msh");
+
+
+   // ---Mesh Mold Open - Cavity Side---
+mesh StackCavitySide=CavityMesh+GateInsertMesh;
+// plot(StackCavitySide,wait=Wait);
+// savemesh(StackCavitySide,"StackCavitySide.msh");
+
+   // ---Mesh Mold Open - Core Side without Preform---
+mesh StackCoreSideStackOnly=NeckRingMesh+CoreMesh+LockRingMesh;
+// plot(StackCoreSideStackOnly,wait=Wait);
+// savemesh(StackCoreSide,"StackCoreSide.msh");
+
+/*
+   // ---Mesh CoolRTC - Core Side---
+mesh StackCoolCoreSide=PreformMesh+CoreMesh;
+plot(StackCoolCoreSide,wait=Wait);
+// savemesh(StackCoolCoreSide,"StackCoolCoreSide.msh");
+
+   // ---Mesh CoolRTC - Cavity Side---
+mesh StackCoolCavitySide=CavityMesh+GateInsertMesh+NeckRingMesh;
+plot(StackCoolCavitySide,wait=Wait);
+// save mesh(StackCoolCavitySide,"StackCoolCavitySide.msh");
+*/
+
+
+
+   // ---Mesh Cooling Insert---
+/*
+GenBorderStack(9);
+GenBorderStack(10);
+GenBorderStack(11);
+GenBorderStack(12);
+
+mesh CoolingInsert=buildmesh(
+StackBorder9(NumberOfPointsStack9)
++StackBorder10(NumberOfPointsStack10)
++PrefBorder1(-NumberOfPointsPref1)
++PrefBorder2(-NumberOfPointsPref2)
+,fixeborder=1);
+plot(CoolingInsert,wait=Wait);
+CoolingInsert=change(CoolingInsert,fregion=6);
+
+   // ---Mesh Tube---
+
+mesh Tube=buildmesh(
+StackBorder11(NumberOfPointsStack11)
++StackBorder12(NumberOfPointsStack12)
++PrefBorder3(-NumberOfPointsPref3)
++PrefBorder4(-NumberOfPointsPref4)
++StackBorder10(-NumberOfPointsStack10)
+,fixeborder=1);
+plot(Tube,wait=Wait);
+Tube=change(Tube,fregion=7);
+
+   // ---Mesh Tube Assembly---
+
+mesh TubeAssembly=Tube+CoolingInsert+PreformMesh;
+plot(TubeAssembly,wait=Wait);
+*/
+
+/*
+//  example to build a mesh a cone 
+load "msh3"
+load "medit"
+// cone using buildlayers with a triangle 
+real RR=1,HH=1; 
+// border Taxe(t=0,HH){x=t;y=0;label=0;};
+// border Hypo(t=1,0){x=HH*t;y=RR*t;label=1;};
+// border Vert(t=0,RR){x=HH;y=t;label=2;};
+
+int nn=10;
+real h= 1./nn;
+// mesh Th2=buildmesh(  Taxe(HH*nn)+ Hypo(sqrt(HH*HH+RR*RR)*nn) + Vert(RR*nn) ) ;
+// plot(Th2,wait=1);
+//medit("circle",ThT);
+
+int MaxLayersT=(int(2*pi*RR/h)/4)*4;
+func zminT = 0;
+func zmaxT = 2*pi;
+func fx= y*cos(z);// / max( abs(cos(z) ), abs(sin(z)));
+func fy= y*sin(z);// / max( abs(cos(z) ), abs(sin(z)));
+func fz= x;
+int[int] r1T=[0,0], r2T=[0,0,2,2];
+int[int] r4T=[0,2]; 
+// mesh3 Th3T=buildlayers(PreformMesh,coef= max(.01,y/max(x/HH,0.4) /RR), MaxLayersT,zbound=[zminT,zmaxT],transfo=[fx,fy,fz],facemerge=1);
+// mesh3 Th3T=buildlayers(NeckRingMesh,coef= max(.01,y/max(x/HH,0.4) /RR), MaxLayersT,zbound=[zminT,zmaxT],transfo=[fx,fy,fz],facemerge=1);
+mesh3 Th3T=buildlayers(NeckRingMesh, 20,zbound=[zminT,zmaxT],transfo=[fx,fy,fz],facemerge=1);
+
+medit("cone",Th3T,wait=1);
+*/
+
+savemesh(PreformMesh,"bottle.msh"); 

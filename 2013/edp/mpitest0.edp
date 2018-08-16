@@ -1,0 +1,4 @@
+load "pipe" 
+if( mpirank ==0) 
+ sleep(1); 
+cout << " Hello Word ! " << endl; 

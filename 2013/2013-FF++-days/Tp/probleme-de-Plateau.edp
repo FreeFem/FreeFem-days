@@ -1,0 +1,89 @@
+int fille = 1;
+real hsize = 0.02; 
+mesh Th; 
+if(fille)
+{
+    int[int] ll=[1,1,1,1]; 
+    Th=square(1/hsize,1/hsize,label=ll); 
+}
+else
+{
+    border C(t=0,2*pi){x=cos(t);   y=sin(t);  label=1;};
+    Th= buildmesh(C(2*pi/hsize));
+    ;
+}
+
+plot(Th,wait=1);
+
+func g = sin(x*10)*cos(50*y); 
+
+fespace Vh(Th,P1); 
+
+Vh u,v,w,gh; 
+gh =g;
+u = gh; 
+varf vGamma(u,v)=int1d(Th)(v); 
+Vh ongamma; ongamma[]=vGamma(0,Vh);
+//the functonnel to minimize ..
+int iter=0;
+func real J(real[int] & X)
+{
+	Vh u;
+	u[]=ongamma[]? gh[]: X;// // inside  we get   X and on the border we get  sur  gh 	
+	real jX= int2d(Th)(sqrt(1.+dx(u)*dx(u)+dy(u)*dy(u)));
+	iter++;
+	if(iter%100==1)
+	cout << iter << " J(X) = " << jX << endl;
+	return jX;
+}
+// end of J def.. 
+
+// for  ... cas 2 et 3 
+func real[int]  DJ(real[int] & X)
+{//  DJ return  the  gradient of  J 
+	Vh u,du;
+	u[]=ongamma[]? gh[]: X;// inside  we get   X and on the border we get  sur  gh 	
+	varf vDJ(du,v) =int2d(Th)( (dx(v)*dx(u)+dy(v)*dy(u))/sqrt(1.+dx(u)*dx(u)+dy(u)*dy(u)))
+	                  +on(1,du=0);
+    du[]=vDJ(0,Vh);	     //  du[][i] : is  the derive partiel / variable i      
+	return du[];
+}
+varf vlap(u,v)= int2d(Th)(  dx(v)*dx(u)+dy(v)*dy(u)) +on(1,u=0);
+matrix Alap= vlap(Vh,Vh,solver=sparsesolver);
+func real[int] lap(real[int] &u) {real[int] u1=Alap^-1*u; return u1;}
+// end of DJ ...
+
+
+
+ macro Grad(u) [dx(u),dy(u)]//
+  solve Pbinit(u,v) =
+  int2d(Th)( Grad(u)'*Grad(v)) - int2d(Th)(0*v) + on(1,u=g); 
+  plot(u,wait=1,dim=3);
+real cost=0; 
+verbosity=0;
+NLCG(DJ,u[],eps=1.e-1,nbiter=200,precon=lap);
+for(int i=0;i< 20; ++i)
+{
+   solve PbTangent(w,v) =
+   int2d(Th)( 
+      Grad(w)'*Grad(v)/sqrt(1 + Grad(u)'*Grad(u)) 
+      - (Grad(w)'*Grad(u))*(Grad(v)'*Grad(u)) / sqrt(1 + Grad(u)'*Grad(u))^3
+      ) 
+     - int2d(Th) (
+        Grad(u)'*Grad(v)/ sqrt(1 + Grad(u)'*Grad(u)) 
+     ) 
+ 
+   + on(1,w=0);
+   // test d'arret ... 
+  // real err = sqrt(int2d(Th)( w*w));// norme L2 
+   real err = w[].linfty; 
+   u[] = u[] - w[]; 
+   cost = int2d(Th)(sqrt(1 + Grad(u)'*Grad(u))); 
+   cout << i << " err linfty = " << err << " J : "<< cost <<  endl;
+   if(err < 1e-8) break; 
+   //u = u - w; 
+   //u[] -= w[]; 
+ 
+   plot(u,wait=0,dim=3,cmm=" iter= " +i + " err = " + err + " J=" + cost ,fill=1);
+}
+plot(u,wait=1,dim=3,cmm=" sol "+ " J=" + cost,fill=1);

@@ -1,0 +1,67 @@
+
+real tt=0*pi/10., cc= cos(tt), ss=sin(tt);
+real R = 1,L=3/2.*pi/R, l=1 ;
+int n = 10; 
+mesh Th = square(L*n*R,l*n,[x*L,y*l],flags=3);
+//plot(Th,wait=1);
+Th = movemesh(Th,[sin(x)*(R+(1-y)),-cos(x)*(R+(1-y))+R]);// y linear , x circle   x=0 -> x =0 
+//plot(Th,wait=1);
+Th = movemesh(Th,[cc*x-ss*y,ss*x+cc*y]);// rotation ... 
+// cin : x = 0 , y = . 
+plot(Th,wait=1);
+
+real f1= cc, f2=ss; 
+fespace Vh(Th,P2);
+fespace Ph(Th,P1);
+macro grad(u) [dx(u),dy(u)] //
+macro Grad(u1,u2) [ grad(u1), grad(u2)]//
+  macro epsilon(u1,u2) [dx(u1), dy(u2), (dx(u2)+dy(u1))*0.5, (dx(u2)+dy(u1))*0.5] // 
+  macro div(u1,u2) (dx(u1)+dy(u2)) // 
+Vh u1=1,u2=0;
+Vh v1,v2;
+real betaN =1e7, betaT=0; 
+Ph p,q;
+func mN=[N.x,N.y]*[N.x,N.y]'; 
+func mT=[-N.y,N.x]*[-N.y,N.x]'; 
+
+real mu =1;
+real epsstar= 1e-10;
+verbosity=10;
+
+
+for(int step=0;step<2;++step)
+{
+  int i2=2, i4=4;
+  if(step) {i2=100;i4=101;} // to remove u.t = 0 on out 
+  
+  
+solve StokesMeca([ u1,u2,p], [v1,v2,q] )
+= int2d(Th) ( 2*mu *( epsilon(v1,v2)'*epsilon(u1,u2) ) //')
+	      - p * div(v1,v2) - q *div(u1,u2)
+	      - epsstar*p*q) // for find the  pressure with mean value = 0 
+ + int1d(Th,1,3) ( betaT *[u1,u2]'*mT*[v1,v2] + betaN *[u1,u2]'*mN*[v1,v2] )	      
+ // + on(1,3,u2=0)  
+  - int1d(Th,4)( [v1,v2]'*[f1,f2]) 
+   +on( i4,u2=0) +on(i2,u1=0)
+; // U'*N*N'*V  
+
+plot([u1,u2],cmm="u1,u2 meca (u.t == "+step+")",wait=1,coef=0.1/(u1[].linfty+u2[].linfty));
+plot(p,cmm="p", wait=1);
+
+
+solve StokesMath([ u1,u2,p], [v1,v2,q] )
+= int2d(Th) ( mu *( Grad(v1,v2):Grad(u1,u2) ) //')
+	      - p * div(v1,v2) - q *div(u1,u2)
+	      - epsstar*p*q) // for find the  pressure with mean value = 0 
+  + int1d(Th,1,3) ( betaT *[u1,u2]'*mT*[v1,v2] + betaN * [u1,u2]'*mN*[v1,v2] )	         
+  - int1d(Th,4)( [v1,v2]'*[f1,f2]) 
+ +on( i4,u2=0) +on(i2,u1=0)
+;
+
+plot([u1,u2],cmm="u1,u2 math (u.t == "+step+")",wait=1,coef=0.1/(u1[].linfty+u2[].linfty));
+plot(p,cmm="p", wait=1);
+
+
+}
+
+        

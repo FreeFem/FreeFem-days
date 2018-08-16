@@ -1,0 +1,11 @@
+/* Mesh of a rectangle using square function  */
+// Parameters
+int nbseg=10;
+real L=2,H=1;
+real xc1=0,    yc1=0;
+// FE mesh
+mesh Th = square(nbseg*L,
+                 nbseg*H,
+		 [xc1+x*L,yc1+y*H]);
+plot(Th, cmm="mesh of a rectangle");
+

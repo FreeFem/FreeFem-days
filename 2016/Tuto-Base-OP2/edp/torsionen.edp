@@ -1,0 +1,196 @@
+///////////////////////////////////////
+//                                   //
+// Optimization of the cross-section //
+// of an elastic bar under torsion   //
+//                                   //
+// Ecole Polytechnique, MAP 562      //
+// Copyright G. Allaire, 2004        //
+//                                   //
+///////////////////////////////////////
+ofstream compli("torsion.obj") ;
+string save="torsion";		// Prefix of backup files
+int niter=30;			// Number of iterations
+int n=5;			// Size of the mesh
+real lagrange=1.;		// Lagrange multiplier for the volume constraint
+real lagmin, lagmax ;		// Bounds for the Lagrange multiplier
+int inddico ;
+real compliance;		// Compliance
+real volume0;			// Initial volume 
+real volume,volume1;		// Volume of the current shape
+string caption;			// Caption for the graphics
+func g=1;  			// Applied force (torsion momentum)
+real[int] vviso(21);
+for (int i=0;i<21;i++)
+vviso[i]=i*0.05 ;
+////////////////////////////////////////////
+// Inverse shear moduli of the two phases //
+////////////////////////////////////////////
+real alpha=0.5;
+real beta=1.;
+///////////////////////////////////////////////////////
+//  Initialization of the proportion of phase alpha  //
+///////////////////////////////////////////////////////
+real thetamoy=0.5;
+func theta0=thetamoy ;
+
+//////////////////////////////////
+// Domain definition            // 
+// Dirichlet boundary condition //
+//////////////////////////////////
+mesh Th ;
+
+border bd(t=0,1)   { x=1; y=t;label=1; };   // right boundary of the domain
+border bg(t=1,0)   { x=0; y=t;label=1; };   // left boundary of the domain
+border bs(t=1,0)   { x=t; y=1;label=1; };   // upper boundary of the domain
+border bi(t=0,1)   { x=t; y=0;label=1; };   // lower boundary of the domain
+
+///////////////////////
+// Building the mesh //
+///////////////////////
+Th= buildmesh (bd(10*n)+bs(10*n)+bg(10*n)+bi(10*n));
+plot(Th,wait=0,ps=save+".mesh.eps");
+
+/////////////////////////////////////////////
+// Definition of the finite element spaces //
+/////////////////////////////////////////////
+fespace Vh0(Th,P0);
+fespace Vh1(Th,P1);
+
+Vh1 u,v;
+Vh0 theta,density;
+
+////////////////////////////////
+// Proportion of phase alpha  //
+////////////////////////////////
+theta = theta0 ;
+///////////////////////////////
+// Torsion elasticity system //
+///////////////////////////////
+problem torsion(u,v) =
+    int2d(Th)(
+               alpha*beta*(dx(u)*dx(v)+dy(u)*dy(v))/(beta*theta+alpha*(1-theta))
+	)
+    -int2d(Th)(g*v)	           
+    +on(1,u=0)
+;
+
+////////////////////
+// Initial volume //
+////////////////////
+volume0=int2d(Th)(theta);
+
+/////////////////////////
+// Initial compliance  //
+/////////////////////////
+torsion;
+compliance=int2d(Th)(g*u);
+compli << -compliance  << endl ;
+cout<<"Initialization. Compliance: "<<compliance<<" Volume: "<<volume0<<endl;
+
+
+///////////////////////////////
+//     Optimisation loop     //
+///////////////////////////////
+ 
+int iter;
+
+for (iter=1;iter< niter;iter=iter+1)  
+{
+cout <<"Iteration " <<iter <<" ----------------------------------------" <<endl;
+
+
+/////////////////////////////////////////////
+// Optimality condition for the proportion //
+// in terms of the energy density          //
+/////////////////////////////////////////////
+
+density = (dx(u)^2+dy(u)^2);
+theta = ( sqrt(density*alpha*beta*(beta-alpha)/lagrange) - alpha )/(beta-alpha);
+theta = min(theta,1) ;
+theta = max(theta,0) ;
+
+/////////////////////////////////////////////////////
+// Bracketing the value of the Lagrange multiplier //
+/////////////////////////////////////////////////////
+volume=int2d(Th)(theta);
+volume1 = volume ;
+//
+if (volume1 < volume0)
+{
+   lagmin = lagrange ;
+   while (volume < volume0)
+{ 
+      lagrange = lagrange/2 ;
+      theta = ( sqrt(density*alpha*beta*(beta-alpha)/lagrange) - alpha )/(beta-alpha);
+      theta = min(theta,1) ;
+      theta = max(theta,0) ;
+      volume=int2d(Th)(theta) ; 
+};
+   lagmax = lagrange ;
+};
+//
+if (volume1 > volume0)
+{
+   lagmax = lagrange ;
+   while (volume > volume0)
+{
+      lagrange = 2*lagrange ;
+      theta = ( sqrt(density*alpha*beta*(beta-alpha)/lagrange) - alpha )/(beta-alpha);
+      theta = min(theta,1) ;
+      theta = max(theta,0) ;
+      volume=int2d(Th)(theta) ;
+};
+   lagmin = lagrange ;
+};
+//
+if (volume1 == volume0) 
+{
+   lagmin = lagrange ;
+   lagmax = lagrange ;
+};
+
+///////////////////////////////////////////////////////
+// Dichotomy on the value of the Lagrange multiplier //
+///////////////////////////////////////////////////////
+
+inddico=0;
+while ((abs(1.-volume/volume0)) > 0.000001)
+{
+   lagrange = (lagmax+lagmin)*0.5 ;
+   theta = ( sqrt(density*alpha*beta*(beta-alpha)/lagrange) - alpha )/(beta-alpha);
+   theta = min(theta,1) ;
+   theta = max(theta,0) ;
+   volume=int2d(Th)(theta) ;
+   inddico=inddico+1;
+   if (volume < volume0)
+      {lagmin = lagrange ;} ;
+   if (volume > volume0)
+      {lagmax = lagrange ;} ;
+};
+
+//cout<<"number of iterations of the dichotomy: "<<inddico<<endl;
+
+// Solving the torsion problem
+torsion;
+
+//Computation of the compliance
+compliance=int2d(Th)(g*u);
+compli << -compliance  << endl ;
+cout<<"Compliance: "<<compliance<<" Volume: "<<volume<<" Lagrange: "<<lagrange<<endl;
+
+///////////////////////////////////////////////
+// Plot the proportion of the current design //
+///////////////////////////////////////////////
+
+caption="Iteration "+iter+", Compliance "+compliance+", Volume="+volume;
+plot(Th,theta,fill=1,value=0,viso=vviso,cmm=caption,wait=0); 
+
+};
+
+
+// Plot the final design
+caption="Final design, Iteration "+iter+", Compliance "+compliance+", Volume="+volume;
+plot(Th,theta,fill=1,value=0,viso=vviso,cmm=caption,wait=1);
+
+
+

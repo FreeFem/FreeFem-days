@@ -1,0 +1,190 @@
+// Implements DEM (Discontinuous Enrichment method) of Farhat et al
+// each triangle is subdivided into smaller elements. The solution is continuous at the vertices
+// of the coarse triangulation Thg continuous within each coarse triangle and discontinuous
+// accross the edges of Thg. However the mean of the solution on the edge is continuous.
+// On the coarse mesh the solution ug is defined byy the values at the vertices plus the integrals on
+// the edges (see the FEM space VEgh).
+// the mean continuity is implemented by one Lagranger multiplyer per edge but eliminated at the fine level.  
+
+
+real eps = 1./20.; //0.1/pi;
+func aeps = (1+0.95*cos(x/eps)*sin(y/eps));  // coef of PDE :- div(aeps grad u)=f
+macro Aeps(u,v) (Grad(u)'*Grad(v)*aeps) //
+macro Grad(u) [dx(u),dy(u)] // EOM
+
+
+int debug=3;
+mesh Thg=square(20,20);  // coarse mesh
+int ntg=Thg.nt;  // nb of triangles
+int nsplit=10;  
+
+fespace Pgh(Thg,P0);  // FEM Spaces on the coarse
+fespace Vgh(Thg,P1);
+fespace Egh(Thg,P0edge);
+fespace VEgh(Thg,[P1,P0edge]);
+
+
+func f =1;  // rhs of PDE
+func g =0;  // boundary conditions: not implemented (=0)
+real tgv = 1e30;
+
+// bluid the array of fine meshes 
+mesh[int] THK(ntg), ThK(ntg); 
+Pgh ChiK=0;
+for (int i=0;i<ntg;++i)
+  { 
+    ChiK[][i]=1;
+    THK[i]=trunc(Thg,ChiK>0.1,split=1,label=10);  // a mesh made of only one triangle
+    ThK[i]=trunc(THK[i],1,split=nsplit+i%3,label=10); // each triangle divived by nsplit or nsplit+1 "randomly(sort of)"  
+    ChiK[][i]=0;
+  }
+
+varf VZERO(u,v)=int2d(Thg)(0*u*v);
+matrix Ag=VZERO(VEgh,VEgh);  // used to define the skeleton of the matrix Ag of the ug system
+VEgh  [ug,eg];  // the coarse solution on verticies and edges
+real[int] bg(VEgh.ndof);  // rhs of linear system for [ug,eg]
+varf vongVE([unused],[u,e])= int1d(Thg)(e+u); // for the boundary condition
+real[int] ong=vongVE(0,VEgh);  // this is non zero on the degree of freedom on boundary
+bg=0; 
+verbosity=0;
+int k=0;
+mesh TK=THK[k];
+mesh TKh=ThK[k];
+fespace VKh(TKh,P1);
+fespace VEK(TK,[P1,P0edge]);
+fespace VK(TK,P1);
+fespace EK(TK,P0edge);
+
+
+VKh[int] Ui(VEgh.ndofK*ntg);// FH
+int iU=0;
+
+for( k=0;k<ntg;++k)  // on each coarse triangle the PDE is solved with the 6 basis functions = delta_{ij}
+  {  // so as to build the matrix and rhs yielded by the degree of freedom on the fine mesh
+    //   if(! (k%50))   cout << " Element " << k <<"/" << ntg << endl;
+    TK=THK[k];
+    TKh=ThK[k];
+    
+    VEK [ui,ei];  // solution on the fine mesh (6 solutions, one for each coarse degree of freedom)
+    EK  ve,be;
+    varf vA(u,v)= int2d(TKh)(Aeps(u,v) )+int2d(TK,qft=qf1pTlump)(tgv*u*v)+on(1,2,3,4,u=0);  // bilinear form of fine mesh pb with b.c.
+    varf vAG(u,v)= int2d(TKh)(Aeps(u,v));  // here on vertices and without b.c.
+    varf vB(u,v)= int2d(TK,qft=qf1pTlump)(tgv*ui*v); // just the b.c. part
+    varf vC(u,v)=int1d(TKh)(ve*v); // to compute the integrals on the edges, of the coarse basis function
+    varf vE(u,v)=int1d(TKh)(ei*v);// integrals on edges with fine mesh solution
+    
+    VKh[int] uki(VEK.ndofK); 
+    real[int,int] CK(VKh.ndof,EK.ndofK); 
+    ve[] =0;
+    for(int ii=0;ii<EK.ndof;ii++) // loop on 3 edges functions (=1 on an edge =0 on others)
+      {
+	int i=EK(0,ii);
+	ve[][i]=1;
+	CK(:,i)=vC(0,VKh);  // = int_{E_ii} ve * basis function of VKh
+	if(debug>4) cout << CK(:,i) << endl;
+	ve[][i]=0;   	
+      }
+    matrix AK=vA(VKh,VKh);  // matrix of fine linear system
+    matrix AAK=[ [AK,CK],[CK',0]];  // block matrix with Lagrange Multiers
+    set(AAK,solver=UMFPACK);
+    //  cout << " AK = " << AK << endl;
+    if(debug>2)  plot(Thg,TKh,wait=0);
+    ui[]=0;
+    for(int i=0;i<VEK.ndofK;i++)
+      {
+   	int dli=VEK(0,i);
+   	ui[][dli]=1;
+   	
+  	real[int] bk=vB(0,VKh);
+  	real[int] be=vE(0,EK);
+  	if(debug>3)
+	  cout << " be " << be << endl;;
+  	real[int] b=[bk,be];
+  	real[int] xx(b.n);
+  	xx=AAK^-1*b;
+  	[uki[i][],be]=xx;
+  	if(debug>2)
+	  cout << i<< " moy : " << uki[i][]'*CK(:,0) << " " << uki[i][]'*CK(:,1) 
+	       << " " << uki[i][]'*CK(:,2) 
+	       << endl;
+  	if(debug>3)
+	  plot(uki[i],wait=1,cmm="  cas "+i );
+        Ui[iU++][]=uki[i][]; //  to   store the basic function
+  	ui[][dli]=0;
+      }
+    AK=vAG(VKh,VKh);
+    varf vf([u],[v])=int2d(TKh)(f*v);
+    real[int] fKi=vf(0,VKh);
+    
+    for(int il=0;il<VEK.ndofK;il++)  
+      {
+     	int i=VEgh(k,il);
+        real[int] AKukil=AK*uki[il][];
+        for(int jl=0;jl<VEK.ndofK;jl++) 
+	  { 
+	    int j=VEgh(k,jl);       
+	    Ag(i,j)+= AKukil'*uki[jl][];
+	  }
+        if(!ong[i])
+          {
+	    bg[i] += fKi'*uki[il][];
+	    if(debug>5)
+	      cout << i << " " << bg[i] << " " << fKi.sum << endl;
+	    
+          }
+        else
+          Ag(i,i)= tgv;
+      }
+    ug[]=bg;
+    
+  }
+ 
+ug[]=bg;
+
+set(Ag,solver=UMFPACK);  // solution of the coarse linear system
+ug[]=Ag^-1*bg;
+plot(ug,wait=1,value=1,ps="dem.eps");
+
+
+//  rebuild a fine function.
+
+mesh Thf=trunc(Thg,split=nsplit,1);
+fespace Whf(Thf,P1dc);
+Whf bf=0,bfi;
+
+iU=0;
+for(int k=0;k<ntg;++k)
+  {
+    //if(! (k%50))    cout << " Element " << k <<"/" << ntg << endl;
+    TK=THK[k];//FH
+    TKh=ThK[k];//FH
+    mesh TKf=trunc(TK,split=10,1);
+    // fespace VKh(TKh,P1);
+    varf vF(u,v)=int2d(TKf)(u*v);
+    
+    matrix Mf=vF(Whf,VKh);
+    // cout << Mf.n << " " << Mf.m << " " << Ui[iU][].n << " ->" << bf[].n << endl;
+    for(int i=0;i<VEgh.ndofK;++i)
+      {
+	// cout << i << " " << iU << endl;
+	real ugi=ug[][VEgh(k,i)];
+	bfi[]= Mf'*Ui[iU][];
+	bf[] += ugi*bfi[];
+	iU++;
+      }
+  }
+bf[]= -bf[];
+Whf uf,vf;
+fespace Vhf(Thf,P1);Vhf ur,vr;
+solve Af(uf,vf)= int2d(Thf)(uf*vf)+bf[];
+solve Ar(ur,vr)=int2d(Thf)(Aeps(ur,vr))-int2d(Thf)(f*vr)+on(1,2,3,4,ur=0);
+cout << "ref  u max = " <<  ur[].max << "  u fine max = " << uf[].max << endl; 
+
+plot(uf,wait=1,value=1,cmm=" fine solution");
+plot(ur,wait=1,value=1,cmm=" ref solution");
+
+plot(ur,uf,wait=1,value=1,cmm=" fine + ref solution");
+
+   
+  
+ 

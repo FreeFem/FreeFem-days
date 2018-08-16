@@ -1,0 +1,27 @@
+// NBPROC 1
+// PARAM -n 20 -ns
+load "metis"
+
+verbosity=10;
+func f= 1. ; // right hand side function
+func g=0.; ; // boundary condition function
+func u0= 0;
+int nn=30;
+mesh Th=square(nn,nn);
+
+// to slip integral on each processor 
+// set a region number of a processor number 
+int npart= 10;
+int[int] nupart(Th.nt);
+metisdual(nupart,Th,npart); 
+fespace Ph(Th,P0);
+Ph fr;
+for(int k=0;k< Th.nt;++k)
+  fr[][k]= nupart[k];
+  
+// to slip integral on each processor 
+// set a region number of a processor number 
+Th=change(Th,fregion= real(fr) );// ok 
+Th=change(Th,fregion=  nupart[nuTriangle]);// bugs 
+for (int i=0;i< 10; ++i)
+cout << " int2d  " << i << "  == " << int2d(Th,i)(1.) << endl; 

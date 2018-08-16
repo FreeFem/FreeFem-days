@@ -1,0 +1,23 @@
+//test gnuplot
+load "pipe"
+real R0=1, R1=2, R2=3,rhof=1, rhos=2, nu=1, kappa=5,ringvelocity=3, T=0.8, dt=0.025;
+//// semi-analytic solution by solving a 1d problem ///////////////////////////
+mesh Th=square(100,5,[R0+(R2-R0)*x,0.1*y]);
+fespace WWh(Th,P1,periodic=[[1,x],[3,x]]);
+fespace W0(Th,P0);
+WWh d=0,w,wh,wold=0;
+W0 nnu=nu*(x>R1)+2*kappa*dt*(x<=R1), Rho=rhof*(x>R1)+rhos*(x<=R1);
+problem AA(w,wh) = int2d(Th)(Rho*x*w*wh/dt+x*nnu/2*dx(w)*dx(wh) )
+			+ int2d(Th)(-Rho*x*wold*wh/dt +x*nnu/2*dx(wold)*dx(wh)
+			+ 2*kappa*(x<=R1)*(x*dx(d)*dx(wh) ))
+			+on(2,w=-ringvelocity)+on(4,w=0);// this is the one-d axisymmetric problem
+///////// prepare gnuplot //////////////////////////////////////////////////////
+pstream  pgnuplot("gnuplot" );
+int J=40;
+real dr = (R2-R0)/(J-1);
+for(int i=0;i<T/dt;i++){ 
+	AA; d=d+(w+wold)*dt; wold=w; 
+	ofstream f("aux.gp");
+	for(int j=0;j<J;j++) f << j*dr <<"   " << w(R0+j*dr,0.05) << endl;
+	pgnuplot << "plot 'aux.gp' u 1:2 w l "<< endl; sleep(1); flush(pgnuplot); 
+}

@@ -1,0 +1,17 @@
+int nn = 10;
+
+mesh Th=square(nn,nn);
+plot(Th,wait=1); 
+
+macro grad(w) [dx(w),dy(w)] // EOM 
+
+fespace Vh(Th,P2); 
+
+Vh u,v;
+func f = 1.;
+func g = 0; 
+
+solve Name(u,v) = int2d(Th)(grad(v)'*grad(u) )  - int2d(Th)(f*v) 
++ on(1,2,3,4, u = g);
+
+plot( u, wait=1, dim=3, fill = 1, value =1, cmm = " max value = " + u[].max   ); 

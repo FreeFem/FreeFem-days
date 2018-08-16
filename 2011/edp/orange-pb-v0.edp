@@ -1,0 +1,63 @@
+int n=10;
+mesh Th=square(4*n,n,[x*4,y]);
+fespace Wh(Th,[P2,P2,P1,P1]);
+fespace Ph(Th,P1); 
+/*
+  u_t + u.gradu+ grad p - nu delta u = g/rho ( 1 - alpha (T-T0))
+  div u = 0
+  T_t + u grad T - K/(rho0 Cv) delta T = 0 
+*/
+Wh [u1,u2,p,T]; 
+Wh [u1p,u2p,pp,Tp];
+Wh [v1,v2,q,TT]; 
+real dt=0.1,tfinal=1;
+real g= -9.81, Cv=1,Kappa=1./10;
+real T0 = 40;
+real Tr = 60 , Tl = 30; 
+real alpha = 0.1,rho0=1; // bof .. 
+// 1/rho = 1/rho0 ( 1- alpha ( T-T0) ) 
+real nus = 1e6, nuf = 0.01;
+Ph nuk = nus; 
+
+real cdt=1./dt;
+real kf = Kappa/(rho0*Cv);
+real ks = kf/100  ;
+Ph kT= Kappa/(rho0*Cv), eps = 1e-7;
+[u1p,u2p,pp,Tp]=[0,0,0,20];
+macro grad(u)[dx(u),dy(u)]//
+macro Grad(u1,u2)[dx(u1),dy(u1),dx(u2),dy(u2)]//
+macro div(u1,u2) (dx(u1)+dy(u2)) //
+real fT = g/rho0*(1-alpha*T0); 
+real cmT = alpha*g/rho0; 
+
+func nuT =  T < 40 ? nus : nuf ;
+func kkT = T < 40 ? ks : kf; 
+cdt =0; 
+nuk = nus; 
+//kT = kf; 
+problem Boussinesq([u1,u2,p,T],[v1,v2,q,TT])
+= int2d(Th) (
+     [u1,u2,T]'*[v1,v2,TT]*cdt
+   + ( Grad(u1,u2)'*Grad(v1,v2)) * nuk + cmT*T*v2 
+   +  grad(T)'*grad(TT)*kT 
+   -div(u1,u2)*q -div(v1,v2)*p - eps*p*q )
+   - int2d(Th)(  fT*v2  + 
+   [convect([u1p,u2p],-dt,u1p),
+    convect([u1p,u2p],-dt,u2p),
+    convect([u1p,u2p],-dt,Tp) ]'*[v1,v2,TT]*cdt) 
+   + on(1,2,3,4, u1=0,u2=0) + on(2,T=Tr) + on(4,T=Tl) ;
+Boussinesq; 
+plot([u1,u2],p,T, wait=1);
+
+for(int iter=0; iter<100; iter++ )
+{
+ nuk =  nuT;
+ kT  =  kkT ; 
+ plot(nuk,fill=1,wait=1,dim=3);
+Boussinesq; 	
+plot([u1,u2],p, wait=1);
+plot(T,wait=1,cmm="T");
+u1p[]=u1[]; 
+//plot(p,wait=1,cmm="p");
+}
+

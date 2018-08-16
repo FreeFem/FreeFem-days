@@ -1,0 +1,13 @@
+  mesh Th=square(10,10);
+  include "ExtractDofsonBorder.idp"
+  fespace Vh(Th,P2); 
+  
+  int[int]  idof(1) ; // to store numbering list 
+  ExtractDofsonBorder(1,Vh,idof,1)
+  Vh xx=x, yy=y;
+  for(int i=0;i < idof.n; ++i)
+   {
+    int j = idof[i]; 
+    cout <<  j << "   x " << xx[][j] << "    y = " << yy[][j] << endl; 
+   }
+  

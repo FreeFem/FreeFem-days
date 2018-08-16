@@ -1,0 +1,64 @@
+macro dimension()2// EOM
+include "macro_ddm.idp"
+
+macro def(i)i// EOM
+macro init(i)i// EOM
+
+real a=20, b=5, c=15, d=10, e=2;
+border a0(t=0,1) {x=a*t; y=0;   label=1;}
+border a1(t=0,1) {x=a;   y=a*t; label=2;}
+border a2(t=1,0) {x=a*t; y=a;   label=3;}
+border a3(t=1,0) {x=0;   y=a*t; label=4;}
+
+border b0(t=0,2*pi) {x=b+e*cos(t); y=b+e*sin(t); label=5;}
+border b1(t=0,2*pi) {x=c+e*cos(t); y=b+e*sin(t); label=5;}
+border b2(t=0,2*pi) {x=b+e*cos(t); y=c+e*sin(t); label=5;}
+border b3(t=0,2*pi) {x=c+e*cos(t); y=c+e*sin(t); label=5;}
+border b4(t=0,2*pi) {x=(b+c)/2.0+cos(t); y=(b+c)/2.0+sin(t); label=5;}
+int n = 2;
+int m = 2*n;
+mesh Th = buildmesh(a0(20*n)+a1(20*n)+a2(20*n)+a3(20*n)
+                  + b0(10*m)+b1(10*m)+b2(10*m)+b3(10*m)
+                  + b4(4*m));
+plot(Th, wait=1);
+
+mesh ThLocal = Th;
+fespace Ph(ThLocal, P0);
+int[int] arrayIntersection;                 // ranks of neighboring subdomains
+int[int][int] restrictionIntersection(0);   // local-to-neighbors renumbering
+real[int] D;                                // partition of unity
+{
+    mesh ThBorder, ThGlobal = Th;
+    build(ThLocal, ThBorder, ThGlobal, 10, 1, 1, D, arrayIntersection, restrictionIntersection, Ph, P0, mpiCommWorld, false);
+    Ph u;
+    u = mpirank;
+    plotMPI(ThLocal, u[], "Standard partitioning", P0, def, real, 2, 1)
+}
+ThLocal = Th;
+{
+    mesh ThBorder, ThGlobal = Th;
+    int[int] lab = [1, 2, 3, 4];
+    buildPeriodic(ThLocal, ThBorder, ThGlobal, 10, 1, 1, D, arrayIntersection, restrictionIntersection, Ph, P0, mpiCommWorld, false, lab);
+    Ph u;
+    u = mpirank;
+    plotMPI(ThLocal, u[], "Partitioning with periodic BC", P0, def, real, 2, 1)
+}
+ThLocal = Th;
+if(mpisize == 6) {
+    mesh ThBorder, ThGlobal = Th;
+    int[int] lab = [1, 2, 3, 4];
+    Ph part;
+    if(mpirank == 0) {
+        part = 0.0;
+        part = ((x - b)^2 + (y - c)^2) < e^2 ? 1.0 : part;
+        part = ((x - b)^2 + (y - b)^2) < e^2 ? 2.0 : part;
+        part = ((x - c)^2 + (y - b)^2) < e^2 ? 3.0 : part;
+        part = ((x - c)^2 + (y - c)^2) < e^2 ? 4.0 : part;
+        part = ((x - (b+c)/2.0)^2 + (y - (b+c)/2.0)^2) < 1.0 ? 5.0 : part;
+        plot(part);
+    }
+    buildEdgeWithPartitioning(ThLocal, ThBorder, ThGlobal, part[], 10, 1, 1, D, arrayIntersection, restrictionIntersection, Ph, P0, mpiCommWorld, false, P0, def, init);
+    Ph u;
+    u = mpirank;
+    plotMPI(ThLocal, u[], "User-supplied partitioning", P0, def, real, 2, 1)
+}

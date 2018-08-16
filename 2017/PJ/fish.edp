@@ -1,0 +1,36 @@
+//exec("emc2");// 1st of April , 2004 : Houston fish 
+load "PETSc"                        // PETSc plugin
+macro partitioner()metis// EOM      // metis, scotch, or parmetis
+macro dimension()2// EOM            // 2D or 3D
+include "macro_ddm.idp"             // additional DDM functions
+
+macro def(i)i// EOM                 // scalar field definition
+macro init(i)i// EOM                // scalar field initialization
+func Pk = P1;
+meshN Th = square(1, 1);
+fespace Vh(Th,Pk);
+
+int[int] arrayIntersection;                 // ranks of neighboring subdomains
+int[int][int] restrictionIntersection(0);   // local-to-neighbors renumbering
+real[int] D;                                // partition of unity
+{
+    meshN ThBorder;    // global mesh
+    mesh ThGlobal("fish.msh");
+    build(Th, ThBorder, ThGlobal, 10, 1, 1, D, arrayIntersection, restrictionIntersection, Vh, Pk, mpiCommWorld, false)
+}
+
+macro Grad(u) [dx(u),dy(u)] // EOM
+Vh p,q; 
+varf laplace(p,q) =
+   int2d(Th)(  Grad(p)'*Grad(q)    )
+   -  int2d(Th) ( 1*q)
+  + on(2,p=2);   //  int on gamma 
+
+matrix Mat = laplace(Vh, Vh);
+real[int] rhs = laplace(0, Vh);
+dmatrix A(Mat, arrayIntersection, restrictionIntersection, D);
+set(A, sparams = "-ksp_monitor");
+real[int] u(rhs.n);
+
+u = A^-1 * rhs;
+plotMPI(Th, u, "Global solution", Pk, def, real, 3, 1)

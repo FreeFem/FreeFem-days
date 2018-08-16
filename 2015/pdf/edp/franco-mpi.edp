@@ -1,0 +1,141 @@
+// NBPROC 50
+// franco@us.es
+// daniel 
+// in => i+1, ip = i-1
+//  sum_i  h int grad(ui)(vi) + 1/h sum_i int (ui-uin)(vi-vin) = sum_i h inf f*vi
+// so equation en vi =>
+//  h int grad(ui)(vi) + 1/h int (ui-uin)(vi) - 1/h int (uip-ui)(vi) = sum_i h inf f*vi
+//  h int grad(ui)(vi) + 1/h int (2* ui -uin - uip )(vi) = sum_i  h inf f*vi
+load "MPICG"
+mpiComm comm(mpiCommWorld,0,0);// trick : make a no split mpiWorld 
+
+
+int vdebug=0;
+real f =1;
+int NN = max(10,mpisize);
+mesh Th=square(NN,NN);
+int[int] L=[1,2,3,4]; 
+
+int NZ = mpisize;
+real hz = 1./NZ; 
+int ipar= mpirank;
+int iparn = mpirank+1;
+int iparp = mpirank-1;
+if(iparn==NZ) iparn=-1; // BC...
+// build data for communication 
+int ncom=0;// nb of communication ..
+int[int] icom(2),kcom(2);
+icom=-1;
+
+if(iparp>=0) {icom[ncom]=iparp; kcom[ncom]=0;ncom++;}
+if(iparn>=0)  {icom[ncom]=iparn; kcom[ncom]=2;ncom++;}
+
+cout << ipar << " icom : " << icom[0] << " " << icom[1] << "/ p " << iparp << " n " << iparn<< "/ " << NZ << endl; 
+assert(ncom);
+icom.resize(ncom);
+fespace Vh(Th,P1);
+macro grad(u) [dx(u),dy(u)]//
+
+Vh[int] uh(3);
+Vh[int] wh(3);
+//  the BC... 
+if(iparp<0) uh[0]=0.;
+if(iparn<0) uh[0]=0.;
+
+
+
+int n2= Vh.ndof;
+int n3= Vh.ndof*(3);
+
+real[int] U(n2); //
+//
+
+// equation on i:
+varf va(u,v)=int2d(Th)(hz*grad(u)'*grad(v)+ 2./hz *u*v ) + on(L,u=0);
+varf vb(u,v)=int2d(Th)(u*v/hz) + int2d(Th)(f*v)+on(L,u=0);
+
+
+varf vl(u,v)=int2d(Th)(1*v) + on(L,u=0);
+
+matrix A = va(Vh,Vh,solver=sparsesolver);
+matrix M = vb(Vh,Vh,solver=CG);
+real[int] rhs = vb(0,Vh);
+
+macro ISendRecv(U,uh)
+{
+  
+   mpiRequest[int] rq(ncom*2);
+  int ir=0; 
+ for(int j=0;j<ncom;++j)
+  { 
+    int iproc=icom[j],k=kcom[j];
+     if(vdebug) cout << mpirank << " --ISendRecvAny " << j  << " proc=" << iproc << " k=" << k << endl;
+    Irecv(processor(iproc,comm,rq[ir++]),uh[k][]);/* uh[k] recv form iproc*/
+    Isend(processor(iproc,comm,rq[ir++]),U);/* U send to iproc*/
+  }
+  if(vdebug) cout << mpirank << " ++ISendRecvAny " << endl;
+  
+  for (int j=0;j<ncom*2;++j)
+  {
+    int k= mpiWaitAny(rq);
+    if(vdebug)
+     cout << " ++ISendRecvAny wait: get " << k << endl;
+  }
+  
+}// 
+
+func real JACOBI(real[int ] & U)
+{
+    real err=0;
+    ISendRecv(U,uh)
+    
+    real[int] bh= rhs;     
+    real[int]  w(n2);
+      w = M*uh[0][] ; bh += w ;
+      w = M*uh[2][] ; bh += w ;
+      w = A^-1*bh;
+      bh = uh[1][]-w; 
+      err=bh.linfty;
+      uh[1][]= w ;
+      U=w;
+    //    cout << " JACOBI: " << mpirank <<  "    " <<  erri << " " << w.linfty << " " << w.min <<  endl;
+     return err;
+}
+func real[int]  Jzero(real[int ] & U)
+{ // jacobi iteration 
+     ISendRecv(U,uh); 
+      real[int] bh= rhs;
+      
+      real[int]  w(n2);
+      w = M*uh[0][] ; bh += w ;
+      w = M*uh[2][] ; bh += w ;
+      w = A^-1*bh;
+      U-=w;   
+    return U;
+}
+//  iteration Jacobi ( ne converge pas )
+U=0;
+for(int k=0; k <200; ++k)
+{
+ real  errT=0,err=JACOBI( U);
+ mpiAllReduce(err,errT,comm,mpiMAX);
+ if(mpirank==mpisize/2)
+   cout << k <<  " errT " << errT << " / l " << err << endl; 
+  if(errT< 1e-5) {
+      plot(uh[1],wait=1,cmm=" k="+k); 
+
+    break; 
+  }
+}
+if(1)
+{
+U=0;
+MPIAffineGMRES(Jzero,U,nbiter=1000, eps=1e-5); 
+plot(uh[1],wait=1); 
+}
+
+
+
+
+
+

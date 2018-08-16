@@ -1,0 +1,324 @@
+///////////////////////////////////////////////////////
+// Homogenization method for compliance minimization //
+//                 of a cantilever                   //
+//                                                   //
+//         Ecole Polytechnique, MAP 562              //
+//         Copyright G. Allaire, 2004                //
+///////////////////////////////////////////////////////
+
+ofstream fichobj("cantilever.obj");
+string save="cantilever";	// Prefix of backup files
+int niternp=40;			// Number of iterations without penalization
+int niterpp=20;			// Number of iterations with penalization
+int niter=niternp+niterpp;	// Total number of iterations
+int p=0;			// Penalization degree: the largest p, the weaker the penalization
+int n=2;			// Size of the mesh
+real compliance;		// Compliance
+string caption;			// Caption for the graphics
+real Y=1;			// Young modulus
+real nu=0.3;			// Poisson coefficient (between -1 and 1/2)
+real lagrange=1;		// Lagrange multiplier for the volume constraint
+real lagmin, lagmax;		// Bounds for the Lagrange multiplier
+real weight0;			// Initial weight 
+real weight,weight1;		// Weight of the current shape
+int inddico ;
+real epsil=0.01;		// Ratio of the weak phase over the strong one
+real thetaverage=0.4;		// Average density
+real pi=4*atan(1);		// Value of pi=3.14159...
+real sqrt2 = sqrt(2.);		// Square root of 2
+func f1=0;  			// Applied force
+func f2=-1;
+
+real[int] vviso(21);
+for (int i=0;i<21;i++)
+vviso[i]=i*0.05 ;
+//////////////////////////////////////
+// Computation of Lame coefficients //
+//////////////////////////////////////
+real lambda=Y*nu/((1.+nu)*(1.-2.*nu));
+real mu=Y/(2.*(1.+nu));
+real K=(mu+lambda)/(mu*(2.*mu+lambda));
+real kappa=lambda+mu;
+
+/////////////////////// 			1:Dirichlet boundary condition
+// Domain definition // 			2:Neumann boundary or free boundary condition
+/////////////////////// 			3:Non-homogeneous Neumann or applied load
+mesh Th;
+border bd1(t=0,0.45)		{ x=+1; y=t;label=2; };   // right boundary of the domain
+border bd2(t=0.45,0.55)		{ x=1;  y=t;label=3; };
+border bd3(t=0.55,1)		{ x=1;  y=t;label=2; };
+border bg(t=1,0)		{ x=-1; y=t;label=1; };   // left boundary of the domain
+border bs(t=1,-1)		{ x=t;  y=1;label=2; };   // upper boundary of the domain
+border bi(t=-1,1)		{ x=t;  y=0;label=2; };   // lower boundary of the domain
+
+///////////////////////
+// Building the mesh //
+///////////////////////
+int m=int(4.5*n) ;
+Th= buildmesh (bg(10*n)+bs(20*n)+bi(20*n)+bd1(m)+bd2(n)+bd3(m));
+
+///////////////////////////////////
+// Finite element spaces         //
+// (u,v) = displacement          //
+// sigma = stress tensor         //
+// theta = material density      //
+///////////////////////////////////
+fespace Vh0(Th,P0);
+fespace Vh2(Th,[P2,P2]);
+
+Vh2 [u,v],[w,s];
+Vh0 theta,theta1,A,B,C,D,E,F,m1,m2,A1,B1,C1,D1,E1,F1,DET;
+Vh0 sigma11,sigma22,sigma12,vp1,vp2,e1x,e1y,e2x,e2y;
+
+////////////////////
+// Initialization //
+////////////////////
+
+func theta0=thetaverage;
+theta=theta0;
+// Initial weight
+real volume=int2d(Th)(1.);
+weight0=int2d(Th)(theta);
+weight0 = weight0/volume ;
+
+///////////////////////////////////////////////////////////////////////////
+// Tensorial notations:   2x2 symmetric matrices are stored in           //
+// 3-components vectors M=(M11,M22,sqrt(2)*M12)^T in such a way that     //
+// the norm of the vector is equal to the matric norm.                   //
+// An elasticity tensor (i.e. a symmetric fourth-order tensor) is thus   //
+// a 3x3 symmetric matrix, denoted by:                                   //
+//	(	A	D	F	)				 //
+//	(	D	B	E	)				 //
+//	(	F	E	C	)				 //
+// See below the computation of sigma in terms of the deformation        //
+// tensor e(u).                                                          //
+///////////////////////////////////////////////////////////////////////////
+//Initial elasticity tensor (pure phase)
+A = lambda+2*mu;
+B = lambda+2*mu;
+C = 2*mu;
+D = lambda;
+E = 0;
+F = 0;
+//Initial elasticity tensor (Hashin-Shtrikman upper bound)
+real kapef, muef;
+kapef = thetaverage*kappa*mu/((1.-thetaverage)*kappa+mu) ;
+muef = thetaverage*kappa*mu/(kappa+(1.-thetaverage)*(kappa+2*mu)) ;
+C = 2.*muef ;
+D = kapef - muef ;
+A = D+C;
+B = D+C;
+E = 0;
+F = 0;
+///////////////////////
+// Elasticity system //
+///////////////////////
+problem elasticity([u,v],[w,s]) =
+int2d(Th)(	 (A*dx(u)+D*dy(v)+F*sqrt2*(dx(v)+dy(u))/2) 	* dx(w)
+		+(D*dx(u)+B*dy(v)+E*sqrt2*(dx(v)+dy(u))/2) 	* dy(s)
+		+(F*dx(u)+E*dy(v)+C*sqrt2*(dx(v)+dy(u))/2) 	* sqrt2*(dx(s)+dy(w))/2	)
+- int1d(Th,3)( f1*w + f2*s )
++ on(1,u=0,v=0)
+;
+
+///////////////////////////////
+//     Ooptimization loop    //
+///////////////////////////////
+
+int iter;
+for (iter=1;iter< niter+1;iter=iter+1)
+{
+cout <<"Iteration " <<iter <<" ----------------------------------------" <<endl;
+
+elasticity;
+
+compliance = int1d(Th,3)(f1*u+f2*v);
+
+cout<<"compliance = "<<compliance<<endl;
+fichobj<<compliance<<endl;
+
+/////////////////////////
+// Stress tensor sigma //
+/////////////////////////
+sigma11 = A*dx(u)+	D*dy(v)+	F*sqrt2*(dx(v)+dy(u))/2;
+sigma22 = D*dx(u)+	B*dy(v)+	E*sqrt2*(dx(v)+dy(u))/2;
+sigma12 =(F*dx(u)+	E*dy(v)+	C*sqrt2*(dx(v)+dy(u))/2)/sqrt2;
+
+/////////////////////////////////
+// Diagonalization of sigma    //
+//  vp1, vp2 = eigenvalues     //
+// (e1x,e1y) = 1st eigenvector //
+// (e2x,e2y) = 2nd eigenvector //
+/////////////////////////////////
+vp1 = (sigma11+sigma22+sqrt((sigma11-sigma22)^2+4*sigma12^2))/2;
+vp2 = (sigma11+sigma22-sqrt((sigma11-sigma22)^2+4*sigma12^2))/2;
+
+real delta = epsil*1.e-6 ;
+e1x = sigma12/sqrt(sigma12^2+(vp1-sigma11)^2+delta^2);
+e1y = (vp1-sigma11)/sqrt(sigma12^2+(vp1-sigma11)^2+delta^2);
+e2x = e1y ;
+e2y = -e1x ;
+
+////////////////////////////////////////////////
+// Proportions of the optimal rank 2 laminate //
+////////////////////////////////////////////////
+m1 = abs(vp2)/(abs(vp1)+abs(vp2));
+m2 = abs(vp1)/(abs(vp1)+abs(vp2));
+
+///////////////////////////////////////////////
+// Computation of the material density theta //
+///////////////////////////////////////////////
+theta1 = sqrt(mu+kappa)/sqrt((4*mu*kappa))*(abs(vp1)+abs(vp2));
+theta = theta1/sqrt(lagrange);
+theta = min(1,theta);
+
+////////////////////////////////////////////
+// Computation of the Lagrange multiplier //
+////////////////////////////////////////////
+weight = int2d(Th)(theta)/volume;
+weight1 = weight;
+
+/////////////////////////////////////////////////////
+// Bracketing the value of the Lagrange multiplier //
+/////////////////////////////////////////////////////
+if (weight1 < weight0)
+{
+   lagmin = lagrange ;
+   while (weight < weight0)
+{
+      lagrange = lagrange/2 ;
+      theta = theta1/sqrt(lagrange);
+      theta = min(1,theta);
+      weight = int2d(Th)(theta)/volume ;
+};
+   lagmax = lagrange ;
+};
+//
+if (weight1 > weight0)
+{
+   lagmax = lagrange ;
+   while (weight > weight0)
+{
+      lagrange = 2*lagrange ;
+      theta = theta1/sqrt(lagrange);
+      theta = min(1,theta);
+      weight = int2d(Th)(theta)/volume ;
+};
+   lagmin = lagrange ;
+};
+//
+if (weight1 == weight0)
+{
+   lagmin = lagrange ;
+   lagmax = lagrange ;
+};
+
+///////////////////////////////////////////////////////
+// Dichotomy on the value of the Lagrange multiplier //
+///////////////////////////////////////////////////////
+inddico=0;
+while ((abs(1.-weight/weight0)) > 0.000001)
+{
+   lagrange = (lagmax+lagmin)*0.5 ;
+      theta = theta1/sqrt(lagrange);
+      theta = min(1,theta);
+   weight = int2d(Th)(theta)/volume ;
+   inddico=inddico+1;
+   if (weight < weight0)
+      {lagmin = lagrange ;} ;
+   if (weight > weight0)
+      {lagmax = lagrange ;} ;
+
+};
+
+//cout<<"number of iterations of the dichotomy: "<<inddico<<endl;
+
+////////////////////////////////
+// Penalization of composites //
+////////////////////////////////
+if (iter>niternp)
+{theta=((1-cos(pi*theta))/2+p*theta)/(p+1);}
+;
+
+//////////////////////////////////////////////////////
+// Computation of the homogenized elasticity tensor //
+//////////////////////////////////////////////////////
+
+// Contribution from the lamination directions
+A =	m1 * ( (lambda+2*mu) - 1/mu*(lambda^2*e1y^2+(lambda+2*mu)^2*e1x^2) + K*((lambda+2*mu)*e1x^2+lambda*e1y^2)^2 )
+	+m2* ( (lambda+2*mu) - 1/mu*(lambda^2*e2y^2+(lambda+2*mu)^2*e2x^2) + K*((lambda+2*mu)*e2x^2+lambda*e2y^2)^2 );
+B =	m1 * ( (lambda+2*mu) - 1/mu*(lambda^2*e1x^2+(lambda+2*mu)^2*e1y^2) + K*((lambda+2*mu)*e1y^2+lambda*e1x^2)^2 )
+	+m2* ( (lambda+2*mu) - 1/mu*(lambda^2*e2x^2+(lambda+2*mu)^2*e2y^2) + K*((lambda+2*mu)*e2y^2+lambda*e2x^2)^2 );
+C =	m1 * ( 4*mu - 1/mu*(2*mu)^2 + K*(4*mu*e1x*e1y)^2 )/2
+	+m2* ( 4*mu - 1/mu*(2*mu)^2 + K*(4*mu*e2x*e2y)^2 )/2;
+D = 	m1 * ( 2*lambda - 1/mu*(2*lambda*(lambda+2*mu)) + K*2*((lambda+2*mu)*e1y^2+lambda*e1x^2)*((lambda+2*mu)*e1x^2+lambda*e1y^2) )/2
+	+m2* ( 2*lambda - 1/mu*(2*lambda*(lambda+2*mu)) + K*2*((lambda+2*mu)*e2y^2+lambda*e2x^2)*((lambda+2*mu)*e2x^2+lambda*e2y^2) )/2;
+E =	m1 * ( -1/mu*(4*mu*(2*lambda+2*mu)*e1x*e1y) + K*2*(4*mu*e1x*e1y*((lambda+2*mu)*e1y^2+lambda*e1x^2)) )/(2*sqrt2)
+	+m2* ( -1/mu*(4*mu*(2*lambda+2*mu)*e2x*e2y) + K*2*(4*mu*e2x*e2y*((lambda+2*mu)*e2y^2+lambda*e2x^2)) )/(2*sqrt2);
+F = 	m1 * ( -1/mu*(4*mu*(2*lambda+2*mu)*e1x*e1y) + K*2*(4*mu*e1x*e1y*((lambda+2*mu)*e1x^2+lambda*e1y^2)) )/(2*sqrt2)
+	+m2* ( -1/mu*(4*mu*(2*lambda+2*mu)*e2x*e2y) + K*2*(4*mu*e2x*e2y*((lambda+2*mu)*e2x^2+lambda*e2y^2)) )/(2*sqrt2);
+
+// Adding a weak phase (mimicking void)
+A = epsil/(1.-epsil)*(lambda+2*mu)	+ theta*A;
+B = epsil/(1.-epsil)*(lambda+2*mu)	+ theta*B;
+C = epsil/(1.-epsil)*2*mu		+ theta*C;
+D = epsil/(1.-epsil)*lambda		+ theta*D;
+E = epsil/(1.-epsil)*0			+ theta*E;
+F = epsil/(1.-epsil)*0			+ theta*F;
+
+//First inversion
+DET = A*B*C-A*E*E-B*F*F-C*D*D+2*D*E*F;
+A1=(B*C-E*E)/DET;
+B1=(A*C-F*F)/DET;
+C1=(A*B-D*D)/DET;
+D1=(E*F-C*D)/DET;
+E1=(D*F-A*E)/DET;
+F1=(D*E-B*F)/DET;
+
+A = (1-theta)*A1+(lambda+2*mu)/(4*mu*(lambda+mu));
+B = (1-theta)*B1+(lambda+2*mu)/(4*mu*(lambda+mu));
+C = (1-theta)*C1+1/(2*mu);
+D = (1-theta)*D1-lambda/(4*mu*(lambda+mu));
+E = (1-theta)*E1;
+F = (1-theta)*F1;
+
+//Second inversion
+DET = A*B*C-A*E*E-B*F*F-C*D*D+2*D*E*F;
+A1=(B*C-E*E)/DET;
+B1=(A*C-F*F)/DET;
+C1=(A*B-D*D)/DET;
+D1=(E*F-C*D)/DET;
+E1=(D*F-A*E)/DET;
+F1=(D*E-B*F)/DET;
+A=A1;
+B=B1;
+C=C1;
+D=D1;
+E=E1;
+F=F1;
+
+caption="Iteration "+iter+", Compliance "+compliance+", weight="+weight;
+plot(Th,theta,fill=1,value=true,viso=vviso,wait=0,cmm=caption);
+//plot(Th,theta,fill=1,value=true,viso=vviso,wait=0,cmm=caption,ps=save+iter+".eps");
+//plot(Th,[e1x,e1y],fill=1,viso=vviso,wait=true);
+//plot(Th,vp1,fill=1,value=true,viso=vviso,wait=true);
+//plot(Th,vp2,fill=1,value=true,viso=vviso,wait=true);
+if (iter == niternp)
+{
+cout<<"Beginning of the penalization process"<<endl;
+//Plot the composite design
+caption="Composite design, Iteration "+iter;
+plot(Th,theta,fill=1,value=1,viso=vviso,cmm=caption,ps=save+".composite.eps");
+}
+;
+
+
+/////////////////////
+// End of the loop //
+/////////////////////
+};
+
+//Plot the penalized design
+caption="Final design, Iteration "+niter;
+plot(Th,theta,fill=1,value=1,viso=vviso,cmm=caption,ps=save+".eps");
+

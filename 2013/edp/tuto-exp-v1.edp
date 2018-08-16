@@ -1,0 +1,56 @@
+load "MUMPS_seq" // good sparse linear solver 
+real L = 3;
+int NX = 30;
+int NY = 10;
+func fgamma0 = sin(2*pi*y)/5; 
+int[int] ll1=[1,3,1,0], ll2=[1,2,1,0];
+mesh Th1=square(NX,NY,[(x-1)*fgamma0+ x * L , y],label=ll1);
+mesh Th2=square(NX,NY+5,[(x-1)*fgamma0 -  x * L, y],label=ll2); 
+plot(Th1,Th2, wait=1);
+if(0) 
+{// check label ... 
+    real l01= int1d(Th1,0)(1.);
+    real l02= int1d(Th2,0)(1.);
+    real l11= int1d(Th1,1)(1.);
+    real l12= int1d(Th2,1)(1.);
+    real l31= int1d(Th1,3)(1.);
+    real l22= int1d(Th2,2)(1.);
+    cout << " mean y 0 " << int1d(Th1,0)(y)/l01  << " " 
+        << int1d(Th2,0)(y)/l02  << endl;
+    cout << " mean x 1 " << int1d(Th1,1)(x)/l11  << " " 
+        << int1d(Th2,1)(x)/l12  << endl;
+   cout << " mean x 3 2   " << int1d(Th1,3)(x)/l31  << " " 
+        << int1d(Th2,2)(x)/l22  << endl;
+   assert(l01); 
+}
+macro grad(u) [dx(u),dy(u)] // 
+real alpha = 1;
+func f =1 ;
+real K1 =1;
+real K2 = 1;
+real U3 = 10; 
+real U2 = 1;  
+fespace Vh1(Th1,P1); 
+fespace Vh2(Th2,P1); 
+Vh1 u1;
+Vh2 u2;
+
+varf Pb1(u,v) = int2d(Th1)( K1*grad(u)'*grad(v) ) + int2d(Th1)(f*v) + int1d(Th1,0) ( alpha*u*v) + on(3, u = U3); 
+varf Pb2(u,v) = int2d(Th2)( K2*grad(u)'*grad(v) ) + int2d(Th2)(f*v) 
+  + int1d(Th2,0) ( alpha*u*v) + on(2, u = U2); 
+varf Pb21(u,v) = int1d(Th2,0)( -0.5* alpha*u*v ) +  int1d(Th1,0)( -0.5* alpha*u*v );
+matrix A11 = Pb1(Vh1,Vh1); 
+matrix A22 = Pb2(Vh2,Vh2); 
+matrix A12 = Pb21(Vh2,Vh1); 
+matrix A21 = Pb21(Vh1,Vh2); 
+
+matrix A=[ [A11,A12], [A21, A22]] ;
+set(A, solver=sparsesolver); // by deflaut GMRES solver ...
+real[int] b1= Pb1(0,Vh1); 
+real[int] b2= Pb2(0,Vh2); 
+real[int] b = [b1,b2];
+real [int] u12= A^-1*b; 
+
+[u1[],u2[]] = u12; 
+plot( u1,u2, wait=1);
+

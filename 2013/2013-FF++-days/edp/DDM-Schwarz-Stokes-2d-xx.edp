@@ -1,0 +1,199 @@
+// NBPROC 2
+// ff-mpirun -np 4 DDM-Schwarz-Stokes-2d.edp -glut ffglut  -n 11 -k 1  -d 1 -ns -gmres 1
+/*
+  a first true parallele example fisrt freefem++ 
+  Ok up to 200 proc for a Poisson equation.. 
+  See the Doc for full explaiantion
+
+  F Hecht Dec. 2010. 
+  -------------------
+usage :
+ff-mpirun [mpi parameter]  DDM-Schwarz-Stokes-2d.edp   [-glut ffglut]  [-n N] [-k K]  [-d D] [-ns] [-gmres [0|1]
+ argument: 
+   -glut ffglut : to see graphicaly the process
+   -n N:  set the mesh cube split NxNxN
+   -d D:  set debug flag D must be one for mpiplot 
+   -k K:  to refined by K all  elemnt
+   -ns: reomove script dump
+   -gmres 0   : use iterative schwarz algo.  
+          1   :  Algo GMRES on residu of schwarz algo.
+          2   :  DDM GMRES 
+          3   :  DDM GMRES with coarse grid preconditionner (Good one)  
+*/
+load "MPICG"  load "medit"  load "metis"
+include "getARGV.idp"
+include "DDM-Schwarz-macro.idp"
+include "AddLayer2d.idp"
+include "DDM-funcs-v2.idp"
+
+
+searchMethod=1; // more safe seach algo (warning can be very expensive in case lot of ouside point) 
+// 0 by default
+assert(version >=3.11);
+real[int] ttt(10);int ittt=0;
+macro settt {ttt[ittt++]=mpiWtime();}//
+
+
+verbosity=getARGV("-vv",0);
+int vdebug=getARGV("-d",1);
+int ksplit=getARGV("-k",1);
+int nloc = getARGV("-n",10);
+string sff=getARGV("-p,","");
+int gmres=getARGV("-gmres",0); 
+int nC = getARGV("-N" ,max(nloc/10,5)); 
+int sizeoverlaps=1; // size of overlap
+bool RAS=1; 
+
+
+
+if(mpirank==0 && verbosity)
+  cout << " vdebug: " << vdebug << " kspilt "<< ksplit << " nloc "<< nloc << " sff "<< sff <<"."<< endl;
+
+
+string sPk="P2-Stokes-2gd";     
+func Pk=[P2,P2,P1];
+//int  Pknbcomp=3; 
+
+func bool  plotMPIall(mesh &Th,real[int] & u,string  cm)
+{ PLOTMPIALLU(mesh,Pk, defPk3, Th, u, allu1, { cmm=cm,nbiso=10,fill=1,dim=3,value=1}); return 1;}
+
+
+
+mpiComm comm(mpiCommWorld,0,0);// trick : make a no split mpiWorld 
+
+
+int ipart= mpiRank(comm); // current partition number 
+
+if(ipart==0)  cout << " Final N=" << ksplit*nloc << " nloc =" << nloc << " split =" << ksplit <<  endl;
+int[int] l111=[1,1,2,1]; 
+settt 
+
+mesh Thg=square(nloc,nloc,[x,y],label=l111);
+mesh ThC=square(nC,nC,[x,y],label=l111);//   Coarse Mesh
+
+fespace VhC(ThC,[P2,P2,P1]); // of the coarse problem.. 
+
+
+BuildPartitioning(sizeoverlaps,mesh,Thg,Thi,aThij,RAS,pii,jpart,comm,vdebug)
+
+if(ksplit>1)
+{
+for(int jp=0;jp<jpart.n;++jp)
+  aThij[jp]  = trunc(aThij[jp],1,split=ksplit);
+Thi =   trunc(Thi,1,split=ksplit);
+}
+
+BuildTransferMat(ipart,mesh,Pk,3,[0,1,-1],Thi,Whi,Whij,Thij,aThij,Usend,Vrecv,jpart,vdebug)
+
+
+
+
+
+/* the definition of the Problem .... */
+
+
+// the definition of the Problem ....
+// the definition of the Problem ....
+func u1bc= (1.-x)*(x)*4.;
+// the definition of the Problem ....
+macro grad(u) [dx(u),dy(u)] //  
+macro div(u1,u2) (dx(u1)+dy(u2)) // 
+real nu=1,alpha=0;
+varf vPb([u1,u2,p],[v1,v2,q])=
+  int2d(Thi)(  
+       [u1,u2]'*[v1,v2]* alpha
+	   + (   grad(u1)'*grad(v1)
+	       + grad(u2)'*grad(v2)
+	        ) *nu
+	       - div(u1,u2)*q - div(v1,v2)*p )
+  + on(10,u1=0,u2=0)	      
+  + on(2,u1=u1bc,u2=0)
+  + on(1,u1=0,u2=0)
+ ;
+varf vPbC([u1,u2,p],[v1,v2,q])=
+  int2d(ThC)(  
+       [u1,u2]'*[v1,v2]* alpha
+	   + (   grad(u1)'*grad(v1)
+	       + grad(u2)'*grad(v2)
+	        ) *nu
+	       - div(u1,u2)*q - div(v1,v2)*p +1e-9*p*q)	      
+  + on(1,2,u1=0,u2=0)
+  ;
+ 
+varf vPbon10([u1,u2,p],[v1,v2,q])=on(10,u1=1,u2=1)+on(1,2,u1=0,u2=0);
+varf vPBC(U,V)=on(1,2,U=0);
+
+
+varf vPq([u1,u2,p],[v1,v2,q])=  int2d(Thi)(q*pii); 
+varf vPqC([u1,u2,p],[v1,v2,q])=  int2d(Thi)(q); 
+
+
+real[int] onG10 = vPbon10(0,Whi); // on 1 on 10 
+real[int] Bi=vPb(0,Whi);
+real[int] Qi=vPq(0,Whi);
+real[int] CQi=vPqC(0,Whi);
+
+real SQi= Qi.sum; 
+
+cout <<ipart <<  " SQi = " << SQi << endl;
+matrix Ai = vPb(Whi,Whi,solver=sparsesolver); 
+
+DMMDeffuncAndGlobals(Stokes2,comm,jpart,Whi,Vhc,3,Ai,vPbC,onG10,Pii,Usend,Vrecv,[0,1,-1])
+
+ func bool Update(real[int] &ui, real[int] &vi)
+{
+  for(int j=0;j<jpart.n;++j)
+    Usend[j][]=sMj[j]*ui;
+  real[int] tpi(1),tpii(1);
+   tpi[0] =  Qi'*ui; /* =  int_{O_i} \pi_i  p_i  */
+   mpiAllReduce(tpi,tpii,comm,mpiSUM); 
+   /*  $tpii = int_O p  = sum_i  tpi$ */
+   SendRecvUV(comm,jpart,Usend,Vrecv)
+   vi = Pii*ui;
+   real cc = tpii[0]/SQi; 
+    cout << ipart << " ** cc = " <<cc <<  tpi[0] << " " << tpii[0] << endl;  
+   vi -= Qi*cc;
+   for(int j=0;j<jpart.n;++j)
+     vi += rMj[j]*Vrecv[j][]; 
+    
+   return true;
+} 
+func real[int] DJ(real[int]& U)
+{ 
+  ++Stokes2kiter;
+  real[int] V(U.n); 
+  real mq = CQi'*U;
+  U -= mq*CQi;
+  V =  Ai*U;
+  V = onG10 ? 0.: V;  
+  real mqq = CQi'*V;
+  V += (mq-mqq) * Qi;
+  return V; 
+}
+
+func real[int] PDJ(real[int]& U) 
+{ 
+  real[int] V(U.n); 
+  
+  real[int] b= onG10 ? 0. :  U; 
+  real mq = CQi'*b;
+  b -= mq*CQi; 
+  V =  Ai^-1*b;	
+  real mqq = CQi'*V;
+  V += (mq-mqq) * Qi;
+  Update(V,U);
+  return U; 
+}
+  
+  
+
+Whi [u,u1,p],[v,v1,q];
+ 
+
+u[]=vPb(0,Whi,tgv=1); 
+real eps=1e-10;
+
+int rgmres= MPILinearGMRES(DJ,precon=PDJ,u[],Bi,veps=eps,nbiter=1000,comm=comm,
+                         dimKrylov=100,verbosity=ipart ? 0: 50);
+
+if(vdebug) plotMPIall(Thi,v[],"u-final");

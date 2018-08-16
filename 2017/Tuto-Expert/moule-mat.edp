@@ -1,0 +1,105 @@
+// https://fr.wikipedia.org/wiki/Diffusivité_thermique
+// http://www.goodfellow.com/F/Polyethylene-terephthalate.html
+// https://fr.wikipedia.org/wiki/Température_de_transition_vitreuse
+int iplot = 1; 
+real Dacier = 15.0e-6;// m^2/s ( ici en cm) 
+real DPET = 0.15/1.34e3/1200;// m^2/s ( ici en cm)  g/cm^3 = Kg/m^2 = (1000/1000000) g/cm^3 = 1000 g/cm^3 
+real TSpPEt = 69; 
+Dacier *= 1e4; // cm^2/s = 1e4 m^2/s (100 cm = 1 m )
+DPET *= 1e4; // cm^2/s 
+real dt= 0.1,T=5; //
+int nbiter= T/dt;
+load "distance"
+real meshsize= 0.02;
+real epaisseur= 0.1;
+real R0=0.5,R1=R0+epaisseur,R2=2,RC=0.2,L0=0,L1=1,L2=5;
+real[int] CX= [L2/3,2*L2/3,3*L2/3];
+int lint =1, laxe=2, lout=4,lin=5,lcold=6;
+border bintd( t=L0,L2){ x= t; y= R0; label = lint;};
+border bintc( t=0,pi/2){ x= L2+R0*cos(t); y= R0*sin(t); label = lint;}
+border bextd( t=L1,L2){ x= t; y= R1; label = lint;};
+border bexts( t=0,L1){ x= t; y= R1+ 0.05*(1+(5*x/L1>4)*3)*sin(5*pi*x/L1)^2; label = lint;};
+border bextc( t=0,pi/2){ x= L2+R1*cos(t); y= R1*sin(t); label = lint;}
+border baxe (t=0, L2+R0) { x=t; y=0; label= laxe; }
+
+border boutc( t=0,pi/2){ x= L2+R2*cos(t); y= R2*sin(t); label = lout;}
+border boutd( t=L2,L0){ x= t; y= R2; label = lout;}
+
+border baxe2 (t=L2+R0,L2+R2) { x=t; y=0; label= laxe; }
+border bv0 (t=R0,0) { x=L0; y=t; label= lin; }
+border bv1 (t=R1,R0) { x=L0; y=t; label= lin; }
+border bv2 (t=R2,R1) { x=L0; y=t; label= lin; }
+real CY = (R1+R2)/2;
+border holes(t=2*pi,0;i) { x= CX[i]+RC*cos(t); y= CY+RC*sin(t); label = lcold;}
+int[int] Nh(3); Nh= RC*pi*2/meshsize;
+int  Na= (L2+R0)/ meshsize; 
+int  Na2= (R2-R0)/ meshsize; 
+int  Nc= pi*R0/2/ meshsize; 
+int  Nc2= pi*R2/2/ meshsize; 
+int  Nd2= L2/meshsize; 
+int  Nd1= L1/meshsize; 
+
+int  Ns= pi*L1/meshsize; 
+
+func bord = baxe(Na)+ bintc(Nc) + bintd(Nd2)
+ +bextc(Nc)+bextd(Nd2-Nd1)+bexts(Nd1*2)
++ boutd(Nd2)+ boutc(Nc2) + baxe2(Na2)
++ bv0(R0/meshsize) + bv1((R1-R0)/meshsize) + bv2((R2-R1)/meshsize) 
++ holes(Nh);
+plot(bord); 
+mesh Th=buildmesh(bord); 
+Th=adaptmesh(Th,meshsize,IsMetric=1,nbvx=600000);
+plot(Th,wait=1);
+real[int] YR=[R0/2,(R1+R0)/2,(R2+R1)/2];
+int[int] ir(6);
+for(int i=0; i< 3;++i)
+{
+ir[2*i]= Th(0.1,YR[i]).region;
+ir[2*i+1]= i+1;
+}
+Th=change(Th,region=ir);
+plot(Th,wait=1);
+fespace Vh(Th,P1);
+Vh phi,dist;
+varf von1(u,v)= on(lint,u=1);
+phi[] = von1(0,Vh,tgv=1);
+phi[] = phi[] ? 0: 1;
+
+distance(Th,phi,dist[],distmax=0.05);
+plot(dist,wait=1);
+Th= adaptmesh(Th,dist*dist,err=0.003,nbvx=100000,hmax=0.1,hmin=0.005,ratio=1.2);
+plot(Th,wait=1);
+
+Vh u,v,urhs;
+macro grad(u) [dx(u),dy(u)]//
+real[int] DD=[0,Dacier,DPET,Dacier];
+
+real alpha = 1/dt;
+int init=0; 
+varf vA(u,v) = int2d(Th)(y*(u*v*alpha+DD[region]*grad(u)'*grad(v)))                
+  +on(lcold,u=20);
+  varf vM(u,v) = int2d(Th)(y*(u*v)  )   ;
+ matrix A = vA(Vh,Vh, solver=sparsesolver);  
+ matrix M = vM(Vh,Vh);  
+ 
+  u = (region==2)*(200.-20) + 20;
+  real[int] viso(120);
+  for(int i=0; i< viso.n; ++i)
+  viso[i]= 2*i; 
+  real[int] b0= vA(0,Vh);
+for(int iter=0; iter < nbiter; ++iter)
+  {
+	  real t0= clock(); 
+	  real[int] b = M*u[]; 
+	  b *= alpha;	
+	  b = b0 ? b0 : b; 
+	  real t1= clock();  
+	  u[] = A^-1 * b;
+	  real t2= clock();  
+	  if(iplot)
+	  plot(u,fill=1,dim=3,viso=viso);
+	  cout << " " << t1-t0 << "s " << t2-t1 << "s " << endl; 
+	  init=1; 
+  }
+
+

@@ -1,0 +1,59 @@
+// https://fr.wikipedia.org/wiki/Diffusivité_thermique
+// http://www.goodfellow.com/F/Polyethylene-terephthalate.html
+// https://fr.wikipedia.org/wiki/Température_de_transition_vitreuse
+
+int iplot = 0; 
+real Dacier = 15.0e-6;// m^2/s ( ici en cm) 
+real DPET = 0.15/1.34e3/1200;// m^2/s ( ici en cm)  g/cm^3 = Kg/m^2 = (1000/1000000) g/cm^3 = 1000 g/cm^3 
+real TSpPEt = 69; 
+Dacier *= 1e4; // cm^2/s = 1e4 m^2/s (100 cm = 1 m )
+DPET *= 1e4; // cm^2/s 
+real dt= 0.1,T=20; //
+int nbiter= T/dt;
+real delat = dt/5.;
+load "distance"
+real meshsize= 0.02;
+real epaisseur= 0.1;
+mesh Th=readmesh("Th.mesh");
+fespace Vh(Th,P1); 
+int lpreform =1, laxe=2, lout=4,lfaceentre=5,lcold=6,lbouchon=7,l2ext=8,lfaceentrep=9;
+
+Vh u,v,urhs;
+macro grad(u) [dx(u),dy(u)]//
+real[int] DD=[0,Dacier,DPET,Dacier,Dacier];
+
+real alpha = 1/dt;
+int init=0; 
+varf vA(u,v) = int2d(Th)(y*(u*v*alpha+DD[region]*grad(u)'*grad(v)))                
+  +on(lcold,u=20);
+  varf vM(u,v) = int2d(Th)(y*(u*v)  )   ;
+ real tt0=clock();
+ matrix A = vA(Vh,Vh, solver=sparsesolver);  
+ matrix M = vM(Vh,Vh);  
+ 
+  u = (region==2)*(200.-20) + 20;
+  real[int] viso(120);
+  for(int i=0; i< viso.n; ++i)
+  viso[i]= 2*i; 
+  real[int] b0= vA(0,Vh);
+ real tt1=clock();  
+ real t=0; 
+for(int iter=0; iter < nbiter; ++iter)
+  {
+	  t += dt; 
+	  real t0= clock(); 
+	  real[int] b = M*u[]; 
+	  b *= alpha;	
+	  b = b0 ? b0 : b; 
+	  real t1= clock();  
+	  u[] = A^-1 * b;
+	  real t2= clock();  
+	  if(iplot)
+	  plot(u,fill=1,dim=3,viso=viso);
+	  cout <<  t << " " << t1-t0 << "s " << t2-t1 << "s " << endl; 
+	  init=1; 
+  }
+  real tt2=clock(); 
+  cout << " CPUTIME: "<< tt1-tt0 << " s " << tt2-tt1 << " s "<< endl; 
+
+

@@ -1,0 +1,51 @@
+int nn = 30; 
+int niter = 100; 
+mesh Th= square(nn,nn);
+
+func Pk = P2;
+
+macro grad(w) [dx(w),dy(w)]// 
+macro Grad(u) [grad(u#1),grad(u#2)]// 
+
+macro Ugradv3(u1,u2,v)  (u1*dx(v)+u2*dy(v))// 
+macro Ugradv(U,v)  (U'*grad(v))// 
+macro Ugradv2(a,v)  ([a#1,a#2]'*grad(v))// 
+macro UgradV(a,v) [Ugradv2(a,v#1),Ugradv2(a,v#2)]// 
+macro div(u) (dx(u#1)+dy(u#2))//
+
+fespace Wh(Th,[Pk,Pk,P1,P2]) ;
+
+real Ra = 1e4; // 10^4
+real Pr = 0.71; 
+
+int lH = 4, lC = 2;
+int[int] lU =[1,2,3,4]; 
+
+Wh [u1,u2,p,T];
+Wh [up1,up2,pp,Tp];
+Wh [v1,v2,q,TT];
+
+[up1,up2,pp,Tp]=[0,0,0,0];
+real nu = sqrt(Pr/Ra) ;
+real kappa = (Pr*Ra)^-0.5; 
+real err=0;
+real epsp = 1e-8;  
+for(int iter=0; iter< niter; ++iter)
+{
+solve Pb([u1,u2,p,T],[v1,v2,q,TT]) =
+int2d(Th)( nu* ( Grad(u):Grad(v))  + (UgradV(up,u):[v1,v2])
+- p*div(v) - q*div(u) - epsp*p*q - T*v2
++ kappa*grad(T)'*grad(TT) + Ugradv([up1,up2],T)*TT )
++ on(lH,T=1) + on(lC,T=0) +on(lU,u1=0,u2=0);
+up1[]-=u1[];  
+err = up1[].linfty; 
+cout << iter << " err = " << err << endl; 
+up1[]=u1[];
+plot([u1,u2],p, wait=0);
+if( err < 1e-5) break;
+}
+plot([u1,u2],p, wait=1);
+plot(T,wait=1);
+
+
+

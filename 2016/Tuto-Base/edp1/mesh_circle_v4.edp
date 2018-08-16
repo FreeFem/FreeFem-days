@@ -1,0 +1,20 @@
+/* Mesh of a circle with a hole inside 
+   using macros    */
+
+macro Bcircle(bname,Rm,xm,ym,labelm)
+      /* circle border */
+      border bname(t=0,2*pi)
+      {label=labelm; x=xm+Rm*cos(t);y=ym+Rm*sin(t);}//EOM
+// Parameters
+int nbseg=10;
+real R=1, xc=0, yc=0, R2=R/2;
+
+// borders
+Bcircle(circle1,R ,xc,yc,1);
+Bcircle(circle2,R2,xc,yc,2);
+
+plot(circle1(nbseg*2*pi*R)+circle2(nbseg*2*pi*R2),cmm="border");
+// FE mesh
+mesh Th = buildmesh(circle1(nbseg*2*pi*R)
+                   +circle2(-nbseg*2*pi*R2));
+plot(Th, cmm="mesh of a circle with subdomain");

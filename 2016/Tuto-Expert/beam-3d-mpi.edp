@@ -1,0 +1,60 @@
+load "medit"
+load "msh3" 
+load "MUMPS"
+
+int nn=5;
+mesh3 Th;
+if(mpirank==0)
+{
+  Th=cube(20*nn,5*nn,5*nn,[x*5,y,z]);
+  Th=change(Th,fregion= nuTriangle%mpisize);
+  for(int i=0; i< mpisize; ++i)
+  cout << " i = " << i << " " << int3d(Th,i)(1.) << endl; 
+}
+broadcast(processor(0),Th); 
+real E = 21.5e4;
+real sigma = 0.29;
+real mu = E/(2*(1+sigma));
+real lambda = E*sigma/((1+sigma)*(1-2*sigma));
+real gravity = -0.05;
+if(mpirank==0)
+for(int i=0; i<100; ++i)
+{
+	real si = int2d(Th,i)(1.); 
+	real sx = int2d(Th,i)(x); 
+	real sy = int2d(Th,i)(y); 
+	real sz = int2d(Th,i)(z); 
+	if( si) 
+	{
+		cout << i << " "<< si << " " << sx/si << " " << sy/si << " " << sz/si << endl; 
+	}
+}
+
+fespace Vh(Th,[P1,P1,P1]);
+Vh [u1,u2,u3], [v1,v2,v3];
+cout << "lambda,mu,gravity ="<<lambda<< " " << mu << " " << gravity << endl;
+
+real sqrt2=sqrt(2.);
+macro epsilon(u1,u2,u3)  [dx(u1),dy(u2),dz(u3),(dz(u2)+dy(u3))/sqrt2,(dz(u1)+dx(u3))/sqrt2,(dy(u1)+dx(u2))/sqrt2] // EOM
+macro div(u1,u2,u3) ( dx(u1)+dy(u2)+dz(u3) ) // EOM
+ verbosity=10; 
+solve Lame([u1,u2,u3],[v1,v2,v3],solver=sparsesolver,master=-1)=
+  int3d(Th,mpirank)(  
+	    lambda*div(u1,u2,u3)*div(v1,v2,v3)	
+	    +2.*mu*( epsilon(u1,u2,u3)'*epsilon(v1,v2,v3) ) //')
+	      )
+  - int3d(Th,mpirank) (gravity*v3)
+  + on(4,u1=0,u2=0,u3=0)
+  ;
+if(mpirank==0)
+{
+  verbosity=1;
+real dmax= u1[].max;
+cout << " max deplacement = " << dmax << endl;
+real coef= 0.1/dmax;
+int[int] ref2=[1,0,2,0];
+mesh3 Thm=movemesh3(Th,transfo=[x+u1*coef,y+u2*coef,z+u3*coef],label=ref2);
+Thm=change(Thm,label=ref2);
+plot(Th,Thm, wait=1,cmm="coef  amplification = "+coef );
+medit(" Th ",Th,Thm);
+}

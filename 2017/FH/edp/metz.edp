@@ -1,0 +1,34 @@
+load "ppm2rnm" load "isoline" load "shell"
+string lac="metz", lacjpg =lac+".jpg", lacpgm =lac+".pgm";
+if(stat(lacpgm)<0)  exec("convert "+lacjpg+" "+lacpgm);
+
+real hsize= 10; // en pixel 
+real[int,int] Curves(3,1);
+int[int] be(1);
+int nc;// nb of curve 
+{  
+  real[int,int] ff1(lacpgm); // read  image and set to an rect. array 
+  int nx = ff1.n, ny=ff1.m; // grey value beetween 0 to 1 (dark)
+  // build a Cartesian mesh such that the origne is qt the right place.
+  mesh Th=square(nx-1,ny-1,[(nx-1)*(x),(ny-1)*(1-y)]);   
+   // warning  the numbering is of the vertices (x,y) is 
+   // given by $  i = x/nx + nx* y/ny $
+  fespace Vh(Th,P1);
+  Vh f1; f1[]=ff1; //  transforme array in finite element function.
+  plot(f1,cmm="image",wait=1,nbiso=25,value=1,fill=1);
+  real iso =0.80;//0.3; // try some value to get correct iso
+  real[int] viso=[iso];
+  plot(f1,viso=viso,wait=1,cmm="image");
+   
+  nc=isoline(Th,f1,iso=iso,close=0,Curves,beginend=be,smoothing=.1,ratio=0.5); 
+  verbosity=1; 
+  cout << " nc == " << nc << endl;
+}
+int[int] iii=[0];//  chose to  componante 0
+int[int] NC=[-500];// put 300 seg on each componant
+
+border G(t=0,1;i) {  P=Curve(Curves,be(2*iii[i]),be(2*iii[i]+1)-1,t);  label= iii[i];} 		
+
+plot(G(NC),wait=1); 
+mesh Th=buildmesh(G(NC));
+plot(Th,wait=1,grey=0);

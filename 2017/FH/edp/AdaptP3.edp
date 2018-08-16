@@ -1,0 +1,25 @@
+load "MetricPk" load "Element_P3"
+int[int] lab=[1,1,1,1];
+mesh Th = square(10,10,label=lab);
+Th=trunc(Th,x<0.2 | y<0.2, label=1);
+fespace Vh(Th,P3);
+fespace Metric(Th,[P1,P1,P1]);	
+Vh u,v;
+real error=0.01;
+solve  Poisson(u,v,solver=CG,eps=1.0e-6) =
+    int2d(Th,qforder=5)( u*v*1.0e-10+  dx(u)*dx(v) + dy(u)*dy(v)) 
+  + int2d(Th,qforder=5)( (x-y)*v);
+// Do sub optimal adaptation in Norm $W^{r,p}$ for $Pk$   
+real  Nt= 1000,r = 1, k =3, p=1; 
+ 
+for (int i=0;i< 4;i++)
+{   
+   Metric [m11,m12,m22];	
+   m11[]=MetricPk(Th,u ,   kDeg=k,rDeg=r,pExp=p, mass=Nt/2);
+   Th = adaptmesh(Th,m11,m12,m22,IsMetric=true, nbvx= Nt*2);
+   u=u;// reinterpolation of u on new mesh Th. 
+   Poisson; 
+   plot(Th,wait=1);
+   plot(u,wait=1);
+ 
+} ;

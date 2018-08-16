@@ -1,0 +1,23 @@
+ int nn=30;
+ real dd=0.3; 
+ real[int,int] XX=[[0,0],[1,0],[1,dd],[dd,dd],[dd,1],[0,1]]; 
+ int[int] NN=[nn,nn*dd,nn*(1-dd),nn*(1-dd),nn*dd,nn]; 
+  border bb(t=0,1;i) 
+  {
+// i is the the index variable of the multi border loop 
+    int ii = (i+1)%XX.n; real t1 = 1-t;
+    x =  XX(i,0)*t1 + XX(ii,0)*t;
+    y =  XX(i,1)*t1 + XX(ii,1)*t;
+    label = 1; ; 
+  }
+  mesh Th=buildmesh(bb(NN));
+plot(Th,wait=1);
+real k=30;
+func f = tanh((x-y));
+real eps = 1e-6;
+macro grad(p) [dx(p),dy(p)]//
+fespace Vh(Th,P1);
+Vh p,q;  
+solve Pb(p,q)= int2d(Th)( eps*p*q+ grad(p)'*grad(q)) -int2d(Th)(f*q);
+plot(p,wait=1);
+cout << " Compatibility  = " << int2d(Th)(f) << endl;  

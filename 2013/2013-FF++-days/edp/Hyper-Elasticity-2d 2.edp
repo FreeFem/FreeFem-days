@@ -1,0 +1,52 @@
+include "ElasticLaw2d.idp"
+include "CiarletGemona.idp"
+// Dimension constants
+real L			= 20;
+real l			= 2;
+real cx			= 0;
+real cy			= -l/2;
+
+
+// Discretization constants
+int Nx 			= 50;
+int Ny 			= 5;
+int Nnewton     = 20;
+real epsNewton  = 1.e-10;
+int nkk = 1;
+real amplify 	= 300;
+real f1=0, f2=0.1; 
+int[int] labs=[0,1,0,1];
+mesh Th=square(Nx,Ny,[L*x+cx,l*y+cy],label=labs);
+
+
+fespace Wh(Th,[P2,P2]);
+
+// methode de Newton ..
+
+ Wh [d1,d2]=[0,0/100]; // Ok CL Dirichlet homogene . 
+ Wh [w1,w2],[v1,v2];
+ 
+    cout << 0  << "  Energie  = " << int2d(Th)(W2d([d1,d2]) -[d1,d2]'*[f1,f2]) << endl;
+    
+ for(int i=0;i<Nnewton;++i)
+ {
+  
+    solve dWW([w1,w2],[v1,v2]) = 
+         int2d(Th)( ddW2d([d1,d2],[w1,w2],[v1,v2]) ) 
+       - int2d(Th)( dW2d([d1,d2],[v1,v2]) -[v1,v2]'*[f1,f2] ) 
+      + on(1,w1=0,w2=0); 
+      
+     d1[] -= w1[];
+     real err = w1[].linfty;
+     cout << i << " err Nw = " << err << " d max = " << d1[].linfty 
+          << "  Energie  = " << int2d(Th)(W2d([d1,d2]) -[d1,d2]'*[f1,f2]) << endl;
+     if(err< epsNewton) break;
+     assert(err < L*100);  
+ 
+  }
+{
+       mesh Thm=movemesh(Th,[x+d1*amplify,y+d2*amplify]);
+       plot(Thm,wait=1,[d1,d2],coef=amplify);
+}
+  
+ 

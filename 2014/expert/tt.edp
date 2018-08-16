@@ -1,0 +1,9 @@
+load "sprintf"
+string f; 
+
+for( int i =0; i < 100; ++i)
+ {
+     f = 1000+i;
+     f = sprintf("toto-%03ld.txt",i);
+     cout << f << endl;
+ }

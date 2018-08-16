@@ -1,0 +1,15 @@
+
+int[int] labs=[10,20,30,40];// bot., right, top, left labels
+mesh Th1 =  square(10,10,label=labs,region=0,[x,y]); //  
+plot(Th1,wait=1);
+int[int] old2newlabs=[10,11,  30,31]; //  10 -> 11 and 30 -> 31
+Th1=change(Th1,label=old2newlabs) ;// [,region= old2newregion]);
+//do Change in 2d or in 3d. 
+// second a L shape domain $]0,1[^2 \backslash  [\frac{1}{2},1[^2$
+
+ mesh Th =  trunc(Th1,(x<0.5) | (y < 0.5),label=1);  // 
+ plot(Th,cmm="Th");
+ mesh Thh = movemesh(Th,[-x,y]);
+ mesh  Th3  = Th+movemesh(Th,[-x,y]);
+ plot(Th3,cmm="Th3");
+

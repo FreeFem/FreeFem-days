@@ -1,0 +1,15 @@
+/* Mesh of a half-disk  */
+// Parameters
+int nbseg=10;
+real R=1, xc=1, yc=1;
+// border
+border Dcircle(t=0, pi)    {label=1;
+                        x=xc+R*cos(t);
+                        y=yc+R*sin(t);}
+border Daxis  (t=xc-R,xc+R){label=2;
+                        x=t;
+                        y=yc;}
+plot(Dcircle(nbseg*pi*R)+Daxis(nbseg*2*R),cmm="border");
+// FE mesh
+mesh Th = buildmesh(Dcircle(nbseg*pi*R)+Daxis(nbseg*2*R));
+plot(Th, cmm="mesh of a half-disk");

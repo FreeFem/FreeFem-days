@@ -1,0 +1,231 @@
+///////////////////////////////////////////////////////
+//  Level set method for the geometric optimization  //
+//        of a minimal compliance cantilever         //
+//                                                   //
+//         Ecole Polytechnique, MAP 562              //
+//    Copyright G. Allaire, C. Dousset 2007          //
+///////////////////////////////////////////////////////
+// La fonction ligne de niveaux est appelée phi. La 
+// forme est caractérisée par phi<0. La fonction phi
+// est convectée par un schéma caractéristique implicite
+// (cf. J. Strain, JCP 151, 1999).
+// The level set function is denoted by phi. The shape 
+// is characterized by phi<0. The function phi is advected 
+// by a caracteristic implicit scheme (cf. J. Strain, 
+// JCP 151, 1999).
+///////////////////////////////////////////////////////
+int n=2;	//mesh size parameter
+real mu=8;	//Lame coefficient
+real lambda=1;	//Lame coefficient 
+real g1=0;	//horizontal component of the applied force on the boundary
+real g2=-5;	//vertical component of the applied force on the boundary
+real lag=0.5;	//Lagrange multiplier for the weight
+real T=.1;	//descent step or time step for the advection
+real TT=0.01;	//time step for the re-initialization
+real weak=0.0001;	//multiplicative coefficient for the "weak" material mimicking void
+real eps1=0.001;	//small parameter avoiding division by zero in the normal computation
+real eps2=0.001;	//regularization parameter for the velocity
+real tol=0.0001; 	//tolerance for the increase of the objective function
+real compliance;
+real weight;
+real objective;
+real objectiveinitial;
+real compliancem;
+real weightm;
+real objectivem;
+int kx=4;	//number of holes in the horizontal direction of the initial shape
+int ky=3;	//number of holes in the vertical direction of the initial shape
+int N=30;	//number of iterations for the gradient algorithm
+int Ninit=5;	//number of iterations for the re-initialization
+int iter;
+int iterinit;
+string caption;
+string save="cantilever-ls";
+ofstream object("cantilever-ls.obj");
+
+//Definition of the boundary and of the mesh
+
+// right boundary of the mesh
+border bd1(t=-0.5,-0.05)	{ x=1;  y=t; label=1; };
+border bd2(t=-0.05,0.05)	{ x=1;  y=t; label=3; };
+border bd3(t=0.05,0.5)		{ x=1;  y=t; label=1; };
+//left  boundary of the mesh
+border bg(t=0.5,-0.5)		{ x=-1; y=t; label=2; };
+// upper boundary of the mesh
+border bs(t=1,-1)		{ x=t;  y=0.5; label=1; };
+// lower boundary of the mesh
+border bi(t=-1,1)		{ x=t;  y=-0.5; label=1; };
+// label meanings: 1=Neumann, 3=applied force, 2=Dirichlet
+
+mesh Th= buildmesh (bd1(9*n)+bd2(2*n)+bd3(9*n)+ bg(20*n)+bs(40*n)+bi(40*n));
+
+//Definition of finite element spaces
+
+fespace Vh(Th,[P1,P1]);
+fespace Vh1(Th,P1);
+
+Vh [u,v],[w,s],[um,vm];
+Vh1 N1, N2, phi, V, phim, M1, M2, S, phiinit, nabla, Xapprox, X, 
+Vreg, vv, Xapproxm, Xm;
+
+// Definition of the initial shape (perforated by holes according to kx and ky)
+
+func phi0=-0.1+sin(pi*kx*x)*sin(pi*ky*(y-0.5));
+phi=phi0;
+plot(phi,wait=0,fill=1,value=1);
+
+// Re-initialization of phi such that it becomes the signed distance  
+// function to the shape boundary. Implicit linearized solving of :
+// (d phi)/(d t) + sign(phi) ( |gradphi)| - 1 ) = 0
+
+Vh1 h1=hTriangle;
+real h=h1[].max; //maximal size of a mesh triangle
+cout<<"maximal size of a mesh triangle h="<<h<<endl;
+
+for (iterinit=1;iterinit< 20;iterinit=iterinit+1)
+{
+	nabla=(dx(phi))^2+(dy(phi))^2;
+	S=phi/(sqrt(phi^2+h*h*nabla)); //approximation of sign(phi)
+	M1=dx(phi)/(sqrt(nabla+eps1^2)); //approximation of the normal
+	M2=dy(phi)/(sqrt(nabla+eps1^2)); //approximation of the normal
+	phiinit=convect([-S*M1,-S*M2],TT,phi);
+	phiinit=phiinit+TT*S;
+	phi=phiinit;
+};
+	
+//plot(phi,wait=1,fill=1,value=1);
+
+// Computation of the elastic displacement
+
+X= (phi<0); //characteristic function of the shape
+Xapprox = X + weak*(1-X) ; //approximation of the shape characteristic function
+
+solve elasticity([u,v],[w,s]) = int2d(Th)(    
+2*mu*Xapprox*( dx(u)*dx(w)+dy(v)*dy(s) + (dx(v)+dy(u))*(dx(s)+dy(w))/2 )   
++ lambda*Xapprox*(dx(u)+dy(v))*(dx(w)+dy(s))   )
+- int1d(Th,3)(g1*w+g2*s)
++ on(2,u=0,v=0);
+
+// Computation of the objective function (compliance)
+
+compliance=int1d(Th,3)(g1*u+g2*v);
+weight=int2d(Th)(X);
+objective=compliance+lag*weight;
+objectiveinitial=objective;
+object << objective   << endl ;
+cout<<"initial objective="<<objectiveinitial<<endl;
+
+
+// Computation of the shape gradient or advection velocity
+V=2*mu*Xapprox*((dx(u))^2+(dy(v))^2+((dy(u)+dx(v))^2)/2)+lambda*Xapprox*(dx(u)+dy(v))^2;
+V=V-lag*X;
+
+// Definition of the velocity regularization
+problem smoothing (Vreg,vv)=
+int2d(Th)( eps2*( dx(Vreg)*dx(vv)+dy(Vreg)*dy(vv) ) + Vreg*vv ) - int2d(Th)(V*vv);
+// Regularization of the velocity
+smoothing ;
+V=Vreg;	
+
+// Computation of the normal
+nabla=(dx(phi))^2+(dy(phi))^2;
+N1=dx(phi)/(sqrt(nabla+eps1^2));
+N2=dy(phi)/(sqrt(nabla+eps1^2));
+
+// Plot of the shape 
+plot(X,fill=1);
+
+///////////////////////////////////////////////
+// Loop of the gradient algorithm iterations //
+///////////////////////////////////////////////
+for (iter=1;iter< N;iter=iter+1)
+{
+	cout << "iteration= "<<iter  << endl;
+	cout << "descent step T= "<<T  << endl;
+	cout<<"previous objective="<<objective<<endl;
+
+// Shape convection
+	phim=convect([-V*N1,-V*N2],T,phi);
+// This result is provisional as far as it has not been checked that 
+// the objective function decreases. 
+
+// Re-initialization of phim (only if the descent step is not too small).
+
+if (T>0.001)
+{
+for (iterinit=1;iterinit< Ninit;iterinit=iterinit+1)
+{
+	nabla=(dx(phim))^2+(dy(phim))^2;
+	S=phim/(sqrt(phim^2+h*h*nabla));
+	M1=dx(phim)/(sqrt(nabla+eps1^2));
+	M2=dy(phim)/(sqrt(nabla+eps1^2));
+	phiinit=convect([-S*M1,-S*M2],TT,phim);
+	phiinit=phiinit+TT*S;
+	phim=phiinit;
+};
+};
+
+// Computation of the provisional elastic displacement
+
+	Xm= (phim<0);
+	Xapproxm = Xm + weak*(1-Xm);
+
+solve elasticitym([um,vm],[w,s]) = int2d(Th)(    
+2*mu*Xapproxm*( dx(um)*dx(w)+dy(vm)*dy(s) + (dx(vm)+dy(um))*(dx(s)+dy(w))/2 )   
++ lambda*Xapproxm*(dx(um)+dy(vm))*(dx(w)+dy(s))   )
+- int1d(Th,3)(g1*w+g2*s)
++ on(2,um=0,vm=0);
+
+// Computation of the provisional objective function
+
+	compliancem=int1d(Th,3)(g1*um+g2*vm);
+	weightm=int2d(Th)(Xm);
+	objectivem=compliancem+lag*weightm;
+	cout <<"provisional objective="<<objectivem<<endl;
+
+// Test to accept or not the descent step according 
+// to the decrease or increase of the objective function.
+
+// Accept the descent step
+	if (objectivem<=objective*(1+tol))
+	{
+		compliance=compliancem;
+		weight=weightm;
+		objective=objectivem;
+		object << objective   << endl ;
+		phi=phim;
+		[u,v]=[um,vm];
+		X=Xm;
+		Xapprox=Xapproxm;
+		plot(X,fill=1);
+		if (T<0.05) T=T*1.5;
+
+		V=mu*Xapprox*(2*(dx(u))^2+2*(dy(v))^2+(dy(u)+dx(v))^2)+lambda*Xapprox*(dx(u)+dy(v))^2;
+		V=V-lag*X; //Computation of the shape gradient or advection velocity
+		smoothing ; //Regularization of the velocity
+		V=Vreg;
+
+		nabla=(dx(phi))^2+(dy(phi))^2; //Computation of the normal
+		N1=dx(phi)/(sqrt(nabla+eps1^2));
+		N2=dy(phi)/(sqrt(nabla+eps1^2));
+
+		cout <<"descent step accepted"<<endl;
+	};
+
+// Reject the descent step
+	if (objectivem>objective*(1+tol))
+	{
+		T=T/2;
+		cout <<"descent step rejected"<<endl;
+	
+	};
+
+// End of the iteration loop
+}; 
+
+
+caption="Final shape, N= "+N+", Kx= "+kx+", Ky= "+ky+", objective= "+objective+",compliance= "+compliance+", Lagrange multiplier="+lag;
+plot(Th,X,fill=1,cmm=caption);
+
+
+

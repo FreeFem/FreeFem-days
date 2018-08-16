@@ -1,0 +1,219 @@
+// correct D, H on 1 july 2013  Thank to Guillame 
+load "isoline" 
+int wait=0;
+real Rtf = 3.4,Rcoef=1.7;
+real Omega = 0; 
+func Vtrap = (x*x+y*y)*0.5 +square(x*x+y*y)*0.25;
+
+real Omega0=2.5,Omega1=3.5, dOmega=0.5; 
+real g0 = 1000, g1= 1000, dg =1 , g; 
+
+
+bool sameth0=0;//  in the loop of Omega using same inital mesh
+// adapt  just in 
+//int nbadap=2;// nb of adapt loop  0 => no adapt..
+real[int]  errs=[0.1,0.05];//,0.05,0.02] ; // err adap ... 0.05 (ok)
+int nbopt=500, maxiter=10;
+real[int] tols=[1e-3,1e-5,1e-6,1e-7,1e-9]; //  loops of tols 
+// bool Cerclemu = 0; 
+int M=50;//  starting number of point on big circle..
+func Pk = P1;
+real mu = 50; 
+
+include "getARGV.idp"
+
+ M=getARGV("-M",M);
+ 
+ Omega0=getARGV("-O0",Omega0);
+ Omega1=getARGV("-O1",Omega1);
+ dOmega=getARGV("-dO",dOmega);
+ 
+ g0=getARGV("-g0",g0);
+ g1=getARGV("-g1",g1);
+ dg=getARGV("-dg",dg);
+ Rcoef=getARGV("-Rcoef",Rcoef);
+ g = g0;
+ real Rmax= Rcoef * Rtf;
+int nbcas = 0; 
+for(real OO= Omega0; (OO < Omega1+dOmega ) && (nbcas < 10000) ; OO+= dOmega) ++nbcas;
+for(real  gg= g0; (gg < g1+dg) && (nbcas < 10000) ; gg += dg) ++nbcas;
+cout << " nbcase =" << nbcas <<  endl; 
+cout << " Omega s " << Omega0<< " " << Omega1 << " " << dOmega  << endl;
+cout << " g s " << g0<< " " << g1 << " " << dg  << endl;
+assert(nbcas >0 && nbcas < 10000);
+real[int] Omegas(nbcas),gs(nbcas);
+nbcas =0;
+for(real OO= Omega0; OO < Omega1+dOmega; OO+= dOmega) 
+ { Omegas[nbcas] = min(OO,Omega1);
+   gs[nbcas] = g0;
+   ++nbcas;
+ }
+for(real  gg= g0; gg < g1+dg ; gg += dg) 
+ { Omegas[nbcas] = Omega1;
+   gs[nbcas] = min(gg,g1);
+    ++nbcas;
+ }
+ cout << " nb case =" << nbcas << endl; 
+
+
+border C(t=0,2*pi){ x= Rmax*cos(t);y=Rmax*sin(t); label=1;}
+mesh Th=buildmesh(C(M));
+func rhoTF = max(0., (mu - Vtrap)/g );
+
+//  computation of mu ...
+func real Computemu(real mmu)
+{
+    mu = mmu;
+        // Compute mu 
+    for( int iter =0; iter < 20 ; ++ iter)
+    {
+        real nu = int2d(Th)(rhoTF) -1.  ;        
+        real dmu =  int2d(Th) (real( (mu - Vtrap) >0) )/g ; 
+        cout << " iter " << iter << " err = " <<nu << " " << mu << endl; 
+    
+        mu -= nu / dmu ;
+        if( abs(nu ) < 1e-15) break; 
+    }
+    assert( abs(int2d(Th)(rhoTF) -1.) < 1e-10);
+    return mu; 
+}
+
+Computemu(50);
+real R0 = sqrt(sqrt(1.+4.*mu)-1);
+assert(R0 < Rmax); 
+
+fespace Vh(Th,Pk);
+fespace Vh2(Th,[Pk,Pk]);
+macro Grad(u) [dx(u),dy(u)] //
+
+func real J(real[int] & u)
+{
+    Vh2 [ur,ui] ; ur[]=u;
+    real E = int2d(Th) ( 
+         ( Grad(ur)'*Grad(ur) + Grad(ui)'*Grad(ui) ) * 0.5
+       + Vtrap* ( ur*ur + ui * ui)  
+       + g* square( ur*ur + ui * ui) * 0.5
+       - Omega*(  y *( - dx(ur)*ui + dx(ui)*ur ) 
+                + x *(   dy(ur)*ui - dy(ui)*ur ) )
+                );
+       return E;
+}
+
+func real[int] dJ(real[int] & u)
+{
+    Vh2 [ur,ui] ; ur[]=u;
+    varf vdj([aa,bb],[vr,vi]) =
+       int2d(Th) ( 
+         ( Grad(ur)'*Grad(vr) +  Grad(ui)'*Grad(vi) )
+       + Vtrap* ( ur*vr + ui * vi)*2.  
+       + 2.*g*  ( ur*vr + ui*vi) *( ur*ur + ui*ui) 
+       - Omega*(  y *( - dx(ur)*vi + dx(ui)*vr ) 
+                + x *(   dy(ur)*vi - dy(ui)*vr ) )
+       - Omega*(  y *( - dx(vr)*ui + dx(vi)*ur ) 
+                + x *(   dy(vr)*ui - dy(vi)*ur ) )
+                );
+       real [int] du= vdj(0,Vh2);
+       return du ;
+}
+
+func real[int] Constraint(real[int] & u)
+{
+    Vh2 [ur,ui] ; ur[]=u;
+    real[int] c(1);
+    c[0] = int2d(Th) ( ur*ur + ui * ui)  ; 
+    return c; 
+}
+matrix MC;
+func matrix dConstraint(real[int] & u)
+{
+    Vh2 [ur,ui] ; ur[]=u;
+    varf vc([aa,bb],[vr,vi]) = int2d(Th) ( ( ur*vr + ui * vi) *2.) ;
+    real[int,int] MF(1,u.n);
+    MF(0,:) = vc(0,Vh2);
+    MC=MF;
+}
+
+matrix Hessian;
+
+func matrix hJ(real[int] & u,real obj,real[int] & l)
+{
+   Vh2 [ur,ui] ; ur[]=u;
+   varf vhj([wr,wi],[vr,vi]) =
+      int2d(Th) ( 
+       + (obj*Vtrap+ l[0]) * ( wr*vr + wi*vi)*2.  
+       + obj*( 
+        ( Grad(wr)'*Grad(vr) +  Grad(wi)'*Grad(vi) )
+     //  DD of           0.5*g*( ur*ur + ui*ui)^2
+     //  D of  :  2* g*  (ur*vr + ui*vi) *( ur*ur + ui*ui)
+      + g*2.*  ( wr*vr + wi*vi) * ( ur*ur + ui*ui) 
+      + g*4.*  ( ur*vr + ui*vi) * ( wr*ur + wi*ui) 
+      
+      - Omega*(  y *( - dx(wr)*vi + dx(wi)*vr ) 
+               + x *(   dy(wr)*vi - dy(wi)*vr ) )
+      - Omega*(  y *( - dx(vr)*wi + dx(vi)*wr ) 
+               + x *(   dy(vr)*wi - dy(vi)*wr ) )
+               ));
+    Hessian = vhj(Vh2,Vh2);
+    //Hessian= H22 + l[0]*HC;
+    return Hessian;
+}
+
+
+load "ff-Ipopt"
+
+Vh<complex> u0 = sqrt( rhoTF);
+Vh ur = real(u0); 
+plot(ur,wait=wait);
+real[int] c=[1];
+real cost=1000; 
+Vh2 [uur,uui] = [ real(u0), imag(u0)] ; 
+Vh2 [uur0,uui0] ;
+real cpu0;
+
+for (int kas =0;kas < nbcas; ++ kas)
+{  cout << kas << "/" << nbcas << endl;
+  g = gs[kas];
+  Omega = Omegas[kas] ;
+  cout << " IPOPT kas =" << kas << " / " << nbcas <<   " Omega =" << Omega << " g =" << g << endl;
+  cpu0 = clock();
+  int ok=0;
+  mesh Th0= Th; 
+  int ntol = 0,nadep=0;
+  for(int kk=1,nok=0;kk<= nbopt; ++kk)
+  {  
+    real err = 1, tol = 1;
+    
+    if(nadep <errs.n  )
+     Th=adaptmesh(Th,[uur,uui],err=(err=errs[nadep]),nbvx=100000,hmax=Rmax*2*pi/M);
+  
+    [uur,uui] = [uur,uui] ;
+    
+    int[int] II(Vh2.ndof),JJ=0:Vh2.ndof-1; II=0;  
+    ok=IPOPT(J,dJ,hJ,Constraint,dConstraint,uur[],clb=c,cub=c,structjacc=[II,JJ],
+         tol=(tol=tols[ntol]),maxiter=maxiter,objvalue=cost);
+    if(ok < -1000) ok = -1;
+    cout << kk << " IPOPT = " << ok << " J = " << cost << " Th.nv =" << Th.nv 
+         << " Omega =" << Omega << " g =" << g << " tol = " << tols[ntol] << " cpu ="  << clock()-cpu0 << " s" + "  tol =" + tol + " Aerr = "+err  << endl; 
+    if( ok==0) 
+    {
+     Vh uu= sqrt(square(uur)+square(uui));
+     plot(uu,wait=wait, cmm=" Omega =" + Omega+ " g=" + g + " kk " + kk+ " J =" + cost + "  tol =" + tol + " Aerr = "+err  ,dim=3); 
+    }
+    
+    if( (ntol == tols.n-1) && (nadep == errs.n-1) && ok==0) break; 
+    if(ok==0 ) nok++;
+    ntol = min(nok,tols.n-1); 
+    if(errs.n) nadep = min(nok/2,errs.n-1);
+  
+  }
+  cout << " --- IPOPT = " << ok << " J = " << cost << " Th.nv =" << Th.nv << " Omega =" << Omega<< " g =" << g  << " cpu ="  << clock()-cpu0 << " s" <<  endl; 
+   
+  Vh uu= sqrt(square(uur)+square(uui));
+  plot(uu,wait=wait, cmm=" Omega =" + Omega+ " g =" + g + " J =" + cost + "  ok =" + ok ,dim=3);
+  if( sameth0 )
+  {
+    Th=Th0;
+    [uur,uui] = [uur,uui] ;
+  }
+  assert(ok==0);
+}

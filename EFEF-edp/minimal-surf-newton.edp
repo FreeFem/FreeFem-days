@@ -1,0 +1,77 @@
+func g=cos(2*x)*cos(2*y); // valeur au bord
+int nn=10;
+mesh Th=square(nn,nn,[x*pi,y*pi]);  // mesh definition of $\Omega$
+fespace Vh(Th,P2);      // finite element space
+fespace Ph(Th,P1dc);      // for  optimization  to store 1 + dx(u)^2+dy(u)^2
+Vh u=0; //  the current value of the solution
+Ph alpha; // of store  $ 1 + (|\nabla u|^2)$
+
+varf vDJ(uh,vh) = int2d(Th)( 1./alpha*( dx(u)*dx(vh) + dy(u)*dy(vh) ) )
+     + on(1,2,3,4,uh=0);
+varf vD2J(uh,vh) = int2d(Th)( 1./alpha*( dx(uh)*dx(vh) + dy(uh)*dy(vh) ) 
+   - 1./(alpha*alpha*alpha)*( dx(u)*dx(vh) + dy(u)*dy(vh) )*( dx(u)*dx(uh) + dy(u)*dy(uh) ) 
+            )  + on(1,2,3,4,uh=0);
+
+// the fonctionnal to minimise
+func real J(real[int] & xx)
+  {
+    Vh u;u[]=xx; 
+    real r=int2d(Th)( sqrt(1 +dx(u)*dx(u) + dy(u)*dy(u) ) ) ;
+    cout << "J(x) =" << r << " " << xx.min <<  " " << xx.max << endl;
+    return r;
+  }
+  
+// the grad of the fonctionnal
+func real[int] dJ(real[int] & xx)
+  {
+    verbosity=1;
+    Vh u;u[]=xx; 
+    alpha=sqrt(1. +dx(u)*dx(u) + dy(u)*dy(u) ); // optimization 
+     xx= vDJ(0,Vh);
+     verbosity=1;
+    return xx; // warning no return of local array  
+  }
+ // initial value
+ 
+ verbosity=5;
+ u=g;
+   int conv=NLCG(dJ,u[],nbiter=100,eps=-1e-1); 
+ plot(u,wait=1);
+ for(int iter=1;1;iter++)
+ {
+  cout << " the  surface =" << J(u[])  << endl;
+  //  methode de Newton 10 iteration mac
+  real[int] b(Vh.ndof);
+  Vh w;
+  matrix A; 
+  fespace Wh(Th); 
+  Wh onGamma=0;
+
+  for(int it=0;it<10;++it)
+   {
+    alpha=sqrt(1. +dx(u)*dx(u) + dy(u)*dy(u) ); // optimization 
+    b= vDJ(0,Vh);
+    A = vD2J(Vh,Vh); set(A,solver=CG);
+    b = vDJ(0,Vh);
+    w[]=A^-1*b; 
+    u[] -= w[];
+    real err= sqrt(int2d(Th)(w*w));
+    cout << "Newton it = " << it << " err = " << err <<" J(u)=" << J(u[])<< endl;
+    if(err<1e-12) break;
+    }
+  cout << " Iter " << iter << "  the  surface =" << J(u[])  << endl;
+ 
+  if(iter >= 5) break;
+  plot(u,wait=1,dim=3,fill=1);
+  real cc= (1./10.)^(1./4.);// to divide the err/10 in 4 iteration.
+  Th=adaptmesh(Th,u,err=0.05*cc^iter,nbvx=1000000);  
+   u=u; // reinterplote u because une mesh have change.
+  // but u is not correct on border, because is set just with interpolation.
+  // continue; //  un comment to see the problem.
+   //  a trick to set FE functon just on border to g 
+   varf vonGamma(u,v)=int1d(Th)(v/lenEdge);
+  onGamma=0;
+  onGamma[]=vonGamma(0,Wh); 
+  u=  u * (1-onGamma) + onGamma*g;	
+ } 
+

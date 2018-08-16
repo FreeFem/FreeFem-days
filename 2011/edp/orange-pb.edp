@@ -1,0 +1,87 @@
+real Kphase = 10;
+real dt=0.01,tfinal=1;
+real g= -9.81, Cv=1,Kappa=1.00;
+real ratioTst = 1;
+real T0 = 40;
+real Tr = 60 , Tl = 30; 
+real alpha = 0.1,rho0=1; // bof .. 
+// 1/rho = 1/rho0 ( 1- alpha ( T-T0) ) 
+real nus = 1e6, nuf = 0.01;
+
+int n=10;
+real xl=0,xr=4;
+mesh Th=square(4*n,n,[xl+x*(xr-xl),y]);
+
+fespace Wh(Th,[P2,P2,P1,P1]);
+fespace Vh(Th,P1);
+fespace Ph(Th,P1); 
+/*
+  u_t + u.gradu+ grad p - nu delta u = g/rho ( 1 - alpha (T-T0))
+  div u = 0
+  T_t + u grad T - K/(rho0 Cv) delta T = 0 
+  + Change of Phase
+  if T < 40 solid
+  if T > 40 liquide
+  => the mass of change of phase 
+  cf(T,Tp) = ( (T< 40) - (Tp < 40) ) 
+  where T us the current temp and Tp the previous
+  The thermic is
+   cf(t,Tp)*TT*kCf = fcphase*TT
+    
+*/
+Vh fcphase=0;
+Wh [u1,u2,p,T]; 
+Wh [u1p,u2p,pp,Tp];
+
+Wh [v1,v2,q,TT]; 
+
+Ph nuk = nus; 
+
+real cdt=1./dt;
+real kf = Kappa/(rho0*Cv);
+real ks = kf*ratioTst ;
+func Tinit= Tr*(x-xl)/(xr-xl) +  Tl*(xr-x)/(xr-xl);
+Vh kT= Kappa/(rho0*Cv), eps = 1e-7;
+[u1p,u2p,pp,Tp]=[0,0,0,Tinit];
+macro grad(u)[dx(u),dy(u)]//
+macro Grad(u1,u2)[dx(u1),dy(u1),dx(u2),dy(u2)]//
+macro div(u1,u2) (dx(u1)+dy(u2)) //
+real fT = g/rho0*(1-alpha*T0); 
+real cmT = alpha*g/rho0; 
+
+macro sss(t,v1,v2)  (v1 + (v2-v1)*(0.5+0.5*(t)/sqrt(1.+(t)*(t)))) // 
+func nuT =  10.^sss(T-40,6.,-2.) ;
+func kkT = sss(T-40,ks,kf); 
+problem Boussinesq([u1,u2,p,T],[v1,v2,q,TT])
+= int2d(Th) (
+     [u1,u2,T]'*[v1,v2,TT]*cdt
+   + ( Grad(u1,u2)'*Grad(v1,v2)) * nuk + cmT*T*v2 
+   +  grad(T)'*grad(TT)*kT 
+   -div(u1,u2)*q -div(v1,v2)*p - eps*p*q )
+   - int2d(Th)( 
+       fcphase*TT 
+     + fT*v2  + 
+     
+   [convect([u1p,u2p],-dt,u1p),
+    convect([u1p,u2p],-dt,u2p),
+    convect([u1p,u2p],-dt,Tp) ]'*[v1,v2,TT]*cdt) 
+   + on(1,2,3,4, u1=0,u2=0) + on(2,T=Tr) + on(4,T=Tl) ;
+u1p[]=u1[];
+ 
+
+Boussinesq; 
+for(int iter=0; iter<1000; iter++ )
+{
+ fcphase = (sss(T-40,1,0) - sss(Tp-40,1,0))* Kphase;
+ u1p[]=u1[]; 
+// plot(fcphase,wait=1, cmm="fcphase");
+ nuk = nuT;
+ kT  =  kkT ; 
+// plot(nuk,fill=1,wait=1,dim=3);
+Boussinesq; 	
+plot([u1,u2], T, wait=0);
+//plot(T,wait=1,cmm="T");
+
+
+//plot(p,wait=1,cmm="p");
+}

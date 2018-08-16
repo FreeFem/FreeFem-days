@@ -1,0 +1,27 @@
+mesh Th=square(10,10);
+real a =1, b =2, c= -1; 
+func g = a*x+b*y +c;
+fespace Vh(Th,P1);
+
+macro grad(u) [dx(u),dy(u)] // eom 
+
+Vh u, du;
+
+u = g + 16*x*y*(1-x)*(1-y);
+func J = int2d(Th) ( sqrt(1 + grad(u)'*grad(u))) ;
+plot( u, cmm = " J = "  + J ); 
+
+varf dJ(uu,v) =  int2d(Th) ( grad(u)'*grad(v)/sqrt(1 + grad(u)'*grad(u)))
++ on(1,2,3,4, uu=0) ;
+
+real rho = 0.1;
+real err=0; 
+for( int i=0; i < 1000; ++i)
+{
+        du[] = dJ(0,Vh); 
+        err = du[].linfty ; 
+        u = u - rho * du; 
+        cout << i << " err " << err << " J = " << J << endl; 
+        plot( u, cmm = " J = "  + J ); 
+        if(err < 1e-6) break;         
+}

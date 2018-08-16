@@ -1,0 +1,21 @@
+the aim on the work is to computed the distance of a isoline a border in a bootle.
+
+I propose to way , One build is a emtyp mesh beetween the border and the isoline. 
+and after to compute the distance just use the bacis geometric theorem
+the heigth of a triangle is 2*area of T / lenght of base
+see dist-with-mesh-generation.edp
+
+the other way is to use the soft of C. Dapogny to compute the distance to a level set.
+fisrt compile de solf mshdist soft and copy the program mshdist in a PATH directory 
+I do on my laptop.   
+  874  mkdir mshdist
+  875  cd mshdist
+  876  tar zxvf ../mshdist.2014.12.03.tgz 
+  877  make
+  878  cp bin/mshdist ~/bin 
+  
+
+now use dist.edp exemple.
+
+
+

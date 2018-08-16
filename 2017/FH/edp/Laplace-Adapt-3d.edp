@@ -1,0 +1,36 @@
+load "msh3" load "tetgen" load "mshmet" load "medit"
+//build initial mesh
+int nn  = 6;
+
+int[int] lc=[1,2,2,1,1,2]; //  label numbering 
+
+mesh3 Th3=cube(nn,nn,nn,label=lc);
+Th3 = trunc(Th3,(x<0.5) | (y < 0.5) | (z < 0.5) ,label=1);
+
+fespace Vh(Th3,P1);
+Vh u,v,usol,h;
+
+macro Grad(u) [dx(u),dy(u),dz(u)] // EOM
+
+problem Poisson(u,v,solver=CG) = int3d(Th3)( Grad(u)'*Grad(v) )  // ') for emacs 
+  -int3d(Th3)( 1*v ) + on(1,u=0);
+
+real errm=1e-2;// level of error 
+
+for(int ii=0; ii<5; ii++)
+{
+  Poisson;
+  cout <<" u min, max = " <<  u[].min << " "<< u[].max << endl;
+  h=0. ;// for resizing h
+  h[]=mshmet(Th3,u,normalization=1,aniso=0,nbregul=1,hmin=1e-3,hmax=0.3,err=errm);
+  cout <<" h min, max = " <<  h[].min << " "<< h[].max << " " << h[].n << " " << Th3.nv << endl;
+  plot(u,wait=1);
+  errm*= 0.8;// change the level of error
+  cout << " Th3" << Th3.nv < " " << Th3.nt << endl;
+  Th3=tetgreconstruction(Th3,switch="raAQ",sizeofvolume=h*h*h/6.);
+ // medit("U-adap-iso-"+ii,Th3,u,wait=1);
+}
+  Poisson;
+ medit("U-adap-iso-"+5,Th3,u,wait=1);
+
+

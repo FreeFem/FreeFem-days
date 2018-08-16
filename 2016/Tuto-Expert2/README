@@ -1,0 +1,9 @@
+The problem is to bluid a matrix which the distance 
+of 2 barycentre if the discent is less than epsilon
+
+1) the  file closebary.edp is a example   is a example to compute the barycentre and the list point with 
+distance less than eps
+
+2) the TrivialMatrix-test.edp	TrivialMatrix.cpp is just un test to buyild a matrix...  
+
+3) the result CloseMatrix.cpp  CloseMatrixtest.edp	    

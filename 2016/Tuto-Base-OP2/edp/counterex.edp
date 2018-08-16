@@ -1,0 +1,267 @@
+/////////////////////////////////////////
+//                                     //
+// Counter-example to the existence of //
+// an optimal design for an elastic    //
+// plate and a least square criterion: //
+// no convergence of the design under  //
+// mesh refinement.                    //
+//                                     //
+// Ecole Polytechnique, MAP 562        //
+// Copyright G. Allaire, 2004, 2008    //
+//                                     //
+/////////////////////////////////////////
+ofstream object("counterex.obj") ;
+ofstream grad("counterex.grad") ;
+string save="counterex";	// Prefix of backup files
+int niter=100;			// Number of iterations
+int n;				// Size of the mesh
+real step=1. ;			// Descent step
+real lagrange=0.01;		// Lagrange multiplier for the volume constraint
+real lagmin, lagmax ;		// Bounds for the Lagrange multiplier
+int inddico ;
+real objective;			// Objective function
+real objectiveold ;
+real volume0;			// Initial volume 
+real volume,volume1;		// Volume of the current shape
+real exa=1;			// Coefficient for the shape deformation
+string caption;			// Caption for the graphics
+real E=100;			// Young modulus
+real nu=0.3;			// Poisson coefficient (between -1 and 1/2)
+func g1=0;  			// Applied forces
+func g2=100;
+
+real[int] vviso(21);
+for (int i=0;i<21;i++)
+vviso[i]=i*0.05 ;
+//////////////////////////////////////
+// Computation of Lame coefficients //
+//////////////////////////////////////
+real lambda=E*nu/((1.+nu)*(1.-2.*nu));
+real mu=E/(2.*(1.+nu));
+
+////////////////////////////////////////////////////
+// Lower and upper bounds for the plate thickness //
+////////////////////////////////////////////////////
+real hmin=0.1;
+real hmax=1.0;
+real hmoy=0.5;
+func h0=hmoy ;
+
+/////////////////////// 			1:Dirichlet boundary condition
+// Domain definition // 			2,3,4:Non-homogeneous Neumann or applied load
+/////////////////////// 			
+mesh Th;
+border bd(t=0,1)       { x=+1; y=t;label=2; };   // right boundary of the domain
+border bg(t=1,0)       { x=-1; y=t;label=1; };   // left boundary of the domain
+border bs(t=1,-1)      { x=t;  y=1;label=3; };   // upper boundary of the domain
+border bi(t=-1,1)      { x=t;  y=0;label=4; };   // lower boundary of the domain
+
+///////////////////////
+// Building the mesh //
+///////////////////////
+n = 2 ;
+Th= buildmesh (bd(10*n)+bs(20*n)+bg(10*n)+bi(20*n));
+plot(Th,wait=0);
+
+/////////////////////////////////////////////
+// Definition of the finite element spaces //
+/////////////////////////////////////////////
+fespace Vh0(Th,P0);
+fespace Vh2(Th,[P2,P2]);
+
+Vh2 [u,v],[w,s],[p,q],[uold,vold];
+Vh0 h,hold,gradient;
+
+h = h0 ;
+
+/////////////////////////
+// Target displacement //
+/////////////////////////
+real u0x=-1.;
+real u0y=100.;
+real cx=1.;
+real cy=0.1;
+func u0=u0x;
+func v0=u0y;
+///////////////////////
+// Elasticity system //
+///////////////////////
+problem elasticity([u,v],[w,s]) =
+    int2d(Th)(
+               2.*h*mu*(dx(u)*dx(w)+dy(v)*dy(s)+((dx(v)+dy(u))*(dx(s)+dy(w)))/2.)
+              +h*lambda*(dx(u)+dy(v))*(dx(w)+dy(s))
+	)
+    -int1d(Th,2)(g2*w+g1*s)
+    -int1d(Th,3)(g1*w+0.1*g2*s)
+    -int1d(Th,4)(g1*w-0.1*g2*s)
+    +on(1,u=0,v=0)
+;
+////////////////////
+// Adjoint system //
+////////////////////
+problem adjoint([p,q],[w,s]) =
+    int2d(Th)(
+               2.*h*mu*(dx(p)*dx(w)+dy(q)*dy(s)+((dx(q)+dy(p))*(dx(s)+dy(w)))/2.)
+              +h*lambda*(dx(p)+dy(q))*(dx(w)+dy(s))
+	)
+    +int1d(Th,2)( 2*cx*(u-u0)*w )
+    +int1d(Th,3)( 2*cy*(v-v0)*s )
+    +int1d(Th,4)( 2*cy*(v+v0)*s )
+    +on(1,p=0,q=0)
+;
+////////////////////
+// Initial volume //
+////////////////////
+volume0=int2d(Th)(h);
+
+////////////////////////////////
+// Initial objective function //
+////////////////////////////////
+elasticity;
+objective=int1d(Th,2)( cx*(u-u0)*(u-u0) )
+        +int1d(Th,3)( cy*(v-v0)*(v-v0) )
+        +int1d(Th,4)( cy*(v+v0)*(v+v0) ) ;
+object << objective   << endl ;
+cout<<"Initialization. Objective: "<<objective<<" Volume: "<<volume0<<endl;
+
+//////////////////////////////////
+// Initial adjoint and gradient //
+//////////////////////////////////
+
+adjoint ;
+gradient = 2*mu*(dx(u)*dx(p)+dy(v)*dy(q)+((dx(v)+dy(u))*(dx(q)+dy(p)))/2.)+lambda*(dx(u)+dy(v))*(dx(p)+dy(q)) ;
+real norgrad=int2d(Th)(gradient*gradient);
+norgrad=sqrt(norgrad) ;
+grad << norgrad   << endl ;
+step=step/norgrad ;
+cout << "step "<< step << endl;
+
+///////////////////////////////
+//     Optimization loop     //
+///////////////////////////////
+ 
+int iter;
+
+for (iter=1;iter< niter;iter=iter+1)  
+{
+cout <<"Iteration " <<iter <<" ----------------------------------------" <<endl;
+
+hold = h ;
+objectiveold = objective ;
+[uold,vold] = [u,v] ;
+
+h = hold - step*gradient - lagrange ;
+h = min(h,hmax) ;
+h = max(h,hmin) ;
+
+/////////////////////////////////////////////////////
+// Bracketing the value of the Lagrange multiplier //
+/////////////////////////////////////////////////////
+volume=int2d(Th)(h);
+volume1 = volume ;
+//
+if (volume1 < volume0)
+{
+   while (volume < volume0)
+{ 
+      lagmin = lagrange ;
+      lagrange = lagrange - 0.01 ;
+      h = hold - step*gradient - lagrange ;
+      h = min(h,hmax) ;
+      h = max(h,hmin) ;
+      volume=int2d(Th)(h) ; 
+};
+   lagmax = lagrange ;
+};
+//
+if (volume1 > volume0)
+{
+   while (volume > volume0)
+{
+      lagmax = lagrange ;
+      lagrange = lagrange + 0.01 ;
+      h = hold - step*gradient - lagrange ;
+      h = min(h,hmax) ;
+      h = max(h,hmin) ;
+      volume=int2d(Th)(h) ;
+};
+   lagmin = lagrange ;
+};
+//
+if (volume1 == volume0) 
+{
+   lagmin = lagrange ;
+   lagmax = lagrange ;
+};
+
+///////////////////////////////////////////////////////
+// Dichotomy on the value of the Lagrange multiplier //
+///////////////////////////////////////////////////////
+
+inddico=0;
+while ((abs(1.-volume/volume0)) > 0.0000001)
+{
+   lagrange = (lagmax+lagmin)*0.5 ;
+   h = hold - step*gradient - lagrange ;
+   h = min(h,hmax) ;
+   h = max(h,hmin) ;
+   volume=int2d(Th)(h) ;
+   inddico=inddico+1;
+   if (volume < volume0) 
+      {lagmin = lagrange ;} ;
+   if (volume > volume0)
+      {lagmax = lagrange ;} ;
+};
+
+//cout<<"number of iterations of the dichotomy: "<<inddico<<endl;
+
+// Solving the elasticity system
+elasticity;
+
+// Computation of the objective function
+objective=int1d(Th,2)( cx*(u-u0)*(u-u0) )
+        +int1d(Th,3)( cy*(v-v0)*(v-v0) )
+        +int1d(Th,4)( cy*(v+v0)*(v+v0) ) ;
+
+if (objective > objectiveold*1.00001 )
+{
+// we reject this step
+step = step / 2. ;
+cout << "step back, new step " << step << endl ;
+h=hold ;
+[u,v] = [uold,vold] ;
+objective = objectiveold ;
+}
+else
+{
+// we accept this step
+step = step * 1.1 ;
+cout << "new step " << step << endl ;
+
+///////////////////////////////////////////////////
+// Computation of the gradient using the adjoint //
+///////////////////////////////////////////////////
+adjoint ;
+gradient = 2*mu*(dx(u)*dx(p)+dy(v)*dy(q)+((dx(v)+dy(u))*(dx(q)+dy(p)))/2.)+lambda*(dx(u)+dy(v))*(dx(p)+dy(q)) ;
+//caption="Iteration "+iter+", gradient";
+//plot(Th,gradient,fill=1,value=true,viso=vviso,cmm=caption,wait=1); 
+
+};
+
+//////////////////////////////////////////////////////
+// End of the loop, time to plot the current design //
+//////////////////////////////////////////////////////
+
+object << objective   << endl ;
+cout<<"Objective: "<<objective<<" Volume: "<<volume<<" Lagrange: "<<lagrange<<endl;
+
+caption="Iteration "+iter+", Objective "+objective+", Volume="+volume;
+plot(Th,h,fill=1,value=0,viso=vviso,cmm=caption,wait=0); 
+
+};
+
+
+//Plot the final design
+caption="Final design, Iteration "+iter+", Objective "+objective+", Volume="+volume;
+plot(Th,h,fill=1,value=0,viso=vviso,cmm=caption,ps=save+".eps");
+

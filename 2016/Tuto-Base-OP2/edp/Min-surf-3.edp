@@ -1,0 +1,185 @@
+// ---  a real non linear test  
+// find the surface minimal :
+//  find a function u : Omega -> R such that :  
+//   u = argmin int2d(Th)(sqrt(1.+dx(u)*dx(v)+dy(u)*dy(u)));
+//  where  u = g on gamma (the Omega  boundary) 
+//  a well know example: 
+//  Catenoïde
+//     u \in R, v \in  [0,2pi[
+//      x = cosh(u) cos(v)
+//      y = cosh(u) sin(v) 
+//      z = u
+/*  in cylindrical coordonates: 
+  x,y ->   r, t 
+  r = sqrt(x*x+y*y);
+  t = atan2(y,x);
+  z = acosh(r); 
+*/
+
+// 3 algo chose with case parameter:
+// 1 newuoa, 2 Gradient Conjugue, 3 Gradient a pas fixe 
+int case =2;
+int casemesh=1; // 
+
+func catenoide= acosh(sqrt(x*x+y*y));
+
+//  choose of the function g  (catenoide  if casemesh==1) 
+
+func g= casemesh == 1 ? catenoide : cos(2*x*pi)*cos(pi*y) ;  //sin(x*pi); //x+5*y;//cos(x*pi)*cos(pi*y);
+
+int nn=10;  // number of point on border par unit .. 
+if(case==2) nn=5*nn; 
+if(case==3) nn=2*nn; 
+
+mesh Th; // the mesh name to set the 
+if(casemesh==1) 
+{ // the border for the Catenoïde  ( between 2 circles)
+  real RE=5,RI=1.1;
+  border CI(t=0,2*pi){ x=RI*cos(t);y=RI*sin(t);label=1;}
+  border CE(t=0,2*pi){ x=RE*cos(t);y=RE*sin(t);label=1;}
+  Th=buildmesh(CI(-nn*RI)+CE(RE*nn));
+}
+else if(casemesh==2) 
+{
+//  a  mesh none regular of a square
+  border A(t=1,0){ x=t;y=0;label=1;}
+  border B(t=0,1){ x=0;y=t;label=1;}
+  border C(t=0,1){ x=t;y=1;label=1;}
+  border D(t=1,0){ x=1;y=t;label=1;}
+  Th=buildmesh(A(-nn)+B(-nn)+C(-nn)+D(-nn));
+}
+else
+{
+  // a regular mesh of a square. 
+  int[int] l4=[1,1,1,1];
+  Th = square(nn,nn,flags=3,label=l4);
+}
+
+plot(Th,wait=1);
+
+fespace Vh(Th,P1);
+
+Vh u=g; // set the Finite element function u to g at vertices. 
+plot(u,wait=1);
+
+
+real j=int2d(Th)(sqrt(1.+dx(u)*dx(u)+dy(u)*dy(u)));  // the functionnal 
+// of the interpolate 
+cout << " J min  =" << j << endl;
+
+//  build a  finite element function ongamma
+//  such that  ongamma = 1 on gamma and zero otherwhere.
+
+Vh  ongamma;
+varf von(u,v)=on(1,u=1); //  defini une formulation variationel 
+ongamma[]=von(0,Vh,tgv=1); 
+// FIN DU TRUC ...
+plot(ongamma,wait=1,cmm="ongamma"); // VERIFICATION DU TRUC 
+
+Vh   gh=g;
+load "ffnewuoa"   // opimisation without gradient.. 
+
+/*   NEWUOA:
+ The algorithm is intended to change the variables to values
+that are close to a local minimum of F. The user, however, should assume
+responsibility for finding out if the calculations are satisfactory, by
+considering carefully the values of F that occur. The method is described
+in the report "The NEWUOA software for unconstrained optimization without
+derivatives", which is available on the web at www.damtp.cam.ac.uk, where
+you have to click on Numerical Analysis and then on Reports, the number
+of the report being NA2004/08. Let N be the number of variables. The main
+new feature of the method is that quadratic models are updated using only
+about NPT=2N+1 interpolation conditions, the remaining freedom being taken
+up by minimizing the Frobenius norm of the change to the second derivative
+matrix of the model.
+
+     The new software was developed from UOBYQA, which also forms quadratic
+models from interpolation conditions. That method requires NPT=(N+1)(N+2)/2
+conditions, however, because they have to define all the parameters of the
+model. The least Frobenius norm updating procedure with NPT=2N+1 is usually
+much more efficient when N is large, because the work of each iteration is
+much less than before, and in some experiments the number of calculations
+of the objective function seems to be only of magnitude N.
+
+ If you wish to refer to it, please
+cite the DAMTP report that is mentioned above, which has been submitted for
+publication in the proceedings of the 40th Workshop on Large Scale Nonlinear
+Optimization (Erice, Italy, 2004).
+December 16th, 2004                    M.J.D. Powell (mjdp@cam.ac.uk)
+*/
+
+int iter=0;
+//the functonnel to minimize ..
+func real J(real[int] & X)
+{
+	Vh u;
+	u[]=ongamma[]? gh[]: X;// // inside  we get   X and on the border we get  sur  gh 	
+	real jX= int2d(Th)(sqrt(1.+dx(u)*dx(u)+dy(u)*dy(u)));
+	iter++;
+	if(iter%100==1)
+	cout << iter << " J(X) = " << jX << endl;
+	return jX;
+}
+// end of J def.. 
+
+// for  ... cas 2 et 3 
+func real[int]  DJ(real[int] & X)
+{//  DJ return  the  gradient of  J 
+	Vh u,du;
+	u[]=ongamma[]? gh[]: X;// inside  we get   X and on the border we get  sur  gh 	
+	varf vDJ(du,v) =int2d(Th)( (dx(v)*dx(u)+dy(v)*dy(u))/sqrt(1.+dx(u)*dx(u)+dy(u)*dy(u)))
+	                  +on(1,du=0);
+    du[]=vDJ(0,Vh);	     //  du[][i] : is  the derive partiel / variable i      
+	return du[];
+}
+varf vlap(u,v)= int2d(Th)(  dx(v)*dx(u)+dy(v)*dy(u)) +on(1,u=0);
+matrix Alap= vlap(Vh,Vh,solver=sparsesolver);
+func real[int] lap(real[int] &u) {real[int] u1=Alap^-1*u; return u1;}
+// end of DJ ...
+
+
+
+// the minimization algorithm .... 
+int n= u[].n; 
+u[]=0;
+u[]=ongamma[]? gh[]: u[];
+real mincost;
+if( case ==1)
+  mincost=newuoa(J,u[],rhobeg=1,rhoend=1e-4,npt=2*n+1,maxfun=10000);
+else if( case==2) 
+{
+   NLCG(DJ,u[],eps=1.e-10,nbiter=200,precon=lap);
+   mincost= J(u[]);
+}
+else //  by hand,   gradient algorithm with precoditionner C.: 
+{  	//  u^n=1 -= rho* C^-1 G
+    //  where G is gradient of J 
+    //        and C  symetric positive matrix  (here the Laplacien operator).
+	real rho = 0.1,err=1; 
+	Vh dj,cdj;
+	int iter=0;
+	while(err>1e-5)
+	{
+		dj[]= DJ(u[]);
+		cdj[]= Alap^-1*dj[]; // the preconditionner part. 
+		u[] -= rho * cdj[];
+		err = (dj[]'*cdj[]);
+		iter++;
+		cout << iter << " " << err 
+		      << " J " << ( mincost=int2d(Th)(sqrt(1.+dx(u)*dx(u)+dy(u)*dy(u))) )
+		      << endl; 
+	}
+}
+cout << " min " << mincost << endl;
+u[]=ongamma[]? gh[]: u[];
+plot(u,wait=1,dim=3);
+Vh diff= u-g; 
+cout << " err infty = " << diff[].linfty << endl;
+
+
+
+ 
+ 
+ 
+
+

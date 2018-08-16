@@ -1,0 +1,220 @@
+//////////////////////////////////////
+//                                  //
+// Thickness or sizing optimization //
+//      of an elastic plate         //
+//                                  //
+//   Ecole Polytechnique, MAP 562   //
+//   Copyright G. Allaire, 2004     //
+//                                  //
+//////////////////////////////////////
+ofstream compli("plate.obj") ;
+string save="plate";		// Prefix of backup files
+int niter=30;			// Number of iterations
+int n=2;			// Size of the mesh
+real lagrange=1.;		// Lagrange multiplier for the volume constraint
+real lagmin, lagmax ;		// Bounds for the Lagrange multiplier
+int inddico ;
+real compliance;		// Compliance
+real volume0;			// Initial volume 
+real volume,volume1;		// Volume of the current shape
+real exa=1;			// Coefficient for the shape deformation
+string caption;			// Caption for the graphics
+real E=100;			// Young modulus
+real nu=0.3;			// Poisson coefficient (between -1 and 1/2)
+func g1=0;  			// Applied forces 
+func g2=-100;
+real[int] vviso(21);
+for (int i=0;i<21;i++)
+vviso[i]=i*0.05 ;
+//////////////////////////////////////
+// Computation of Lame coefficients //
+//////////////////////////////////////
+real lambda=E*nu/((1.+nu)*(1.-2.*nu));
+real mu=E/(2.*(1.+nu));
+
+////////////////////////////////////////////////////
+// Lower and upper bounds for the plate thickness //
+////////////////////////////////////////////////////
+real hmin=0.1;
+real hmax=1.0;
+real hmoy=0.5;
+func h0=hmoy ;
+
+/////////////////////// 			1:Dirichlet boundary condition
+// Domain definition // 			2:Neumann boundary or free boundary condition
+/////////////////////// 			3:Non-homogeneous Neumann or applied load
+mesh Th, Dh;
+
+border bd(t=0,1)       { x=+1; y=t;label=2; };   // right boundary of the domain
+border bg(t=1,0)       { x=-1; y=t;label=2; };   // left boundary of the domain
+border bs(t=1,-1)      { x=t;  y=1;label=2; };   // upper boundary of the domain
+border b1(t=-1,-0.9)   { x=t;  y=0;label=1; };   // lower boundary of the domain
+border b2(t=-0.9,-0.1) { x=t;  y=0;label=2; };
+border b3(t=-0.1,0.1)  { x=t;  y=0;label=3; };
+border b4(t=0.1,0.9)   { x=t;  y=0;label=2; };
+border b5(t=0.9,1)     { x=t;  y=0;label=1; }; 
+
+///////////////////////
+// Building the mesh //
+///////////////////////
+n = 2 ;
+int m = 3 ;
+Th= buildmesh (bd(10*n)+bs(20*n)+bg(10*n)+b1(m)+b2(8*n)+b3(2*m)+b4(8*n)+b5(m));
+plot(Th,wait=0,ps=save+".mesh.eps");
+
+/////////////////////////////////////////////
+// Definition of the finite element spaces //
+/////////////////////////////////////////////
+fespace Vh0(Th,P0);
+fespace Vh2(Th,[P2,P2]);
+
+Vh2 [u,v],[w,s];
+Vh0 h,hold,density;
+
+h = h0 ;
+///////////////////////
+// Elasticity system //
+//////////////////////
+problem elasticity([u,v],[w,s]) =
+    int2d(Th)(
+               2.*h*mu*(dx(u)*dx(w)+dy(v)*dy(s)+((dx(v)+dy(u))*(dx(s)+dy(w)))/2.)
+              +h*lambda*(dx(u)+dy(v))*(dx(w)+dy(s))
+	)
+    -int1d(Th,3)(g1*w+g2*s)	           
+    +on(1,u=0,v=0)
+;
+
+////////////////////
+// Initial volume //
+////////////////////
+volume0=int2d(Th)(h);
+
+////////////////////////
+// Initial compliance //
+////////////////////////
+elasticity;
+compliance=int1d(Th,3)(g1*u+g2*v);
+compli << compliance  << endl ;
+cout<<"Initialization. Compliance: "<<compliance<<" Volume: "<<volume0<<endl;
+
+//////////////////////////////////
+// Plot of the mesh deformation //
+//////////////////////////////////
+real coef = 0.2 ;
+Dh = movemesh (Th,[x+coef*u,y+coef*v]);
+plot(Dh,wait=0,ps=save+"initdef.eps");
+
+////////////////////////////////
+//     Optimisation loop      //
+////////////////////////////////
+ 
+int iter;
+
+for (iter=1;iter< niter;iter=iter+1)  
+{
+cout <<"Iteration " <<iter <<" ----------------------------------------" <<endl;
+
+hold = h ;
+
+///////////////////////////////////////////////
+// Optimality condition for the thickness    //
+// in terms of the density of elastic energy //
+///////////////////////////////////////////////
+
+density = 2*h*mu*(dx(u)^2+dy(v)^2+((dx(v)+dy(u))^2)/2.)+h*lambda*(dx(u)+dy(v))^2;
+
+h = sqrt(density*hold/lagrange) ;
+h = min(h,hmax) ;
+h = max(h,hmin) ;
+
+/////////////////////////////////////////////////////
+// Bracketing the value of the Lagrange multiplier //
+/////////////////////////////////////////////////////
+volume=int2d(Th)(h);
+volume1 = volume ;
+//
+if (volume1 < volume0)
+{
+   lagmin = lagrange ;
+   while (volume < volume0)
+{ 
+      lagrange = lagrange/2 ;
+      h = sqrt(density*hold/lagrange) ;
+      h = min(h,hmax) ;
+      h = max(h,hmin) ;
+      volume=int2d(Th)(h) ; 
+};
+   lagmax = lagrange ;
+};
+//
+if (volume1 > volume0)
+{
+   lagmax = lagrange ;
+   while (volume > volume0)
+{
+      lagrange = 2*lagrange ;
+      h = sqrt(density*hold/lagrange) ;
+      h = min(h,hmax) ;
+      h = max(h,hmin) ;
+      volume=int2d(Th)(h) ;
+};
+   lagmin = lagrange ;
+};
+//
+if (volume1 == volume0) 
+{
+   lagmin = lagrange ;
+   lagmax = lagrange ;
+};
+
+///////////////////////////////////////////////////////
+// Dichotomy on the value of the Lagrange multiplier //
+///////////////////////////////////////////////////////
+
+inddico=0;
+while ((abs(1.-volume/volume0)) > 0.000001)
+{
+   lagrange = (lagmax+lagmin)*0.5 ;
+   h = sqrt(density*hold/lagrange) ;
+   h = min(h,hmax) ;
+   h = max(h,hmin) ;
+   volume=int2d(Th)(h) ;
+   inddico=inddico+1;
+   if (volume < volume0) 
+      {lagmin = lagrange ;} ;
+   if (volume > volume0)
+      {lagmax = lagrange ;} ;
+};
+
+//cout<<"number of iterations of the dichotomy: "<<inddico<<endl;
+
+// Solving the elasticity system
+elasticity;
+
+//Computation of the compliance
+compliance=int1d(Th,3)(g1*u+g2*v);
+compli << compliance  << endl ;
+cout<<"Compliance: "<<compliance<<" Volume: "<<volume<<" Lagrange: "<<lagrange<<endl;
+
+//////////////////////////////////////////////
+// Plot the thickness of the current design //
+//////////////////////////////////////////////
+
+caption="Iteration "+iter+", Compliance "+compliance+", Volume="+volume;
+plot(Th,h,fill=1,value=true,viso=vviso,cmm=caption,wait=0); 
+
+/////////////////////
+// End of the loop //
+/////////////////////
+};
+
+//Plot the final design
+caption="Final design, Iteration "+iter+", Compliance "+compliance+", Volume="+volume;
+plot(Th,h,fill=1,value=1,viso=vviso,cmm=caption,ps=save+".eps");
+
+//////////////////////////////////
+// Plot of the mesh deformation //
+//////////////////////////////////
+Dh = movemesh (Th,[x+coef*u,y+coef*v]);
+plot(Dh,wait=0,ps=save+"def.eps"); 
+

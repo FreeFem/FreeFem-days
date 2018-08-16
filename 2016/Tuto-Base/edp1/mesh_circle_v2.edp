@@ -1,0 +1,20 @@
+/* Mesh of a circle with a subdomain */
+// Parameters
+int nbseg=10;real R=1, xc=0, yc=0, R2=R/2;
+// borders
+border circle1(t=0,2*pi){label=1;
+                        x=xc+R*cos(t);
+                        y=yc+R*sin(t);}
+border circle2(t=0,2*pi){label=2;
+                        x=xc+R2*cos(t);
+                        y=yc+R2*sin(t);}
+plot(circle1(nbseg*2*pi*R)+circle2(nbseg*2*pi*R2),cmm="border");
+// FE mesh
+mesh Th = buildmesh(circle1(nbseg*2*pi*R)
+                   +circle2(nbseg*2*pi*R2));
+plot(Th, cmm="mesh of a circle with subdomain");
+// Identify subdomains
+cout <<"inner region:: number ="<<
+  Th(xc,yc).region <<endl;
+cout <<"inner region:: number ="<<
+  Th(xc+(R2+R)/2,yc).region <<endl;

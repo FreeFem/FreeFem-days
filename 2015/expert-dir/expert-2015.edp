@@ -1,0 +1,13 @@
+load "expert-2015"
+load "splitmesh3"
+cout << expert(1.) << endl; 
+real t=4;
+expert(t);
+cout << t<< endl; 
+mesh Th=square(1,1);
+fespace Vh(Th,P1b2);
+Vh u=x+y*y;
+mesh Th2=splitmesh3(Th);
+fespace Vh2(Th2,P1);
+Vh2 u2=u;
+plot(u2,wait=1);

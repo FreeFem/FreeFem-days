@@ -1,0 +1,9 @@
+load "pipe"
+pstream  f("gnuplot");
+for(int i=0;i<100; i++)
+ {
+   cout << i <<endl;
+  sleep(1); //100000/2);
+  f << "plot sin(x+"+ (i*.1)+ ") w l"<< endl;
+  flush(f); 
+ }

@@ -1,0 +1,79 @@
+ real meshsize = 0.05;
+ real Lx = 2;
+ real Ly = 1;
+ real Lcx = Lx*0.5;
+ real Lcy = Ly*0.5;
+ 
+ real Cx = Lx*0.9;
+ real Cy = Ly*0.8;
+ real rc = Ly*0.1;
+ real[int] xx=[-Lx,Lx,Lx,-Lx];
+ real[int] yy=[-Ly,-Ly,Ly,Ly];
+ real[int] xxc=[-Lcx,Lcx,Lcx,-Lcx];
+ real[int] yyc=[-Lcy,-Lcy,Lcy,Lcy];
+ real[int] RC(6);
+ RC = rc; 
+ real[int]  XC=[ -Cx, 0, Cx, -Cx, 0, Cx];
+ real[int]  YC=[ Cy,Cy,Cy, -Cy,-Cy,-Cy];
+ int nhz = 2*Lx/meshsize;
+ int nvt = 2*Ly/meshsize;
+ int nchz = 2*Lcx/meshsize;
+ int ncvt = 2*Lcy/meshsize;
+
+  int[int]  NC(6);
+  NC =  rc*2*pi/meshsize; 
+
+  border bb(t=0,1;i) 
+  {
+  //  cout << " i = " << i << endl; 
+    int ii = (i+1)%4; real t1 = 1-t;
+    x = xx[i]*t1 + xx[ii]*t;
+    y =  yy[i]*t1 + yy[ii]*t;
+    label = 1; ; 
+  }
+    border aa(t=0,1;i) 
+  {
+  //  cout << " i = " << i << endl; 
+    int ii = (i+1)%4; real t1 = 1-t;
+    x = xxc[i]*t1 + xxc[ii]*t;
+    y =  yyc[i]*t1 + yyc[ii]*t;
+    label = 0; ; 
+  }
+  border cc(t=0,2*pi;i) 
+{
+	x = RC[i]*cos(t)+XC[i];
+	y = RC[i]*sin(t)+YC[i];
+	label = i+1; 
+}
+  int[int] nn=[nhz,nvt,nhz,nvt];
+  int[int] nnc=[nchz,ncvt,nchz,ncvt];
+  plot(bb(nn),cc(NC),aa(nnc),wait=1);
+  mesh Th= buildmesh(aa(nnc)+bb(nn)+cc(NC)) ; 
+  plot(Th,wait=1); 
+  //  changer les numero de region du maillage ...
+  int [int] nreg(8);
+  for(int i=0; i < 6; ++i)
+    nreg[i]=Th(XC[i],YC[i]).region;
+   nreg[6]= Th(0,0).region;
+   nreg[7]= Th(Lx*0.99,Ly*0.99).region;
+   
+   cout << " les numeros de region " << nreg << endl;
+   int[int] non(8*2);
+   int k=0; 
+   for (int i=0; i < 8; ++i)
+    { 
+        non[k++] = nreg[i];
+        non[k++] = i;
+    }
+    cout << "region  Old-> New " << non << endl; 
+   Th = change(Th, region= non);
+   plot(Th, wait=1,fill=1, ps="Th-four.eps");
+   for(int  i=0; i< 8; ++i)
+    cout << " aire " << i << " = " << int2d(Th,i)(1.) 
+         << " xm = " << int2d(Th,i)(x)/int2d(Th,i)(1.)
+         << " ym =" << int2d(Th,i)(y)/int2d(Th,i)(1.)
+         << endl; 
+  savemesh(Th,"four2.msh");        
+   
+  
+  

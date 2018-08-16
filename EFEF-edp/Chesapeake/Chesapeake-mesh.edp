@@ -1,0 +1,90 @@
+real hmin=2;
+/*  Chesapeake bay: Build mesh
+   ----------------------------------
+  make during the European Finite Element Fair 2009 
+  in TTK/ Helsinki  (6 june 2009) 
+  http://math.tkk.fi/numericsyear/fefair/
+  By F. Hecht 
+  
+
+  FROM DATA  Chesapeake.jpg come form the  presentation of 
+  Mme. Sonia Garcia email: smg at usna.edu
+  
+  Professors Denny Kirwan and Bruce Lipphardt - UD   Mrs. Lisa Becktold and the CADIG staff    Dr. Tom Gross - NOAA    USNA Chesapeake Bay Group: 
+       Reza Malek-Madani, Kevin McIlhany, Gary Fowler, John Pierce,
+        Irina Popovici, Sonia Garcia, George Nakos, Louise Wallendorf,
+        Bob Bruninga, Jim D’Archangelo
+        
+Remark, I will all tool to build best mesh, it is a  first test
+to buid mesh form image.        
+
+2 hours of work 
+*/
+
+load "ppm2rnm"
+/*  
+ to bluid pgm file : on shell do : 
+# convert Chesapeake.jpg Chesapeake.pgm
+*/
+
+string Chesapeake="Chesapeake.pgm";
+real[int,int] ff1(Chesapeake); // read  image and set to an rect. array 
+//  remark (0,0) is the upper, left corner.
+int nx = ff1.n, ny=ff1.m; 
+// build a cartesain mesh such that the origne is qt the right place.
+mesh Th=square(nx-1,ny-1,[(nx-1)*(x),(ny-1)*(1-y)]); 
+mesh Tf=Th;
+// warning  the numbering is of the vertices (x,y) is 
+// given by $  i = x/nx + nx* y/ny $
+fespace Vh(Th,P1);
+fespace Vf(Th,P1);
+/*
+Vh ll;
+for(int i=0;i<pends.n;i++)
+  {
+  	  real xx= pends[i++];
+  	  real yy= ny-pends[i];
+  	  ll = ll + i*(square(x-xx)+(square(y-yy)) < 25);
+  }
+plot(ll,wait=1);*/
+Vh f1,f2;
+f1[]=ff1; //  transforme array in finite element function.
+
+f2= f1 < 0.99;
+
+plot(f1,wait=1,dim=2,fill=1);
+
+
+Th=adaptmesh(Th,f2,nbvx=1000000,hmin=max(10.,hmin)); // start with a coarse mesh to go fast.
+Th=adaptmesh(Th,f2,nbvx=1000000,hmin=max(5.,hmin));
+if(hmin<6)
+Th=adaptmesh(Th,f2,nbvx=1000000,hmin=max(1.,hmin)); // the final mesh 
+if(hmin<2)
+Th=adaptmesh(Th,f2,nbvx=1000000,hmin=hmin); // the final mesh 
+plot(Th,wait=1);
+
+f2=f2;
+Th=trunc(Th,f2>0.9); //   remove 
+
+plot(Th,wait=1);
+
+
+//  a small problem to separed the connect component of the meshes.
+//  We solve a   $ \epsilon u - \Delta u = 0, \partial_n u = 1 $
+// so the solution is almost constant on each connect component $C$
+// and the value is  $ 1/\epsilon \int_{\partial C}/ \int_C 1 $ 
+// so the greatest component have the mininql value.
+
+macro Grad(u) [dx(u),dy(u)] //
+Vh u,v;
+solve P(u,v)= int2d(Th)(u*v*1e-5+ Grad(u)'*Grad(v)) - int1d(Th)(v);
+plot(u,wait=1,fill=1);
+//  set:  the  threshold value value :  l=  min + 10% 
+real l=u[].min + (u[].max-u[].min)*0.1;
+cout << " l = " << l << endl;
+
+Th=trunc(Th,u<l);//  remove a element greater to l 
+plot(Th,wait=1);
+savemesh(Th,"Th-"+hmin+".msh");
+
+

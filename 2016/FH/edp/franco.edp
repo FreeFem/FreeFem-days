@@ -1,0 +1,129 @@
+// franco@us.es
+// daniel 
+// in => i+1, ip = i-1
+//  sum_i  h int grad(ui)(vi) + 1/h sum_i int (ui-uin)(vi-vin) = sum_i h inf f*vi
+// so equation en vi =>
+//  h int grad(ui)(vi) + 1/h int (ui-uin)(vi) - 1/h int (uip-ui)(vi) = sum_i h inf f*vi
+//   h int grad(ui)(vi) + 1/h int (2* ui -uin - uip )(vi) = sum_i  h inf f*vi
+real f =1;
+mesh Th=square(10,10);
+int[int] L=[1,2,3,4]; 
+int NZ = 10;
+real hz = 1./NZ; 
+fespace Vh(Th,P1);
+macro grad(u) [dx(u),dy(u)]//
+
+Vh[int] uh(NZ+1);
+Vh[int] wh(NZ+1);
+
+int n2= Vh.ndof;
+int n3= Vh.ndof*(NZ-1);
+
+real[int] U(n3); //
+macro U2uh(U,uh)
+{
+    
+    for(int i=1;i<NZ;++i)
+    {
+      int ii = (i-1)*Vh.ndof;
+      int ij = (i)*Vh.ndof-1;     
+       uh[i][]=U(ii:ij); 
+    }
+}
+//
+
+macro uh2Um(U,uh)
+{    
+    for(int i=1;i<NZ;++i)
+    {
+      int ii = (i-1)*Vh.ndof;
+      int ij = (i)*Vh.ndof-1;     
+      U(ii:ij)-=uh[i][]; 
+    }
+}
+//
+
+uh[0] = 0;
+uh[NZ] = 0;
+wh[0] = 0;
+wh[NZ] = 0;
+// equation on i:
+varf va(u,v)=int2d(Th)(hz*grad(u)'*grad(v)+ 2./hz *u*v ) + on(L,u=0);
+varf vb(u,v)=int2d(Th)(u*v/hz) + int2d(Th)(f*v)+on(L,u=0);
+
+
+varf vl(u,v)=int2d(Th)(1*v) + on(L,u=0);
+
+matrix A = va(Vh,Vh,solver=sparsesolver);
+matrix M = vb(Vh,Vh,solver=CG);
+real[int][int] rhs(NZ);
+for(int i=0;i< NZ; ++i)
+{
+ rhs[i].resize(n2);   
+ rhs[i]=vb(0,Vh); 
+}
+ 
+func real JACOBI(real[int ] & U)
+{ // Gauss-Siedel 
+    real err=0,erri;
+    for(int i=1;i<NZ;++i) 
+     {
+      real[int] bh= rhs[i];
+      
+      real[int]  w(n2);
+      w = M*uh[i-1][] ; bh += w ;
+      w = M*uh[i+1][] ; bh += w ;
+      w = A^-1*bh;
+      bh = uh[i][]-w; 
+      erri=bh.linfty;
+      uh[i][]= w ;
+      cout << "    - i " <<  erri << " " << w.linfty << " " << w.min <<  endl;
+      err +=   erri ;  
+     }
+    cout << "  err= " << err << endl; 
+    return err;
+}
+func real[int]  Jzero(real[int ] & U)
+{ // jacobi iteration 
+    real err=0,erri;
+    U2uh(U,uh);
+    for(int i=1;i<NZ;++i) 
+     {
+      real[int] bh= rhs[i];
+      
+      real[int]  w(n2);
+      w = M*uh[i-1][] ; bh += w ;
+      w = M*uh[i+1][] ; bh += w ;
+      w = A^-1*bh;
+      bh = uh[i][]-w; 
+      erri=bh.linfty;
+      wh[i][]= w ;
+    //  cout << "    - i " <<  erri << " " << w.linfty << " " << w.min <<  endl;
+      err +=   erri ;  
+     }
+    uh2Um(U,wh);
+    cout << "  err= " << err << endl; 
+    return U;
+}
+
+U=0;
+for(int k=0; k <100; ++k)
+{
+ real  err=JACOBI( U);
+  if(err< 1e-5) {
+      plot(uh[1],uh[5], uh[NZ-1],wait=1,cmm=" k="+k); 
+
+    break; 
+  }
+}
+
+U=0;
+LinearCG(Jzero,U,nbiter=100, eps=1e-5); 
+ plot(uh[1],uh[5], uh[NZ-1],wait=1); 
+
+
+
+
+
+
+

@@ -1,0 +1,326 @@
+/////////////////////////////////////////////////////
+// Méthode d'homogénéisation pour la minimisation  //
+//         de la compliance d'un pont              //
+//     (avec un maillage structure symétrique)     //
+//                                                 //
+//         Ecole Polytechnique, MAP 562            //
+//         Copyright G. Allaire, 2011              //
+/////////////////////////////////////////////////////
+
+ofstream fichobj("pont.struct.obj");
+string sauve="pont.struct";		// Nom du fichier de sauvegarde
+int niternp=30;			// Nombre d'itérations non pénalisées
+int niterpp=30;			// Nombre d'itérations pénalisées
+int niter=niternp+niterpp;	// Nombre d'itérations total
+int p=0;			// Degré de pénalisation:  p grand-> pénalisation plus faible
+int n=6;			// Taille du maillage
+real compliance;		// Compliance
+string legende;			// Légende pour les sorties graphiques
+real Y=1;			// Module de Young
+real nu=0.3;			// Coefficient de Poisson
+real lagrange=1;		// Multiplicateur de Lagrange
+real lagmin, lagmax;		// Encadrement du multiplicateur de Lagrange
+real masse0;			// Masse initiale
+real masse,masse1;		// Masse de la forme courante
+int inddico ;			// Indice dans la recherche du multiplicateur de Lagrange
+real epsil=0.01;		// Rapport de rigidité du matériau mou par rapport au vrai
+real thetamoy=0.3;		// Densité moyenne de matière
+real pi=4*atan(1);		// Valeur de pi=3.14159...
+real sqrt2 = sqrt(2.);		// Racine carrée de 2
+func f1=0;  			// Forces appliquées
+func f2=-1;
+
+// Définition des isovaleurs de tracé
+real[int] vviso(21);
+for (int i=0;i<21;i++)
+vviso[i]=i*0.05 ;
+/////////////////////////////////////
+// Calcul des coefficients de Lamé //
+/////////////////////////////////////
+real lambda=Y*nu/((1.+nu)*(1.-2.*nu));
+real mu=Y/(2.*(1.+nu));
+real K=(mu+lambda)/(mu*(2*mu+lambda));
+real kappa=lambda+mu;
+
+////////////////////////////// 			1:Condition de Dirichlet
+// Construction du maillage // 			2:Condition Libre
+////////////////////////////// 			3:Condition de Neuman non nulle
+real y0=0. , y1= 1.2 ;
+real x0=-1. , x1= -0.9 , x2= -0.1 , x3= 0.1 , x4= 0.9 , x5= 1. ;
+int[int] l1=[1,0,2,2] ;
+int[int] l2=[2,4,2,0] ;
+int[int] l3=[3,4,2,4] ;
+int[int] l4=[2,4,2,4] ;
+int[int] l5=[1,2,2,4] ;
+mesh Th1=square(n,12*n,[x0+(x1-x0)*x,y0+(y1-y0)*y],label=l1,flags=1);
+mesh Th2=square(8*n,12*n,[x1+(x2-x1)*x,y0+(y1-y0)*y],label=l2,flags=1);
+mesh Th3=square(2*n,12*n,[x2+(x3-x2)*x,y0+(y1-y0)*y],label=l3,flags=1);
+mesh Th4=square(8*n,12*n,[x3+(x4-x3)*x,y0+(y1-y0)*y],label=l4,flags=1);
+mesh Th5=square(n,12*n,[x4+(x5-x4)*x,y0+(y1-y0)*y],label=l5,flags=1);
+mesh Th = Th1+Th2+Th3+Th4+Th5;
+
+plot(Th,wait=1,ps=sauve+".maillage.eps");
+
+
+/////////////////////////////////////
+// Espaces d'éléments finis        //
+// (u,v) = déplacement             //
+// sigma = tenseur des contraintes //
+// theta = densité de matière      //
+/////////////////////////////////////
+fespace Vh0(Th,P0);
+fespace Vh2(Th,[P2,P2]);
+
+Vh2 [u,v],[w,s];
+Vh0 theta,theta1,A,B,C,D,E,F,m1,m2,A1,B1,C1,D1,E1,F1,DET;
+Vh0 sigma11,sigma22,sigma12,vp1,vp2,e1x,e1y,e2x,e2y;
+
+////////////////////
+// Initialisation //
+////////////////////
+
+func theta0=thetamoy;
+theta=theta0;
+// Masse initiale
+real volume=int2d(Th)(1.);
+masse0=int2d(Th)(theta);
+masse0 = masse0/volume ;
+
+///////////////////////////////////////////////////////////////////////////
+// Notations tensorielles:                                               //
+// Les matrices symétriques 2x2 sont rangées dans un vecteur de taille 3 //
+// M=(M11,M22,sqrt(2)*M12)^t de maniere a ce que la norme du vecteur     //
+// corresponde a la norme de la matrice.                                 //
+// Un tenseur d'ordre 4 symétrique est alors une matrice symétrique 3x3. //
+// Le tenseur d'élasticité est donc donné par:                           //
+//	(	A	D	F	)				 //
+//	(	D	B	E	)				 //
+//	(	F	E	C	)				 //
+// Voir ci-dessous le calcul de sigma en fonction de e(u).               //
+///////////////////////////////////////////////////////////////////////////
+//tenseur initial (domaine plein de matière)
+A = lambda+2*mu;
+B = lambda+2*mu;
+C = 2*mu;
+D = lambda;
+E = 0;
+F = 0;
+//tenseur initial (borne supérieure de Hashin-Shtrikman)
+real kapef, muef;
+kapef = thetamoy*kappa*mu/((1.-thetamoy)*kappa+mu) ;
+muef = thetamoy*kappa*mu/(kappa+(1.-thetamoy)*(kappa+2*mu)) ;
+C = 2.*muef ;
+D = kapef - muef ;
+A = D+C;
+B = D+C;
+E = 0;
+F = 0;
+///////////////////////////
+// Definition du système //
+///////////////////////////
+problem elasticite([u,v],[w,s]) =
+int2d(Th)(	 (A*dx(u)+D*dy(v)+F*sqrt2*(dx(v)+dy(u))/2) 	* dx(w)
+		+(D*dx(u)+B*dy(v)+E*sqrt2*(dx(v)+dy(u))/2) 	* dy(s)
+		+(F*dx(u)+E*dy(v)+C*sqrt2*(dx(v)+dy(u))/2) 	* sqrt2*(dx(s)+dy(w))/2	)
+- int1d(Th,3)( f1*w + f2*s )
++ on(1,v=0)
+;
+
+//////////////////////////////////
+//     Boucle d'optimisation    //
+//////////////////////////////////
+
+int iter;
+for (iter=1;iter< niter;iter=iter+1)
+{
+cout <<"Iteration " <<iter <<" ----------------------------------------" <<endl;
+
+elasticite;
+
+compliance = int1d(Th,3)(f1*u+f2*v);
+
+cout<<"compliance = "<<compliance<<endl;
+fichobj<<compliance<<endl;
+
+///////////////////////////////////
+// Tenseur des contraintes sigma //
+///////////////////////////////////
+sigma11 = A*dx(u)+	D*dy(v)+	F*sqrt2*(dx(v)+dy(u))/2;
+sigma22 = D*dx(u)+	B*dy(v)+	E*sqrt2*(dx(v)+dy(u))/2;
+sigma12 =(F*dx(u)+	E*dy(v)+	C*sqrt2*(dx(v)+dy(u))/2)/sqrt2;
+
+/////////////////////////////////////
+// Diagonalisation de sigma        //
+//  vp1, vp2 = valeurs propres     //
+// (e1x,e1y) = 1er  vecteur propre //
+// (e2x,e2y) = 2eme vecteur propre //
+/////////////////////////////////////
+vp1 = (sigma11+sigma22+sqrt((sigma11-sigma22)^2+4*sigma12^2))/2;
+vp2 = (sigma11+sigma22-sqrt((sigma11-sigma22)^2+4*sigma12^2))/2;
+
+real delta = 1.e-6 ;
+e1x = sigma12/sqrt(sigma12^2+(vp1-sigma11)^2+delta^2);
+e1y = (vp1-sigma11)/sqrt(sigma12^2+(vp1-sigma11)^2+delta^2);
+e2x = e1y ;
+e2y = -e1x ;
+
+/////////////////////////////////////
+// Proportions du laminé de rang 2 //
+/////////////////////////////////////
+m1 = abs(vp2)/(abs(vp1)+abs(vp2));
+m2 = abs(vp1)/(abs(vp1)+abs(vp2));
+
+///////////////////////////////////////////
+// Calcul de la densité de matière theta //
+///////////////////////////////////////////
+theta1 = sqrt(mu+kappa)/sqrt((4*mu*kappa))*(abs(vp1)+abs(vp2));
+theta = theta1/sqrt(lagrange);
+theta = min(1,theta);
+
+/////////////////////////////////////////////////
+// Détermination du multiplicateur de Lagrange //
+/////////////////////////////////////////////////
+masse = int2d(Th)(theta)/volume;
+masse1 = masse;
+
+// Encadrement du multiplicateur de Lagrange
+if (masse1 < masse0)
+{
+   lagmin = lagrange ;
+   while (masse < masse0)
+{
+      lagrange = lagrange/2 ;
+      theta = theta1/sqrt(lagrange);
+      theta = min(1,theta);
+      masse = int2d(Th)(theta)/volume ;
+};
+   lagmax = lagrange ;
+};
+//
+if (masse1 > masse0)
+{
+   lagmax = lagrange ;
+   while (masse > masse0)
+{
+      lagrange = 2*lagrange ;
+      theta = theta1/sqrt(lagrange);
+      theta = min(1,theta);
+      masse = int2d(Th)(theta)/volume ;
+};
+   lagmin = lagrange ;
+};
+//
+if (masse1 == masse0)
+{
+   lagmin = lagrange ;
+   lagmax = lagrange ;
+};
+
+// Dichotomie sur le multiplicateur de Lagrange
+inddico=0;
+while ((abs(1.-masse/masse0)) > 0.000001)
+{
+   lagrange = (lagmax+lagmin)*0.5 ;
+      theta = theta1/sqrt(lagrange);
+      theta = min(1,theta);
+   masse = int2d(Th)(theta)/volume ;
+   inddico=inddico+1;
+   if (masse < masse0)
+      {lagmin = lagrange ;} ;
+   if (masse > masse0)
+      {lagmax = lagrange ;} ;
+
+};
+
+cout<<"Nombre d'iterations de Lagrange "<<inddico<<endl;
+
+////////////////////////////
+// Pénalisation de theta  //
+////////////////////////////
+if (iter>niternp)
+{theta=((1-cos(pi*theta))/2+p*theta)/(p+1);}
+;
+
+///////////////////////////////////
+// Calcul du tenseur homogénéisé //
+///////////////////////////////////
+
+// Contribution des directions de lamination
+A =	m1 * ( (lambda+2*mu) - 1/mu*(lambda^2*e1y^2+(lambda+2*mu)^2*e1x^2) + K*((lambda+2*mu)*e1x^2+lambda*e1y^2)^2 )
+	+m2* ( (lambda+2*mu) - 1/mu*(lambda^2*e2y^2+(lambda+2*mu)^2*e2x^2) + K*((lambda+2*mu)*e2x^2+lambda*e2y^2)^2 );
+B =	m1 * ( (lambda+2*mu) - 1/mu*(lambda^2*e1x^2+(lambda+2*mu)^2*e1y^2) + K*((lambda+2*mu)*e1y^2+lambda*e1x^2)^2 )
+	+m2* ( (lambda+2*mu) - 1/mu*(lambda^2*e2x^2+(lambda+2*mu)^2*e2y^2) + K*((lambda+2*mu)*e2y^2+lambda*e2x^2)^2 );
+C =	m1 * ( 4*mu - 1/mu*(2*mu)^2 + K*(4*mu*e1x*e1y)^2 )/2
+	+m2* ( 4*mu - 1/mu*(2*mu)^2 + K*(4*mu*e2x*e2y)^2 )/2;
+D = 	m1 * ( 2*lambda - 1/mu*(2*lambda*(lambda+2*mu)) + K*2*((lambda+2*mu)*e1y^2+lambda*e1x^2)*((lambda+2*mu)*e1x^2+lambda*e1y^2) )/2
+	+m2* ( 2*lambda - 1/mu*(2*lambda*(lambda+2*mu)) + K*2*((lambda+2*mu)*e2y^2+lambda*e2x^2)*((lambda+2*mu)*e2x^2+lambda*e2y^2) )/2;
+E =	m1 * ( -1/mu*(4*mu*(2*lambda+2*mu)*e1x*e1y) + K*2*(4*mu*e1x*e1y*((lambda+2*mu)*e1y^2+lambda*e1x^2)) )/(2*sqrt2)
+	+m2* ( -1/mu*(4*mu*(2*lambda+2*mu)*e2x*e2y) + K*2*(4*mu*e2x*e2y*((lambda+2*mu)*e2y^2+lambda*e2x^2)) )/(2*sqrt2);
+F = 	m1 * ( -1/mu*(4*mu*(2*lambda+2*mu)*e1x*e1y) + K*2*(4*mu*e1x*e1y*((lambda+2*mu)*e1x^2+lambda*e1y^2)) )/(2*sqrt2)
+	+m2* ( -1/mu*(4*mu*(2*lambda+2*mu)*e2x*e2y) + K*2*(4*mu*e2x*e2y*((lambda+2*mu)*e2x^2+lambda*e2y^2)) )/(2*sqrt2);
+
+// Ajout du matériau mou (qui simule le vide)
+A = epsil/(1.-epsil)*(lambda+2*mu)	+ theta*A;
+B = epsil/(1.-epsil)*(lambda+2*mu)	+ theta*B;
+C = epsil/(1.-epsil)*2*mu		+ theta*C;
+D = epsil/(1.-epsil)*lambda		+ theta*D;
+E = epsil/(1.-epsil)*0			+ theta*E;
+F = epsil/(1.-epsil)*0			+ theta*F;
+
+//Première inversion
+DET = A*B*C-A*E*E-B*F*F-C*D*D+2*D*E*F;
+A1=(B*C-E*E)/DET;
+B1=(A*C-F*F)/DET;
+C1=(A*B-D*D)/DET;
+D1=(E*F-C*D)/DET;
+E1=(D*F-A*E)/DET;
+F1=(D*E-B*F)/DET;
+
+A = (1-theta)*A1+(lambda+2*mu)/(4*mu*(lambda+mu));
+B = (1-theta)*B1+(lambda+2*mu)/(4*mu*(lambda+mu));
+C = (1-theta)*C1+1/(2*mu);
+D = (1-theta)*D1-lambda/(4*mu*(lambda+mu));
+E = (1-theta)*E1;
+F = (1-theta)*F1;
+
+//Deuxième inversion
+DET = A*B*C-A*E*E-B*F*F-C*D*D+2*D*E*F;
+A1=(B*C-E*E)/DET;
+B1=(A*C-F*F)/DET;
+C1=(A*B-D*D)/DET;
+D1=(E*F-C*D)/DET;
+E1=(D*F-A*E)/DET;
+F1=(D*E-B*F)/DET;
+A=A1;
+B=B1;
+C=C1;
+D=D1;
+E=E1;
+F=F1;
+
+legende="Iteration "+iter+", Compliance "+compliance+", Masse="+masse;
+plot(Th,theta,fill=1,value=true,viso=vviso,wait=0,cmm=legende);
+//plot(Th,theta,fill=1,value=true,viso=vviso,wait=0,cmm=legende,ps=sauve+iter+".eps");
+//plot(Th,[e1x,e1y],fill=1,viso=vviso,wait=true);
+//plot(Th,vp1,fill=1,value=true,viso=vviso,wait=true);
+//plot(Th,vp2,fill=1,value=true,viso=vviso,wait=true);
+if (iter == niternp)
+{ ofstream file(sauve+".np.bb");
+	file << theta[].n << " \n";
+	int j;
+	for (j=0;j<theta[].n ; j++)
+	file << theta[][j] << endl;  }
+;
+//
+};
+
+
+
+legende="Forme finale, Iteration "+iter;
+plot(Th,theta,fill=1,value=1,viso=vviso,cmm=legende,ps=sauve+".eps");
+{ ofstream file(sauve+".bb");
+	file << theta[].n << " \n";
+	int j;
+	for (j=0;j<theta[].n ; j++)  
+	file << theta[][j] << endl;  }  	
+exec("xd3d -bord=2 -hidden -fich="+sauve+".bb -iso=11 -nbcol=10 -table=8 "+sauve);

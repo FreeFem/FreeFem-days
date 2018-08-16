@@ -1,0 +1,86 @@
+int nn = 30; 
+int niter = 100; 
+mesh Th= square(nn,nn);
+real theta = 1.*pi/180; 
+real st = sin(theta),ct =cos(theta);
+Th = movemesh(Th,[x*ct+y*st, -x*st+ y*ct]);
+plot(Th,wait=1);
+func Pk = P2;
+
+macro grad(w) [dx(w),dy(w)]// 
+macro Grad(u) [grad(u#1),grad(u#2)]// 
+
+macro Ugradv3(u1,u2,v)  (u1*dx(v)+u2*dy(v))// 
+macro Ugradv(U,v)  (U'*grad(v))// 
+macro Ugradv2(a,v)  ([a#1,a#2]'*grad(v))// 
+macro UgradV(a,v) [Ugradv2(a,v#1),Ugradv2(a,v#2)]// 
+macro div(u) (dx(u#1)+dy(u#2))//
+
+fespace Wh(Th,[Pk,Pk,P1,P2]) ;
+ 
+
+real[int] tRa = [1e4,1e4,1e5,1e6]; // 10^4
+real Pr = 0.71; 
+
+int lH = 1, lC = 3;
+int[int] lU =[1,2,3,4]; 
+
+Wh [u1,u2,p,T];
+Wh [up1,up2,pp,Tp];
+Wh [v1,v2,q,TT];
+
+[up1,up2,pp,Tp]=[0,0,0,0];
+real tol = 1e-1;
+real tolf =1e-6;
+real err=0;
+real epsp = 1e-8;  
+for(int step=0; step<tRa.n; ++step)
+{
+	real Ra=tRa[step];
+	real nu = sqrt(Pr/Ra) ;
+	real kappa = (Pr*Ra)^-0.5; 
+	
+for(int iter=0; iter< niter; ++iter)
+{
+solve Pb([u1,u2,p,T],[v1,v2,q,TT]) =
+int2d(Th)( nu* ( Grad(u):Grad(v))  + (UgradV(up,u):[v1,v2])
+- p*div(v) - q*div(u) - epsp*p*q - T*v2
++ kappa*grad(T)'*grad(TT) + Ugradv([up1,up2],T)*TT )
++ on(lH,T=1) + on(lC,T=0) +on(lU,u1=0,u2=0);
+up1[]-=u1[];  
+err = up1[].linfty; 
+cout << " Ra="  << Ra << " " << iter << " err = " << err << endl; 
+up1[]=u1[];
+plot([u1,u2],p, wait=0,cmm= "Ra ="+ Ra + " "+iter);
+if( err < tol) break;
+}
+tol=tolf; 
+plot([u1,u2],p, wait=1,cmm= "U,p Ra ="+ Ra );
+plot(T,wait=1,cmm= "T,Ra ="+ Ra );
+cout << " Nusselt = "  << int1d(Th,1)( grad(T)'*[N.x,N.y]) << endl;
+{
+	ofstream fx("x-"+Ra+".txt");
+	ofstream fy("y-"+Ra+".txt");
+	int ni = 1000; 
+	for(int i=0; i<= ni; ++i)
+	{
+		real xx = real(i)/ni;
+		real yy = 0.5;
+		fx << xx << " " << yy << " " << u1(xx,yy) << " " << u2(xx,yy) 
+		         << " " << p(xx,yy) << " "<< T(xx,yy) <<endl;
+        yy = real(i)/ni;
+		xx = 0.5;
+		fy << xx << " " << yy << " " << u1(xx,yy) << " " << u2(xx,yy) 
+		   << " " << p(xx,yy) << " "<< T(xx,yy) <<endl;
+	}
+}
+ Th= square(nn,nn);
+ [u1,u2,p,T]=[0,0,0,0]; // 
+ u1[]=up1[]; 
+ [up1,up2,pp,Tp]=[0,0,0,0]; 
+ up1[]=u1[]; 
+}
+ 
+
+
+

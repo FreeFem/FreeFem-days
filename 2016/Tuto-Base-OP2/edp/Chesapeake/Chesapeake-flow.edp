@@ -1,0 +1,61 @@
+
+
+
+
+/*
+  Compute the eigen vector of the pontentiel flow on the 
+   Chesapeak Bay,
+   
+   Frederic Hecht  UPMC PARIS France.
+   during the European Finite Element Fair 2009 
+    in TTK/ Helsinki  (6 june 2009) 
+
+
+    Remark: before  run the  Chesapeak-mesh.edp script to build
+    the Th-1.msh mesh file.
+    
+*/
+real hmin=3;
+mesh Th("Th-"+hmin+".msh");
+fespace Vh(Th,P1);
+macro Grad(u) [dx(u),dy(u)] //
+Vh u,v;
+
+real tol = 0.01;
+// a trick to have  not to bad mesh .
+//solve PP(u,v)= int2d(Th)( 0.01*u*v+Grad(u)'*Grad(v)) - int2d(Th)(1*v)+on(2,u=0);
+//plot(u,wait=1,nbiso=100);exit(0);
+//Th=adaptmesh(Th,u,nbvx=1000000,hmin=1,ratio=1.8);
+//Th=adaptmesh(Th,u,nbvx=1000000,hmin=1,ratio=1.8);
+u=0;v=0;
+
+for(int step=0;step<2;++step)
+{
+varf vP(u,v) = int2d(Th)( Grad(u)'*Grad(v)) + on(2,u=0); 
+varf vM(u,v) = int2d(Th)( u*v)  ;
+
+matrix A=vP(Vh,Vh,solver=UMFPACK);
+matrix B=vM(Vh,Vh);
+
+int nev=20;  // number of computed eigen valeu close to sigma
+
+real[int] ev(nev); // to store nev eigein value
+Vh[int] eV(nev);   // to store nev eigen vector
+
+
+int k=EigenValue(A,B,sym=true,sigma=0,value=ev,vector=eV,tol=1e-10,maxit=0,ncv=0);
+
+for (int i=0;i<min(k,nev);i++)
+{
+ Vh u1=eV[i];
+  plot(eV[i],dim=3,fill=1,cmm="Eigen  Vector "+i+" valeur =" + ev[i]  ,wait=1,value=1);
+}
+// to build de mesh adqpted to all eigen value. 
+ Vh m11=0,m22=0,m12=0; // reset metric  
+ if(step>=0) break; 
+ for (int i=1;i<k;i++)
+      adaptmesh(Th,eV[i],err=tol,metric=[m11[],m12[],m22[]],nomeshgeneration= true );  // 
+ Th= adaptmesh(Th,eV[0],metric=[m11[],m12[],m22[]],ratio=2,nbvx=1000000);
+ plot(Th,wait=1,dim=3);
+ u=0;v=0;
+}

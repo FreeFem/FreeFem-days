@@ -1,0 +1,87 @@
+/*
+  Incompressible steady Navier Stokes + boussinesq coupled system
+    with Taylor-Hood Finite element
+    Non-linearity : Newton method
+    continuation on Rayleigh Number
+*/
+load "msh3"
+load "MUMPS_freefem"
+real  raymax = 100;  
+bool adaptation=1;
+int[int] rup=[0,1],  rdown=[0,1], rmid=[1,1,2,2,3,3,4,4];
+int nn=10;
+mesh3 Th=buildlayers(square(nn,nn),nn, zbound=[0.,1.],
+  labelmid=rmid,   labelup = rup, labeldown = rdown);
+
+fespace XXXMh(Th,[P2,P2,P2,P1,P1]);//vectorial FE space for velocity and pressure
+
+XXXMh [u1,u2,u3,p,T];
+XXXMh [uw1,uw2,uw3,pw,Tw];
+XXXMh [v1,v2,v3,q,TT]; 
+
+macro grad(u) [dx(u),dy(u),dz(u)]//
+macro Grad(u) [grad(u#1),grad(u#2),grad(u#3)]//
+macro div(u) (dx(u#1)+dy(u#2)+dz(u#3)) //
+macro ugrad(u,v) ([u#1,u#2,u#3]'*grad(v) ) //
+macro UgradV(u,v,T) [ugrad(u,v#1),ugrad(u,v#2),ugrad(u,v#3),ugrad(u,T)]//
+
+real Pr = 56.2; 
+
+
+int i=0;
+real  nu=1./100.;// define a dummy nu for reversing it to rayleigh in iteration
+real pran =.71;
+real cmT=1;
+real kT  =  1. / Pr ; 
+real eps = 1e-6;
+
+
+[u1,u2,u3,p,T]=[0,0,0,0,1-x]; 
+for(real ray=100;ray<=raymax;ray=min(raymax, ray*2.))//continuation on rayleigh number
+  { 
+    ray = min(ray,raymax);
+    cmT = - ray/Pr; 
+    kT  =  1. / Pr ; 
+    int one =adaptation;
+	for (i=0;i<=20;i++)// nonlinear newton iteration
+	  {
+	    nu =1./ray;
+       solve BoussinesqNL([uw1,uw2,uw3,pw,Tw],[v1,v2,v3,q,TT])
+       = int3d(Th) (
+       UgradV(u,uw,Tw)' * [v1,v2,v3,TT]
+     + UgradV(uw,u,T)'  * [v1,v2,v3,TT]
+     + ( Grad(uw):Grad(v)) * nu   
+     + cmT*Tw*v3 
+     + grad(Tw)'*grad(TT)*kT  
+     - div(uw)*q -div(v)*pw - eps*pw*q  
+     )
+   - int3d(Th)(
+       UgradV(u,u,T)' * [v1,v2,v3,TT]
+     + ( Grad(u):Grad(v) ) * nu 
+     + cmT*T*v3 
+     +  grad(T)'*grad(TT)*kT  
+     - div(u)*q -div(v)*p 
+     - eps*p*q  
+     ) 
+   + on(1,2,3,4, uw1=0,uw2=0,uw3=0) + on(2,4,Tw=0);
+	 u1[] -= uw1[]; 
+	cout << " iter = "<< i << " err=  " << uw1[].linfty 
+	         <<  " ray = " << ray << endl;
+	    if(uw1[].l2<1e-6) {
+      	if( one )
+        {
+         one=0;
+         //Th=adaptmesh(Th,[u1,u2],T,p,err=0.05,nbvx=100000);
+         [u1,u2,u3,p,T]=[u1,u2,u3,p,T];
+         [uw1,uw2,uw3,pw,Tw]=[0,0,0,0,0];
+        }
+        else	       
+	       break; 
+	    }
+	    plot(coef=0.2,cmm=" [u1,u2] et T  "+ray,T);  
+
+	  } ;
+      
+   plot(coef=0.2,cmm="ray="+ray+" temperature ",T,wait=0,nbiso=20); 
+   if( ray==raymax) break;  
+  }

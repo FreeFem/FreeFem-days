@@ -1,0 +1,30 @@
+#!/usr/bin/python
+if __name__ == '__main__':
+  import sys
+  import os
+  sys.path.insert(0, os.path.abspath('config'))
+  import configure
+  configure_options = [
+    '--CFLAGS=-O2',
+    '--COPTFLAGS=-O3',
+    '--CXXFLAGS=-O2 -std=c++11',
+    '--CXXOPTFLAGS=-O3',
+    '--FFLAGS=-O2',
+    '--FOPTFLAGS=-O3',
+    '--download-fftw',
+    '--download-hypre',
+    '--download-metis',
+    '--download-ml',
+    '--download-mumps',
+    '--download-parmetis',
+    '--download-pastix',
+    '--download-ptscotch',
+    '--download-scalapack',
+    '--download-suitesparse',
+    '--download-superlu',
+    '--prefix=/usr/local/ff++/mpich/petsc',
+    '--with-blas-lapack-lib=-L/opt/intel/mkl/lib -lmkl_intel_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_sequential -lm -lpthread ',
+    '--with-mpi-dir=/usr/local/ff++/mpich',
+    'PETSC_ARCH=arch-ff++',
+  ]
+  configure.petsc_configure(configure_options)

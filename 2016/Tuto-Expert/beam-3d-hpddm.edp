@@ -1,0 +1,102 @@
+// NBPROC 4
+load "medit"
+load "msh3" 
+load "MUMPS"
+load "hpddm"                        // HPDDM plugin
+load "metis"                        // Metis partitioner
+load "scotch"                       // SCOTCH partitioner
+include "macro_ddm.idp"             // additional DDM functions
+macro bbN()bb3// EOM                // three-dimensional bounding box
+macro meshN()mesh3// EOM            // three-dimensional problem
+macro intN()int3d// EOM             // three-dimensional integral
+macro intN1()int2d// EOM            // two-dimensional integral
+macro def(i)[i, i#B, i#C]// EOM     // vector field definition
+macro init(i)[i, i, i]// EOM        // vector field initialization
+
+int nn=5;
+mesh3 Th111=cube(1,1,1);;
+func Pk=[P1,P1,P1]; 
+mesh3 ThBorder, Th = Th111;
+fespace Wh(Th, Pk);                         // local finite element space
+/*# SchwarzMethod #*/
+int[int] arrayIntersection;                 // ranks of neighboring subdomains
+int[int][int] restrictionIntersection(0);   // local-to-neighbors renumbering
+real[int] D;                                // partition of unity
+
+string deflation = getARGV("-deflation", "geneo");              // coarse space construction
+int overlap = getARGV("-overlap", 1);                           // geometric overlap between subdomains
+int fakeInterface = getARGV("-interface", 10);                  // interface between subdomains
+int s = getARGV("-split", 1);                                   // refinement factor
+int partitioner = getARGV("-partitioner", 2);                   // partitioner (1: Metis, 2: SCOTCH)
+
+mpiComm comm;
+int p = getARGV("-hpddm_master_p", 1);
+bool excluded = splitComm(mpiCommWorld, p, comm, topology = getARGV("-hpddm_master_topology", 0), exclude = (usedARGV("-hpddm_master_exclude") != -1));
+cout << " excluded "<< excluded << endl;
+{
+    mesh3 ThGlobal = cube(20*nn,5*nn,5*nn,[x*5,y,z]);      // global mesh
+    build(Th, ThBorder, ThGlobal, fakeInterface, s, overlap, D, arrayIntersection, restrictionIntersection, Wh, Pk, comm, excluded)
+}
+
+real E = 21.5e4;
+real sigma = 0.29;
+real mu = E/(2*(1+sigma));
+real lambda = E*sigma/((1+sigma)*(1-2*sigma));
+real gravity = -0.05;
+
+
+real sqrt2=sqrt(2.);
+macro epsilon(u1,u2,u3)  [dx(u1),dy(u2),dz(u3),(dz(u2)+dy(u3))/sqrt2,(dz(u1)+dx(u3))/sqrt2,(dy(u1)+dx(u2))/sqrt2] // EOM
+macro div(u1,u2,u3) ( dx(u1)+dy(u2)+dz(u3) ) // EOM
+ 
+real[int] rhs;                              // local right-hand side
+matrix<real> Mat;                           // local operator
+{                                           // local weak form
+    mesh3 ThAugmented = Th + ThBorder;
+    varf vPb([u1,u2,u3],[v1,v2,v3]) = 
+    int3d(ThAugmented)(lambda*div(u1,u2,u3)*div(v1,v2,v3)	
+    +2.*mu*( epsilon(u1,u2,u3)'*epsilon(v1,v2,v3) ) //')
+      ) - int3d(ThAugmented) (gravity*v3) + on(4,u1=0,u2=0,u3=0);
+	 fespace WhAugmented(ThAugmented, Pk);
+    Mat = vPb(WhAugmented, WhAugmented, tgv = -1);
+    real[int] rhsFull = vPb(0, WhAugmented, tgv = -1);
+    matrix R = interpolate(Wh, WhAugmented);
+    renumbering(Mat, R, rhsFull, rhs);
+}
+ThBorder = Th111; 
+
+dschwarz A(Mat, arrayIntersection, restrictionIntersection, scaling = D);
+set(A, sparams = "-hpddm_schwarz_method ras -hpddm_schwarz_coarse_correction balanced -hpddm_variant right -hpddm_verbosity 1 -hpddm_geneo_nu 10");
+varf vPbNoPen([u1,u2,u3],[v1,v2,v3]) = 
+int3d(Th)(lambda*div(u1,u2,u3)*div(v1,v2,v3)	
++2.*mu*( epsilon(u1,u2,u3)'*epsilon(v1,v2,v3) ) //')
+  ) - int3d(Th) (gravity*v3) + on(4,u1=0,u2=0,u3=0);
+
+dpair ret;
+matrix<real> noPen = vPbNoPen(Wh, Wh, solver = CG);
+attachCoarseOperator(mpiCommWorld, A, A = noPen, ret = ret);
+
+Wh [u1,u2,u3]; 
+u1[] = A^-1 * rhs;
+
+ /*
+solve Lame([u1,u2,u3],[v1,v2,v3],solver=sparsesolver,master=-1)=
+  int3d(Th,mpirank)(  
+	    lambda*div(u1,u2,u3)*div(v1,v2,v3)	
+	    +2.*mu*( epsilon(u1,u2,u3)'*epsilon(v1,v2,v3) ) //')
+	      )
+  - int3d(Th,mpirank) (gravity*v3)
+  + on(4,u1=0,u2=0,u3=0)
+  ;
+if(mpirank==0)
+{
+  verbosity=1;
+real dmax= u1[].max;
+cout << " max deplacement = " << dmax << endl;
+real coef= 0.1/dmax;
+int[int] ref2=[1,0,2,0];
+mesh3 Thm=movemesh3(Th,transfo=[x+u1*coef,y+u2*coef,z+u3*coef],label=ref2);
+Thm=change(Thm,label=ref2);
+plot(Th,Thm, wait=1,cmm="coef  amplification = "+coef );
+medit(" Th ",Th,Thm);
+}*/ 

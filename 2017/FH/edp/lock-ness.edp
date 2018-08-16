@@ -1,0 +1,65 @@
+load "ppm2rnm" load "isoline" load "shell"
+string lac="lock-ness", lacjpg =lac+".jpg", lacpgm =lac+".pgm";
+if(stat(lacpgm)<0)  exec("convert "+lacjpg+" "+lacpgm);
+real lunit3 =11.6,  AreaLac =  56.4; // $ km^2$ 
+real hsize= 10; // in pixel 
+real[int,int] Curves(3,1); int[int] be(1);
+int nc;// nb of curve 
+{  
+  real[int,int] ff1(lacpgm); // read  image and set to an rect. array 
+  int nx = ff1.n, ny=ff1.m; // grey value beetween 0 to 1 (dark)
+  mesh Th=square(nx-1,ny-1,[(nx-1)*(x),(ny-1)*(1-y)]);   
+   // warning  the numbering is of the vertices (x,y) is 
+   // given by $  i = x/nx + nx* y/ny $
+  fespace Vh(Th,P1);
+  Vh f1; f1[]=ff1; //  transforme array in finite element function.
+  plot(f1,cmm="image",wait=0,nbiso=100,value=1,fill=0);
+  real iso =0.07;  // try some value to get correct iso black => close to zero 
+  real[int] viso=[iso];  
+  nc=isoline(Th,f1,iso=iso,close=0,Curves,beginend=be,smoothing=.1,ratio=0.5); 
+  cout << " nc == " << nc << endl;
+  for(int i=0; i<min(1,nc);++i)
+   {
+    int i1=be(2*i),i2=be(2*i+1)-1;
+    cout <<i<< " " <<  i1 << " "<< i2;
+    plot(f1,viso=viso,[Curves(0,i1:i2),Curves(1,i1:i2)], wait=1,cmm=i);
+   }
+}
+
+int[int] iii=[0];//  chose to  componante second and  third 
+int[int] NC=[-500];// put 500 seg on each componant negativ change the oriantation
+
+border G(t=0,1;i) {  P=Curve(Curves,be(2*iii[i]),be(2*iii[i]+1)-1,t);  label= iii[i];} 		
+plot(G(NC),wait=1); 
+mesh Th=buildmesh(G(NC));
+plot(Th,wait=1,grey=0);
+real scale = sqrt(AreaLac/Th.area); // methode 1 
+//  read the gradation on image curve 1 ..
+int ib3=be(2*1),ie3=be(2*1+1)-1;
+real lg3 = Curves(0,ib3:ie3).max-Curves(0,ib3:ie3).min; // compute the bound in x 
+cout << "scale = " <<scale << " "<< lunit3/lg3 << endl;
+scale = lunit3/lg3 ; // methode 2
+Th=movemesh(Th,[x*scale,y*scale]); // resize the  mesh to have the correct scale 
+cout << " Th.area = " << Th.area << " m^2 " << " == " << AreaLac <<  "   m^2 " << endl ;
+
+// a computation for the fun ..
+{
+    macro Grad(u) [dx(u),dy(u)]//
+    fespace Vh(Th,P1);
+    varf vP(u,v) = int2d(Th)( Grad(u)'*Grad(v)) + on(1,2,3,u=0); 
+    varf vM(u,v) = int2d(Th)( u*v)  ;
+
+    matrix A=vP(Vh,Vh);   
+    matrix B=vM(Vh,Vh);
+
+    int nev=20;  // number of computed eigen valeu close to sigma
+
+    real[int] ev(nev); // to store nev eigein value
+    Vh[int] eV(nev);   // to store nev eigen vector
+
+
+    int k=EigenValue(A,B,sym=true,sigma=0,value=ev,vector=eV,tol=1e-10,maxit=0,ncv=0);
+
+    for (int i=0;i<min(k,nev);i++)
+      plot(eV[i],dim=3,fill=1,cmm="Eigen  Vector "+i+" valeur =" + ev[i]  ,wait=1,value=1);
+}

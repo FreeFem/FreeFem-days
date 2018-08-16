@@ -1,0 +1,104 @@
+real L=1, H=1, r=0.1,R=0.5,theta=pi/4.;
+real hsize = 0.1;
+real Rey = 100; 
+real x0,y0; 
+real nu = 2*r/Rey; 
+real dt = 0.1; 
+int nbiter=500;
+real Vr = 0; 
+real VR = 0.3;
+real dtheta = dt*VR/R;
+ x0 = R*cos(theta);
+ y0= R*sin(theta) ;
+border Bas(t=-L,+L) { x = t; y = -H; label=0;}
+border Haut(t=+L,-L) { x = t; y = H; label=0;}
+border Droite(t=-H,+H) { x = L; y = t; label=0;}
+border Gauche(t=H,-H) { x = -L; y = t; label=0;}
+border Pelle(t=2*pi,0) {
+    
+     x = x0  + r*cos(t) ;
+     y = y0  + r*sin(t) ;
+     label = 2; 
+      
+}
+func MyBuildMesh = buildmesh(
+  Bas(2*L/hsize) + Haut(2*L/hsize)
+  + Droite(2*H/hsize) + Gauche(2*H/hsize) + Pelle(3*2*pi*r/hsize) 
+  );
+mesh Th = MyBuildMesh;
+
+//Th=adaptmesh(Th,hsize,IsMetric=1,splitpbedge=1);  
+ plot(Th,wait=1); 
+ 
+ // def espace element fini 
+ fespace Wh(Th,[P2,P2,P1]);
+ Wh [u1,u2,p]; 
+ Wh [u1p,u2p,pp]; 
+ Wh [v1,v2,q]; 
+ Wh [w1,w2,wq]; // vect pour les force
+ 
+ varf von1([u1,u2,p],[v1,v2,q]) = on(2,u1=1,u2=0);
+ varf von2([u1,u2,p],[v1,v2,q]) = on(2,u1=0,u2=1);
+
+ [u1,u2,p]=[0,0,0] ; // donne initail
+macro Grad(u1,u2) [ dx(u1),dy(u1), dx(u2),dy(u2)]// 
+macro D(u1,u2) [ dx(u1),(dy(u1)+dx(u2))*0.5, (dy(u1)+dx(u2))*0.5 ,dy(u2)]// 
+macro UgradV(u1,u2,v1,v2) [ [u1,u2]'*[dx(v1),dy(v1)] , [u1,u2]'*[dx(v2),dy(v2)] ]// 
+macro div(u1,u2)  (dx(u1)+dy(u2))//
+ 
+ pp[] = p[]; // Attention copie u1,u2,p dans u1p,u2p,pp
+
+real epsr = 1e-8; 
+verbosity =0; 
+ for(int i=0; i<nbiter; ++i)
+ {
+//[u1p,u2p,pp]=[u1,u2,p]; // methode  de base
+    //pp[] = p[]; // Attention copie u1,u2,p dans u1p,u2p,pp
+    solve NSt( [u1,u2,p],[v1,v2,q]) 
+    = int2d(Th) ( [u1,u2]'*[v1,v2]/dt 
+                 + UgradV(u1p,u2p,u1,u2)'*[v1,v2] 
+                 + 2*nu * D(u1,u2)'*D(v1,v2) 
+                 - q* div(u1,u2)
+                 - p* div(v1,v2) 
+                 - epsr* p*q // regulatisation 
+                 )
+     - int2d(Th) ([u1p,u2p]'*[v1,v2]/dt  )
+     + on(2,u1=-Vr*(y-y0)/r + -VR*y0/R  ,u2=Vr*(x-x0)/r + VR*x0/R) 
+     + on(0,u1=0,u2=0) ;     
+     plot([u1,u2], wait=0); 
+     plot(p, wait=0,WindowIndex=1); 
+     // calcul des force ..
+   [v1,v2,q]=[0,0,0]; // 
+  // v1[] = von1(0,Wh,tgv=1);  
+   [v1,v2,q] = [ real((x > -L) & (x < L) & (y > -H) & (y < H))  , 0,0];
+   real f1 = 
+   int2d(Th) ( [u1,u2]'*[v1,v2]/dt 
+                 + UgradV(u1p,u2p,u1,u2)'*[v1,v2] 
+                 + 2*nu * D(u1,u2)'*D(v1,v2) 
+                 - q* div(u1,u2)
+                 - p* div(v1,v2) 
+                 - epsr* p*q // regulatisation 
+                 )
+     - int2d(Th) ([u1p,u2p]'*[v1,v2]/dt  )  ; 
+   v1[] = von2(0,Wh,tgv=1);   
+  // plot([v1,v2],WindowIndex=2)  ;  
+  real f2 = 
+   int2d(Th) ( [u1,u2]'*[v1,v2]/dt 
+                 + UgradV(u1p,u2p,u1,u2)'*[v1,v2] 
+                 + 2*nu * D(u1,u2)'*D(v1,v2) 
+                 - q* div(u1,u2)
+                 - p* div(v1,v2) 
+                 - epsr* p*q // regulatisation 
+                 )
+     - int2d(Th) ([u1p,u2p]'*[v1,v2]/dt  )  ;  
+     cout << " F = " << f1 << " " << f2 << endl; 
+      [u1p,u2p,pp]=[u1,u2,p]; // methode  de base 
+ theta += dtheta;  
+ x0 = R*cos(theta);
+ y0= R*sin(theta) ;
+ Th= MyBuildMesh;
+//Th=adaptmesh(Th,hsize,IsMetric=1,splitpbedge=1);         
+ }
+  
+  
+

@@ -1,0 +1,56 @@
+load "ppm2rnm" load "isoline"
+string lac="Lac-tyyppalanjarvi.pgm";
+real AreaLac =  10.03; // $Km^2$
+real hsize= 10; 
+real[int,int] Curves(3,1);
+int[int] be(1);
+int nc;// nb of curve 
+{  
+  real[int,int] ff1(lac); // read  image and set to an rect. array 
+  int nx = ff1.n, ny=ff1.m; // grey value beetween 0 to 1 (dark)
+  // build a Cartesian mesh such that the origne is qt the right place.
+  mesh Th=square(nx-1,ny-1,[(nx-1)*(x),(ny-1)*(1-y)]);   
+   // warning  the numbering is of the vertices (x,y) is 
+   // given by $  i = x/nx + nx* y/ny $
+  fespace Vh(Th,P1);
+  Vh f1; f1[]=ff1; //  transforme array in finite element function.
+  plot(f1,value=1,wait=1,cmm="image",grey=1);
+  nc=isoline(Th,f1,iso=0.75,close=0,Curves,beginend=be,smoothing=.1,ratio=0.5); 
+  verbosity=1; 
+}
+// the longuest isoline 
+int ic0=be(0), ic1=be(1)-1;		
+plot([Curves(0,ic0:ic1),Curves(1,ic0:ic1)], wait=1);
+int NC= Curves(2,ic1)/hsize;
+real xl = Curves(0,ic0:ic1).max-5;
+real yl = Curves(1,ic0:ic1).min+5;
+border G(t=0,1) {  P=Curve(Curves,ic0,ic1,t);  label= 1 + (x>xl)*2 + (y<yl);} 		
+
+plot(G(-NC),wait=1); 
+mesh Th=buildmesh(G(-NC));
+plot(Th,wait=1,grey=0);
+real scale = sqrt(AreaLac/Th.area);
+Th=movemesh(Th,[x*scale,y*scale]); // resize the  mesh to have the correct scale 
+cout << " Th.area = " << Th.area << " Km^2 " << " == " << AreaLac <<  "   Km^2 " << endl ;
+
+// a computation for the fun ..
+{
+    macro Grad(u) [dx(u),dy(u)]//
+    fespace Vh(Th,P1);
+    varf vP(u,v) = int2d(Th)( Grad(u)'*Grad(v)) + on(1,2,3,u=0); 
+    varf vM(u,v) = int2d(Th)( u*v)  ;
+
+    matrix A=vP(Vh,Vh,solver=UMFPACK);   
+    matrix B=vM(Vh,Vh);
+
+    int nev=20;  // number of computed eigen valeu close to sigma
+
+    real[int] ev(nev); // to store nev eigein value
+    Vh[int] eV(nev);   // to store nev eigen vector
+
+
+    int k=EigenValue(A,B,sym=true,sigma=0,value=ev,vector=eV,tol=1e-10,maxit=0,ncv=0);
+
+    for (int i=0;i<min(k,nev);i++)
+      plot(eV[i],dim=3,fill=1,cmm="Eigen  Vector "+i+" valeur =" + ev[i]  ,wait=1,value=1);
+}

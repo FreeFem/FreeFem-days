@@ -1,0 +1,59 @@
+mesh Th("oven.msh");
+plot(Th,wait=1); 
+fespace Ph(Th,P0); 
+fespace Vh(Th,P2); 
+Ph rh = region; 
+plot(rh, wait=1, value=1,fill=1);
+
+// truc et Astuce ...
+for( int i=0; i< 8; ++i) 
+{
+    cout << " aire reg " << i << " " << int2d(Th,i)(1.) << " " ;
+    cout << " x = " << int2d(Th,i)(x)/int2d(Th,i)(1.) ;
+    cout << " y =  " << int2d(Th,i)(y)/int2d(Th,i)(1.)  << endl;
+    
+}
+// lourd 
+//real K0 = 1, K1 = 2; ... ; 
+// func K  = (region == 0) * K0 +  (region == 1) * K1 + .....; 
+real Kr = 10; 
+real Kp = 0.1;
+real Ka = 1; 
+real[int] KK=[Kr,Kr,Kr,Kr,Kr,Kr,Kp,Ka]; 
+func K = KK[region] ; 
+Ph Kh = K; 
+plot(Kh,fill=1,wait=1,value=1); 
+
+Vh[int] u(8); 
+Vh uu,v; 
+macro grad(u) [dx(u),dy(u)] //
+for(int i=0;i< 8;++i) 
+{
+    solve Chaleur(uu,v) = int2d(Th)( ( grad(uu)'*grad(v) ) *K ) 
+    + int1d(Th,1)(uu*v) 
+    - int2d(Th) ( (region == i) * v) ;
+    u[i][]=uu[]; //
+    plot(u[i], wait=1);  
+}
+
+real[int,int] A(6,6);
+real[int] B(6),P(6);
+for(int i=0;i<6;++i)
+for(int j=0;j<6;++j)
+  A(i,j) = int2d(Th,6)(u[i]*u[j]) ; 
+  for(int i=0;i<6;++i)
+  B[i]  = int2d(Th,6)(100*u[i]) ; 
+  
+  //  resoudre A P = B
+load "lapack"
+ real[int,int] A1(6,6); A1=A^-1; // (6,6); 
+ P= A1*B; 
+ cout << " P = " << P << endl;
+ // construct de la solution...
+ uu[]=0;
+ for(int i=0;i<6;++i)
+    uu[] += P[i]*u[i][]; 
+
+plot( uu, wait=1,cmm=" sol"); 
+
+

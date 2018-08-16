@@ -1,0 +1,22 @@
+/* Mesh of a smiley using macros    */
+macro Bellipse(bname,Rmx,Rmy,xm,ym,labelm)
+      border bname(t=0,2*pi)
+      {label=labelm; x=xm+Rmx*cos(t);y=ym+Rmy*sin(t);}//EOM
+// Parameters
+int nbseg=10;
+//head
+real Rh=2, xh=1, yh=2, Lh=2*pi*Rh;
+Bellipse(bs1,Rh,Rh,xh,yh,1);
+//eyes
+real xy1=xh+Rh/2*cos(pi/4), yy=yh+Rh/2*sin(pi/4), Ry=Rh/4, Ly=2*pi*Ry;
+Bellipse(bs2,Ry,Ry,xy1,yy,2);
+real xy2=xh-Rh/2*cos(pi/4);
+Bellipse(bs3,Ry,Ry,xy2,yy,3);
+//mouth
+real a=Rh/2, b=Rh/4, Lm=pi*sqrt(2*(a^2+b^2));
+Bellipse(bs4,a,b,xh+0,yh-Rh/2,4);
+
+plot(bs1(nbseg*Lh)+bs2(nbseg*Ly)+bs3(nbseg*Ly)+bs4(nbseg*Lm));
+// FE mesh
+mesh Th = buildmesh(bs1(nbseg*Lh)+bs2(-nbseg*Ly)+bs3(-nbseg*Ly)+bs4(-nbseg*Lm));
+plot(Th, cmm="mesh of a smiley");

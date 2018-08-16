@@ -1,0 +1,38 @@
+func g=cos(2*x)*cos(2*y); // valeur au bord
+int nn=100;
+int[int] ll=[1,1,1,1];
+mesh Th=square(nn,nn,[x*pi,y*pi],label=ll);  // mesh definition of $\Omega$
+fespace Vh(Th,P1);      // finite element space
+fespace Ph(Th,P1dc);      // for  optimization  to store 1 + dx(u)^2+dy(u)^2
+Vh u=g; //  the current value of the solution
+
+Vh uh,vh,up;
+func real[int]  DJ(real[int] & X)
+{//   DJ retourne le vecteur du de derive partiel de J 
+ //  du[i] = la derive partiel / a la variable i
+	Vh u,du;
+	u[]=X;
+	varf vDJ(du,v) =int2d(Th)( (dx(v)*dx(u)+dy(v)*dy(u))/sqrt(1.+dx(u)*dx(u)+dy(u)*dy(u)))
+	                  +on(1,du=0);
+    du[]=vDJ(0,Vh);	                  
+	return du[];
+}
+varf vlap(u,v)= int2d(Th)(  dx(v)*dx(u)+dy(v)*dy(u)) +on(1,u=0);
+matrix Alap= vlap(Vh,Vh,solver=sparsesolver);
+func real[int] matLap(real[int] &u) {real[int] u1=Alap^-1*u; return u1;}
+// the fonctionnal to minimise
+func real J(real[int] & xx)
+  {
+    Vh u;u[]=xx; 
+    real r=int2d(Th)( sqrt(1 +dx(u)*dx(u) + dy(u)*dy(u) ) ) ;
+    cout << "J(x) =" << r << " " << xx.min <<  " " << xx.max << endl;
+    return r;
+  }
+  
+
+ verbosity=2;
+ u=g;
+ int conv=NLCG(DJ,u[],nbiter=100,eps=1e-4,precon=matLap);// if eps is too small 
+ // then the algo do not converge => use of Newtow Method 
+ plot(u,dim=3,fill=1); 
+ cout << " the  surface =" << J(u[])  << endl;

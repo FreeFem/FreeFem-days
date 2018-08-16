@@ -1,0 +1,25 @@
+include "cube.idp"
+    int[int]  Nxyz=[10,10,10];
+    real [int,int]  Bxyz=[[0,1],[0,1],[0,1]];
+    int [int,int]  Lxyz=[[1,1],[1,1],[1,1]];
+
+mesh3 Th3=Cube(Nxyz,Bxyz,Lxyz);
+fespace Vh(Th3,P2);
+
+Vh u,v;
+
+macro Grad3(u) [dx(u),dy(u),dz(u)]  // EOM
+func ue =   2*x*x + 3*y*y + 4*z*z + 5*x*y+6*x*z+1;
+func f= -18. ;
+problem Lap3d(u,v,solver=CG)=int3d(Th3)(Grad3(v)'*Grad3(u)) - int3d(Th3)(f*v) + on(1,u=ue);
+Lap3d;
+cout << " u min::   " << u[]. min << "  max: " << u[].max << endl;
+real err= int3d(Th3)( square(u-ue) );
+cout << int3d(Th3)(1.) << " = " << Th3.mesure << endl;
+Vh d= ue-u;
+cout <<  " err = " << err <<  " diff l^\intfy = " << d[].linfty << endl;
+
+plot(u,cmm="u",wait=1);
+plot(d,cmm="err",wait=1);
+
+assert(err < 1e-9);

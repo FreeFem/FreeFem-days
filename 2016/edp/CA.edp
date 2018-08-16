@@ -1,0 +1,30 @@
+load "Element_Mixte"
+
+real n = 1.0;  // mode number
+int np = 50; // number of edge points
+
+mesh Th = square(np,np,[x+1e-31,y]); //poloidal cross-section
+
+fespace Hrot(Th,RT1Ortho); // Raviar Thomas
+fespace Hdiv(Th,RT1); // Nedelec
+
+Hrot [ax,ay], [wx,wy]; Hdiv [jr,jz],[br,bz]; 
+
+func real nu(real rp, real zp) {
+  if((rp>0.4)&&(rp<0.5)&&(zp>0.2&&(zp<0.8))) return 1.0/50.0;      
+  return 1.0;
+}
+
+solve CurlCurl([ax,ay],[wx,wy],solver=UMFPACK) = // defines the PDE
+  int2d(Th)(nu(x,y)*(x*(dx(wy)-dy(wx))*(dx(ay)-dy(ax))
+			+ n^2*1.0/x*(wx*ax+wy*ay)))
+  + on(1,ax=0.0,ay=0.0)
+  + on(2,3,4,ax=0.0,ay=1.0*x);
+
+[br,bz] = [1.0*n*ay/x,-1.0*n*ax/x];
+
+real[int] vals = [0.99995,0.99996,0.99997,0.99998,0.99999,1.0,1.00001,1.00002,1.00003,1.00004,1.00005];
+
+plot(Th,wait=true,value=true,ps="mesh.eps");
+plot([ax,ay],wait=true,value=true,ps="a_mu.eps");
+plot([br,bz],wait=true,value=true,ps="b_mu.eps");

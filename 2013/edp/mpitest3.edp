@@ -1,0 +1,44 @@
+// solve one bu-ig problem in // 
+load "MUMPS" 
+//  the matrix ant the rhs must be on process 0 (master =0) 
+// or the matrix must be distributed ( read me MUMPS doc)  (master=-1) 
+//  
+load "Element_P4"
+    int nn = 100; 
+    mesh Th; 
+    if(mpirank ==0)
+    { 
+      Th = square(nn,nn);
+      real coef =  mpisize / real(Th.nt) ; 
+      Th = change(Th, fregion= nuTriangle*coef);
+    }  
+    broadcast(processor(0),Th); 
+    real areatotal, arearank = int2d(Th,mpirank)(1.); 
+    mpiReduce(arearank,areatotal,processor(0),mpiSUM) ;
+    if( mpirank ==0) 				      
+    {
+      cout << " areatotal =" << areatotal << " == " << Th.area << endl; 
+      assert ( abs(areatotal-Th.area) < Th.area*1e-10); 
+    }
+    fespace Vh(Th,P4); 
+     Vh u,v; 
+     if(mpirank ==0)	
+       cout << " Nb od Dof = " << Vh.ndof << endl;
+     func f =1.;
+     func K = 1.;
+     func g = 0.;
+     macro grad(u) [dx(u),dy(u)] //
+     varf  Pb( u,v) = int2d(Th,mpirank,qforder=7)( K*grad(u)'*grad(v))
+        +int2d(Th,mpirank) (f*v) 
+	+ on(1,2,3,4,u= g); 
+    real cpua = clock();	
+    matrix A = Pb(Vh,Vh);
+    set(A, solver=sparsesolver,master=-1); // distributed matrix one all process ..
+    real[int] b= Pb(0,Vh);
+
+    real cpu0 = clock();
+    u[] = A^-1*b ; 
+    real cpu = clock() -cpu0 ;
+    cout << " ui max " << u[].max <<  " mpirank = " << mpirank << " " 
+	      << cpu << " s" << " " << cpu0-cpua << "s" <<  endl; 
+ 

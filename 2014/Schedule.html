@@ -1,0 +1,568 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="1343.16">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; text-align: center; font: 21.0px Arial; color: #000000; -webkit-text-stroke: #000000}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px Arial; color: #000000; -webkit-text-stroke: #000000}
+    p.p3 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Arial; color: #000000; -webkit-text-stroke: #000000}
+    p.p4 {margin: 0.0px 0.0px 0.0px 0.0px; font: 21.0px Arial; color: #000000; -webkit-text-stroke: #000000}
+    p.p5 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; color: #000000; -webkit-text-stroke: #000000}
+    p.p6 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Arial; color: #0433ff; -webkit-text-stroke: #000000}
+    p.p7 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Arial; color: #000000; -webkit-text-stroke: #000000}
+    p.p8 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; color: #000000; -webkit-text-stroke: #000000}
+    p.p9 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Arial; color: #000000; -webkit-text-stroke: #000000; min-height: 14.0px}
+    p.p10 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; color: #000000; -webkit-text-stroke: #000000; min-height: 14.0px}
+    p.p11 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; -webkit-text-stroke: #000000}
+    p.p12 {margin: 0.0px 0.0px 12.0px 0.0px; font: 12.0px Arial; color: #000000; -webkit-text-stroke: #000000}
+    p.p13 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px Times; color: #000000; -webkit-text-stroke: #000000}
+    p.p14 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px Arial; color: #0433ff; -webkit-text-stroke: #000000}
+    span.s1 {font-kerning: none}
+    span.s2 {font: 13.0px Arial; text-decoration: underline ; font-kerning: none; color: #0000ff; -webkit-text-stroke: 0px #0000ff}
+    span.s3 {font: 15.0px Arial; text-decoration: underline ; font-kerning: none; color: #0000ee; -webkit-text-stroke: 0px #0000ee}
+    span.s4 {font: 15.0px Calibri; font-kerning: none}
+    span.s5 {font-kerning: none; color: #000000; -webkit-text-stroke: 0px #000000}
+    span.s6 {font: 12.0px Arial; font-kerning: none; color: #000000}
+    span.s7 {font: 12.0px Arial; text-decoration: underline ; font-kerning: none; color: #4787ff; -webkit-text-stroke: 0px #4787ff}
+    span.s8 {font-kerning: none; color: #000000}
+    table.t1 {border-collapse: collapse}
+    td.td1 {width: 109.0px; border-style: solid; border-width: 1.3px 1.3px 1.3px 1.3px; border-color: #cbcbcb #cbcbcb #cbcbcb #cbcbcb; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td2 {width: 155.0px; border-style: solid; border-width: 1.3px 1.3px 1.3px 0.0px; border-color: #cbcbcb #cbcbcb #cbcbcb #000000; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td3 {width: 306.0px; border-style: solid; border-width: 1.3px 1.3px 1.3px 0.0px; border-color: #cbcbcb #cbcbcb #cbcbcb #000000; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td4 {width: 109.0px; border-style: solid; border-width: 0.0px 1.3px 1.3px 1.3px; border-color: #000000 #cbcbcb #cbcbcb #cbcbcb; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td5 {width: 155.0px; border-style: solid; border-width: 0.0px 1.3px 1.3px 0.0px; border-color: #000000 #cbcbcb #cbcbcb #000000; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td6 {width: 306.0px; border-style: solid; border-width: 0.0px 1.3px 1.3px 0.0px; border-color: #000000 #cbcbcb #cbcbcb #000000; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td7 {width: 595.0px; border-style: solid; border-width: 1.3px 1.3px 1.3px 1.3px; border-color: #cbcbcb #cbcbcb #cbcbcb #cbcbcb; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td8 {width: 106.0px; border-style: solid; border-width: 1.3px 1.3px 1.3px 1.3px; border-color: #cbcbcb #cbcbcb #cbcbcb #cbcbcb; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td9 {width: 162.0px; border-style: solid; border-width: 1.3px 1.3px 1.3px 0.0px; border-color: #cbcbcb #cbcbcb #cbcbcb #000000; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td10 {width: 302.0px; border-style: solid; border-width: 1.3px 1.3px 1.3px 0.0px; border-color: #cbcbcb #cbcbcb #cbcbcb #000000; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td11 {width: 106.0px; border-style: solid; border-width: 0.0px 1.3px 1.3px 1.3px; border-color: #000000 #cbcbcb #cbcbcb #cbcbcb; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td12 {width: 162.0px; border-style: solid; border-width: 0.0px 1.3px 1.3px 0.0px; border-color: #000000 #cbcbcb #cbcbcb #000000; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td13 {width: 302.0px; border-style: solid; border-width: 0.0px 1.3px 1.3px 0.0px; border-color: #000000 #cbcbcb #cbcbcb #000000; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td14 {width: 107.0px; border-style: solid; border-width: 1.3px 1.3px 1.3px 1.3px; border-color: #cbcbcb #cbcbcb #cbcbcb #cbcbcb; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td15 {width: 475.0px; border-style: solid; border-width: 1.3px 1.3px 1.3px 0.0px; border-color: #cbcbcb #cbcbcb #cbcbcb #000000; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td16 {width: 109.0px; border-style: solid; border-width: 1.0px 1.0px 1.0px 1.0px; border-color: #cbcbcb #cbcbcb #cbcbcb #cbcbcb; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td17 {width: 155.0px; border-style: solid; border-width: 1.0px 1.0px 1.0px 1.0px; border-color: #cbcbcb #cbcbcb #cbcbcb #cbcbcb; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td18 {width: 306.0px; border-style: solid; border-width: 1.0px 1.0px 1.0px 1.0px; border-color: #cbcbcb #cbcbcb #cbcbcb #cbcbcb; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td19 {width: 141.0px; border-style: solid; border-width: 1.3px 1.3px 1.3px 1.3px; border-color: #cbcbcb #cbcbcb #cbcbcb #cbcbcb; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td20 {width: 268.0px; border-style: solid; border-width: 1.3px 1.3px 1.3px 0.0px; border-color: #cbcbcb #cbcbcb #cbcbcb #000000; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td21 {width: 341.0px; border-style: solid; border-width: 1.3px 1.3px 1.3px 0.0px; border-color: #cbcbcb #cbcbcb #cbcbcb #000000; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td22 {width: 141.0px; border-style: solid; border-width: 0.0px 1.3px 1.3px 1.3px; border-color: #000000 #cbcbcb #cbcbcb #cbcbcb; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td23 {width: 268.0px; border-style: solid; border-width: 0.0px 1.3px 1.3px 0.0px; border-color: #000000 #cbcbcb #cbcbcb #000000; padding: 0.0px 5.0px 0.0px 5.0px}
+    td.td24 {width: 341.0px; border-style: solid; border-width: 0.0px 1.3px 1.3px 0.0px; border-color: #000000 #cbcbcb #cbcbcb #000000; padding: 0.0px 5.0px 0.0px 5.0px}
+    LOC {color:purple;font-weight: bold;font-style: italic;}
+  </style>
+</head>
+<body>
+<p class="p1"><span class="s1"><b>Sixth Workshop on Generic Solvers for PDEs:</b></span></p>
+<p class="p1"><span class="s1"><b> FreeFem++ and its Applications</b></span></p>
+<p class="p1"><span class="s1"><b>Paris, Jussieu, UPMC,  December 9-10,11, 2014</b></span></p>
+<p class="p1"><span class="s1">  </span></p>
+<p class="p1"><span class="s1"> <a href="photo/index.html"><span class="s3">PHOTOS </span></a> </span></p>
+<p class="p1"><span class="s1">  </span></p>
+
+<p class="p2"><span class="s1"> <a href="http://www.ljll.math.upmc.fr/FreeFem++/">  Information.</a></span></p>
+<p class="p1"><span class="s1"> </span></p>
+<p class="p2"><span class="s1">The sponsors: <a href="http://becasim.math.cnrs.fr/"><span class="s2">ANR Becasim<span class="Apple-converted-space"> </span></span></a></span></p>
+
+
+<p class=MsoNormal><span style='font-family:Arial;mso-fareast-font-family:"Times New Roman"'><img
+border=0  height=84 id="_x0000_i1025"
+src="images/LJLL.jpg"
+align=TOP></IMG><img border=0  height=84 id="_x0000_i1026"
+src="images/logo-lmrs125.jpg"
+align=TOP></IMG><img border=0  height=84 id="_x0000_i1027"
+src="images/mp.jpg"
+align=TOP></IMG><img border=0  height=84 id="_x0000_i1028"
+src="images/inria.jpg"
+align=TOP></IMG><img border=0  height=84 id="_x0000_i1029"
+src="images/LogoFacMath.jpg"
+align=TOP><o:p></o:p></span></p>
+
+<p class=p4><span style='font-family:Arial'><o:p>&nbsp;</o:p></span></p>
+
+</IMG>
+
+<p class="p3"><span class="s1"> </span></p>
+<p class="p1"><span class="s1"> </span></p>
+<p class="p4"><span class="s1"><b>Day 1:  Tuesday, December 9</b></span></p>
+<p class="p4"><span class="s1"> </span></p>
+<p class="p2"><span class="s1"><b>Morning session </b> [<LOC> location: Corridor 15-16, floor 1, room 101 </LOC> ]  <a href="http://www.locations.espaces.upmc.fr/fr/campus.html"><span class="s3">LJLL (plan  Campus Jussieu) </span></a><b><i>]</i></b></span></p>
+<p class="p3"><span class="s1"> </span></p>
+<table cellspacing="0" cellpadding="0" class="t1">
+  <tbody>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p3"><span class="s1"><i>9h00-9h05</i></span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p2"><span class="s1">Introduction</span></p>
+      </td>
+      <td valign="middle" class="td3">
+        <p class="p5"><span class="s1"><br>
+</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td4">
+        <p class="p3"><span class="s1"><i>9h05-10h05</i></span></p>
+      </td>
+      <td valign="middle" class="td5">
+        <p class="p3"><span class="s1"><b>F. Hecht</b> </span></p>
+      </td>
+      <td valign="middle" class="td6">
+        <p class="p2"><span class="s1"><i>FreeFem++ solver: status  and future</i><span class="Apple-converted-space"> </span></span>(</b><a href="pdf/Hecht.pdf">pdf</a><b>)</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td4">
+        <p class="p6"><span class="s1"><i>10h05-10h30</i></span></p>
+      </td>
+      <td valign="middle" class="td5">
+        <p class="p6"><span class="s1">Coffee Break</span></p>
+      </td>
+      <td valign="middle" class="td6">
+        <p class="p2"></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td4">
+        <p class="p3"><span class="s1">10h30-11H30</span></p>
+      </td>
+      <td valign="middle" class="td5">
+        <p class="p3"><span class="s1"><b>P. Jolivet</b></span></p>
+      </td>
+      <td valign="middle" class="td6">
+        <p class="p3"><span class="s1"><i>FreeFem++ , mpi parallel solve<span class="Apple-converted-space"> </span></i></span>(</b><a href="pdf/Jolivet.pdf"><b>pdf</b></a><b>)</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td4">
+        <p class="p3"><span class="s1">11h30-12h15</span></p>
+      </td>
+      <td valign="middle" class="td5">
+        <p class="p3"><span class="s1"><b>A. Le Hyaric</b></span></p>
+      </td>
+      <td valign="middle" class="td6"> 
+        <p class="p3"><span class="s1"><i> FreeFem++-cs,
+the FreeFem++ Graphical Interface </i>
+ <br> (</b><a href="pdf/LeHyaric.pdf"><b>  pdf</b></a><b>)
+</span></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="p4"><span class="s1"> </span></p>
+<table cellspacing="0" cellpadding="0" class="t1">
+  <tbody>
+    <tr>
+      <td valign="middle" class="td7">
+        <p class="p7"><span class="s1"><b>Lunch</b></span> [<LOC> location: Corridor 15-16, floor 3, room 309 </LOC>] </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="p4"><span class="s1"> </span></p>
+<p class="p2"><span class="s1"><b>Afternoon session </b></span><span class="s4"> </span><span class="s1"><b>Freefem++ training sessions (please bring your laptop)</b></span></p>
+<p class="p2"><span class="s1"> </span></p>
+<p class="p2"><span class="s1"> </span></p>
+<p class="p2"><span class="s1"> </span></p>
+<table cellspacing="0" cellpadding="0" class="t1">
+  <tbody>
+    <tr>
+      <td valign="middle" class="td8">
+        <p class="p3"><span class="s1"><i>14h00-18h00</i></span></p>
+      </td>
+      <td valign="middle" class="td9">
+        <p class="p3"><span class="s1"><b>O. Pantz and I. Danaila</b></span></p>
+      </td>
+      <td valign="middle" class="td10">
+        <p class="p3"><span class="s1"><b>Basic Tutorial (part 1):</b> <i>generate a mesh, solve a linear PDE, use the Newton method for nonlinear PDEs, use a formulation with matrices, examples with steady and time evolution simple PDEs.</b> [<LOC> location: Corridor 15-25, floor 1, room 104 </LOC>]<span class="Apple-converted-space"> </span></b></span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td11">
+        <p class="p3"><span class="s1"><i>14h00- 18h00</i></span></p>
+      </td>
+      <td valign="middle" class="td12">
+        <p class="p3"><span class="s1"><b>F. Hecht </b> </span></p>
+      </td>
+      <td valign="middle" class="td13">
+        <p class="p3"><span class="s1"><b>Expert Tutorial (part 1):</b> link with other softwares.</span> [<LOC> location: Corridor 15-14, floor 1, room 108 </LOC>]   (</b><a href="expert.zip"><b> the zip file of the directory tutorial</b></a><b>)</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="p3"><span class="s1"> </span></p>
+<table cellspacing="0" cellpadding="0" class="t1">
+  <tbody>
+    <tr>
+      <td valign="middle" class="td14">
+        <p class="p2"><span class="s1"><i>18h30-20h00</i></span></p>
+      </td>
+      <td valign="middle" class="td15">
+        <p class="p2"><span class="s1"><b>FreeFem++ Discution </b> [<LOC> location: Corridor 15-16, floor 3, room 309 </LOC>]  </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="p2"><span class="s1"> </span></p>
+<p class="p4"><span class="s1"><b> </b></span></p>
+<p class="p4"><span class="s1"><b> </b></span></p>
+<p class="p4"><span class="s1"><b> </b></span></p>
+<p class="p4"><span class="s1"><b>Day 2:  Wednesday, December 10th</b></span></p>
+<p class="p4"><span class="s1"> </span></p>
+<p class="p2"><span class="s1"><b>Morning session [<LOC> location: Corridor 15-16, floor 3, room 309 </LOC>]  and<span class="Apple-converted-space"> </span></i></b></span></p>
+<p class="p2"><span class="s1"><b><i>Simulations of Bose-Einstein condensates  (BECASIM session) </i></b></span></p>
+<p class="p3"><span class="s1"> </span></p>
+<table cellspacing="0" cellpadding="0" class="t1">
+  <tbody>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p3"><span class="s1"><i>09h00-09h30</i></span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p8"><span class="s1"><b>K. Ohmori, N. Yamaguchi</b></span></p>
+      </td>
+      <td valign="middle" class="td3">
+        <p class="p3"><span class="s1">Numerical investigation of two-fluid flows by FreeFem++</span>(</b><a href="pdf/Yamaguchi.pdf"><b>pdf</b></a><b>)</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p3"><span class="s1"><i>09h30-10h00</i></span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p8"><span class="s1"><b>F. Ortegón and all</b></span></p>
+      </td>
+      <td valign="middle" class="td3">
+        <p class="p3"><span class="s1">Heat treating of steel Helical Gear<span class="Apple-converted-space"> </span></span><span class="s5"><b> (</b><a href="pdf/Ortegon.pdf"><b>pdf</b></a><b>, </b><a href="pdf/Ortegon-TermalProc2.pdf"><b>TermalProcessing pdf 12Mb</b></a><b>, </b><a href="pdf/Ortegon-slides.pdf"><b>slides pdf 8.5Mb</b></a><b>)</b></span></p>
+        <p class="p9"><span class="s1"></span><br></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td4">
+        <p class="p6"><span class="s1"><i>10h00-10h30</i></span></p>
+      </td>
+      <td valign="middle" class="td5">
+        <p class="p6"><span class="s1">Coffee Break</span></p>
+      </td>
+      <td valign="middle" class="td6">
+        
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td4">
+        <p class="p3"><span class="s1"><i>10h30-10h50</i></span></p>
+      </td>
+      <td valign="middle" class="td5">
+        <p class="p11"><span class="s1"><b>A. Suzuki</b></span></p>
+      </td>
+      <td valign="middle" class="td6">
+        <p class="p11"><span class="s6"><i> </i></span><span class="s1"><i>Numerical simulations of the Gross-Pitaevskii equation by pseudo-spectral and finite element methods</i></span>(<b><a href="pdf/Suzuki-Bec.pdf">pdf</a></b>)</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td4">
+        <p class="p3"><span class="s1"><i>10h50-11h15</i></span></p>
+      </td>
+      <td valign="middle" class="td5">
+        <p class="p8"><span class="s1"><b>G. Vergez</b></span></p>
+      </td>
+      <td valign="middle" class="td6">
+        <p class="p8"><span class="s1"><i>A FreeFem++ toolbox for computing stationary states of rotating Bose-Einstein condensates</i></span>(</b><a href="pdf/Vergez.pdf"><b>pdf</b></a><b>)</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td4">
+        <p class="p3"><span class="s1"><i>11h15-11h45</i></span></p>
+      </td>
+      <td valign="middle" class="td5">
+        <p class="p8"><span class="s1"><b>Q. Tang<span class="Apple-converted-space"> </span></b></span></p>
+      </td>
+      <td valign="middle" class="td6">
+        <p class="p8"><span class="s1"><i>Numerical simulation of the dynamics of the rotating dipolar Bose-Einstein condensates</i></span>(</b><a href="pdf/Tang.pdf"><b>pdf</b></a><b>)</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td4">
+        <p class="p3"><span class="s1"><i>11h45-12h30</i></span></p>
+      </td>
+      <td valign="middle" class="td5">
+        <p class="p8"><span class="s1"><b>L. Untereiner</b></span></p>
+      </td>
+      <td valign="middle" class="td6">
+        <p class="p8"><span class="s1"><i>Visualization of Bose-Einstein Condensates</i></span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td16">
+        <p class="p3"><span class="s1"><br>
+</span></p>
+      </td>
+      <td valign="middle" class="td17">
+        <p class="p3"><span class="s1"><br>
+</span></p>
+      </td>
+      <td valign="middle" class="td18">
+        <p class="p3"><span class="s1"><br>
+</span></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="p4"><span class="s1"> </span></p>
+<table cellspacing="0" cellpadding="0" class="t1">
+  <tbody>
+    <tr>
+      <td valign="middle" class="td7">
+        <p class="p7"><span class="s1"><b>Lunch</b></span>[<LOC> location: Corridor 15-16, floor 3, room 309 </LOC>] </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="p4"><span class="s1"> </span></p>
+<p class="p2"><span class="s1"><b>Afternoon session Freefem++ training sessions (please bring your laptop)</b></span></p>
+<p class="p2"><span class="s1"> </span></p>
+<table cellspacing="0" cellpadding="0" class="t1">
+  <tbody>
+    <tr>
+      <td valign="middle" class="td8">
+        <p class="p3"><span class="s1"><i>14h15-18h00</i></span></p>
+      </td>
+      <td valign="middle" class="td9">
+        <p class="p3"><span class="s1"><b>F. Hecht and O. Pironneau</b><span class="Apple-converted-space"> </span></span></p>
+      </td>
+      <td valign="middle" class="td10">
+        <p class="p3"><span class="s1"><b>Basic Tutorial (part 2):</b> <i> </i></span> [<LOC> location: Corridor 15-25, floor 1, room 103 </LOC>]   (</b><a href="tuto-base-II.zip"><b> the zip file of the directory tutorial</b></a><b>)</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td11">
+        <p class="p3"><span class="s1"><i>14h15-18h00</i></span></p>
+      </td>
+      <td valign="middle" class="td12">
+        <p class="p3"><span class="s1"><b>P. Jolivet</b></span> </p>
+      </td>
+      <td valign="middle" class="td13">
+        <p class="p3"><span class="s1"><b>Expert Tutorial (part 2):</b><span class="Apple-converted-space">  </span>HPC with<span class="Apple-converted-space">  </span>FreeFem++<span class="Apple-converted-space"> </span></span></p>
+        <p class="p3"><span class="s1">[<LOC> location: Corridor 15-16, floor 3, room 309 </LOC>] </span></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="p2"><span class="s1"> </span></p>
+<p class="p2"><span class="s1"> </span></p>
+<p class="p4"><span class="s1"><b>Day 3:  Thursday, December 11 th</b></span></p>
+<p class="p4"><span class="s1"> </span></p>
+<p class="p2"><span class="s1"><b>Morning session  [<LOC> location: Corridor 15-16 floor 2 room 201 (au laboratoire LSTA) </LOC>] 
+<br>
+ <i> Open Session for  Contributors </i></b></span></p>
+<p class="p3"><span class="s1"><b>Call for contributions: if you want to give a talk related to FreeFem++,</b></span></p>
+<p class="p3"><span class="s1"><b> please send to </b><a href="mailto:hecht@ann.jussieu.fr"><span class="s7"><b>hecht@ann.jussieu.fr</b></span></a><b> a title and a short  abstract with references before December 2 .</b></span></p>
+<p class="p2"><span class="s1"> </span></p>
+<p class="p2"><span class="s1"> </span></p>
+<p class="p12"><span class="s1"> </span></p>
+<table cellspacing="0" cellpadding="0" class="t1">
+  <tbody>
+    <tr>
+      <td valign="middle" class="td8">
+        <p class="p3"><span class="s1"><i>09h00-09h20</i></span></p>
+      </td>
+      <td valign="middle" class="td9">
+        <p class="p2"><span class="s1"><b>I. Bajc</b></span></p>
+      </td>
+      <td valign="middle" class="td10">
+        <p class="p3"><span class="s1">Driving metric mesh adaptivity in a nonlinear minimization scheme
+</span>(</b><a href="pdf/Bajc.pdf"><b>pdf</b></a><b>)</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td8">
+        <p class="p3"><span class="s1"><i>09h20-09h45</i></span></p>
+      </td>
+      <td valign="middle" class="td9">
+        <p class="p2"><span class="s1"><b>J. Hammond</b></span></p>
+      </td>
+      <td valign="middle" class="td10">
+        <p class="p3"><span class="s1">An application of FreeFem++ with non-intrusive reduced basis methods.</span>
+        (</b><a href="pdf/Hammond.pdf"><b>pdf</b></a><b>)</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td8">
+        <p class="p3"><span class="s1"><i>09h45-10h10</i></span></p>
+      </td>
+      <td valign="middle" class="td9">
+        <p class="p3"><span class="s1"><b>B. Barrois</b></span></p>
+      </td>
+      <td valign="middle" class="td10">
+        <p class="p3"><span class="s1"><i><span class="Apple-converted-space"> </span>Simulation des flux d’air dans une salle informatique</i> (</b><a href="pdf/Barrois.pdf"><b>pdf</b></a><b>)</span></p>
+      </td>
+   <tr>
+      <td valign="middle" class="td8">
+        <p class="p6"><span class="s1"><i>10h10-10h40</i></span></p>
+      </td>
+      <td valign="middle" class="td9">
+        <p class="p6"><span class="s1">Coffee Break</span></p>
+      </td>
+      <td valign="middle" class="td10">
+        <p class="p2"><span class="s1"><br>
+</span></p>
+      </td>
+    </tr>
+      
+      
+    </tr>
+        <tr>
+      <td valign="middle" class="td8">
+        <p class="p3"><span class="s1"><i>10h40-11h05</i></span></p>
+      </td>
+      <td valign="middle" class="td9">
+        <p class="p3"><span class="s1"><b>O. Moktari</b></span></p>
+      </td>
+      <td valign="middle" class="td10">
+        <p class="p3"><span class="s1"><i>Débruitage et réhaussement à partir d'une équation de diffusion non linéaire; application à l'inpainting (</b><a href="pdf/Moktari.pdf"><b>pdf</b></a><b>) <span class="Apple-converted-space"> </span></i></span></p>
+      </td>
+    </tr>
+
+     
+           <tr>
+      <td valign="middle" class="td8">
+        <p class="p3"><span class="s1"><i>11h05-11h30</i></span></p>
+      </td>
+      <td valign="middle" class="td9">
+        <p class="p3"><span class="s1"><b> P.H. Tournier</b><br>
+</span></p>
+      </td>
+      <td valign="middle" class="td10">
+        <p class="p3"><span class="s1">Water and nutrient uptake by plant root systems.  </span>
+        (</b><a href="pdf/Tournier.pdf"><b>pdf</b></a><b>)</p>
+      </td>
+    </tr>
+ 
+    
+    
+    <tr>
+      <td valign="middle" class="td8">
+        <p class="p3"><span class="s1"><i>11h30-11h55</i></span></p>
+      </td>
+      <td valign="middle" class="td9">
+        <p class="p3"><span class="s1"><b>P. Ventura</b></span></p>
+      </td>
+      <td valign="middle" class="td10">
+        <p class="p3"><span class="s1"><i>Mutual admittance of an infinite periodic Surface Acoustic Waves transducer using an original coupled FEM/BIE numerical model</i></span>(</b><a href="pdf/Ventura.pdf"><b>pdf</b></a><b>,)</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td8">
+        <p class="p3"><span class="s1"><i>12h55-12h20</i></span></p>
+      </td>
+      <td valign="middle" class="td9">
+        <p class="p3"><span class="s1"><b>M. Oumouni<span class="Apple-converted-space"> </span></b></span></p>
+      </td>
+      <td valign="middle" class="td10">
+        <p class="p3"><span class="s1">Numerical analysis and simulation of the spreading and dispersion using FreeFem++<span class="Apple-converted-space"> </span></span><span class="s8"><b> (</b><a href="pdf/Oumouni.pdf"><b>pdf</b></a><b>)</b></span></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="p13"><span class="s1"><br>
+</span></p>
+<table cellspacing="0" cellpadding="0" class="t1">
+  <tbody>
+    <tr>
+      <td valign="middle" class="td7">
+        <p class="p7"><span class="s1"><b>Lunch</b></span>  [<LOC> location: Corridor 15-16, floor 3, room 309 </LOC>] </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="p4"><span class="s1"> </span></p>
+<p class="p2"><span class="s1"><b>Afternoon session   [<LOC>location: Corridor 15-16 floor 2 room 201 (au laboratoire LSTA)  </LOC>] <br> <i> Open Session for  Contributors</i></b></span></p>
+<p class="p2"><span class="s1"> </span></p>
+<table cellspacing="0" cellpadding="0" class="t1">
+  <tbody>
+    <tr>
+      <td valign="middle" class="td8">
+        <p class="p2"><span class="s1"><i>14h00- 14h30</i></span></p>
+      </td>
+      <td valign="middle" class="td9">
+        <p class="p8"><span class="s1"><b>M. Mint Brahim</b></span></p>
+      </td>
+      <td valign="middle" class="td10">
+        <p class="p3"><span class="s1">Hybrid Dual Raviart–Thomas FEM in composit media</span></p>
+      (</b><a href="pdf/MintBrahim.pdf"><b>pdf</b></a><b>)</td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td8">
+        <p class="p2"><span class="s1"><i>14h30- 15h</i></span></p>
+      </td>
+      <td valign="middle" class="td9">
+        <p class="p8"><span class="s1"><b> M. Giacomini</b><br>
+</span></p>
+      </td>
+      <td valign="middle" class="td10">
+        <p class="p3"><span class="s1">A guaranteed a posteriori error estimator for certified boundary variation algorithm </span>
+        (</b><a href="pdf/Giacomini.pdf"><b>pdf</b></a><b>, </b><a href="pdf/Giacomini-slides.pdf"><b>pdf slides</b></a><b>)</p>
+      </td>
+    </tr>
+        <tr>
+      <td valign="middle" class="td8">
+        <p class="p3"><span class="s1"><i>15h00-15H30</i></span></p>
+      </td>
+      <td valign="middle" class="td9">
+        <p class="p3"><span class="s1"><b>J. Mullaert</b></span></p>
+      </td>
+      <td valign="middle" class="td10">
+        <p class="p3"><span class="s1"><i>Numerical Methods for Incompressible Fluid-Structure Interaction</i></span>(</b><a href="pdf/Mullaert"><b>pdf</b></a><b>)</p>
+      </td>
+    </tr>
+
+        <tr>
+      <td valign="middle" class="td8">
+        <p class="p2"><span class="s1"><i>15h30-16h00</i></span></p>
+      </td>
+      <td valign="middle" class="td9">
+        <p class="p6"><span class="s1"> Coffee Break <br>
+</span></p>
+      </td>
+      <td valign="middle" class="td10">
+        <p class="p3"><span class="s1"></p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="middle" class="td8">
+        <p class="p2"><span class="s1"><i>16h00- 16h30</i></span></p>
+      </td>
+      <td valign="middle" class="td9">
+        <p class="p8"><span class="s1"><b>A. Suzuki, F. X. Roux <span class="Apple-converted-space"> </span></b></span></p>
+      </td>
+      <td valign="middle" class="td10">
+        <p class="p3"><span class="s1">A dissection solver with kernel detection for unsymmetric matrices in FreeFem++</span> (<b><a href="pdf/Suzuki-dissection.pdf">pdf</a></b>)</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td8">
+        <p class="p2"><span class="s1"><i>16h30- 17h15</i></span></p>
+      </td>
+      <td valign="middle" class="td9">
+        <p class="p3"><span class="s1"><b>F. Ben Belgacem </b></span></p>
+      </td>
+      <td valign="middle" class="td10">
+        <p class="p8"><span class="s1">A Finite Element Method for an Ill-posed Oxygen-Balance Model</span>
+        </b><a href="pdf/Belgacem.pdf"><b>pdf</b></a><b>
+        </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="p2"><span class="s1"> </span></p>
+</body>
+</html>

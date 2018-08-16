@@ -1,0 +1,76 @@
+//  
+//   calcul d'une zone saturation en eau (nappe phréatique)
+//
+real L=10;        // longueur du domaine					   	
+real q=0.02;      // flux entrant
+real K=0.5;	      //permeabilité	
+
+real  erradap=0.001;
+real  coef=1;
+
+real hg=2.1;	 // hauteur du bord gauche
+real hd=1.1;    // hauteur du bord droite
+
+mesh Tfh= square(1000,1,[x*L,y*0.1]); // une bande
+fespace Fh(Tfh,P1);
+
+Fh fh = x*(hd-hg)/L+hg;
+Fh zh=0;
+hd = fh(L,0);
+hg = fh(0,0);
+
+//  maillage d'un tapeze
+border a(t=0,L){x=t;y=0;};       // bas			   	
+border b(t=0,hd){x=L;y=t;};      // droite
+border f(t=L,0){x=t;y=fh(x,0);}; //  Free surface
+border d(t=hg,0){x=0;y=t;};      // gauche
+
+real n=10;
+int nna= L*n;
+int nnb=hd*n;
+int nnf = sqrt(int1d(Tfh,1)( 1 + square(dx(fh))))*n;
+int nnd = hd*n;
+mesh Th=buildmesh (a(nna)+b(nnb)+f(nnf)+d(nnd));
+//plot(Th,ps="dTh.eps");
+
+fespace Ph(Th,P1);
+fespace Vh(Th,P0);
+
+int j=0,ii=0;
+
+Ph p,pp;
+Vh u1,u2;
+
+problem Pu(p,pp,solver=CG) = int2d(Th)( dx(p)*dx(pp)+dy(p)*dy(pp)) 
+  + int1d(Th,f)(-pp*(q/K)*N.y) 
+  + on(b,p=y) ;
+
+
+real errv=1;
+verbosity=1;
+
+while(errv>1e-6)
+{
+  j++;
+  assert(j < 50);       
+  Pu;
+  u1=-dx(p);u2=-dy(p);
+  plot(Th,coef=0.4,wait=0);
+  plot(p,[u1,u2],coef=0.4,wait=0);
+  fh = p(x,fh(x,0));
+  cout << fh[].max << " " << fh[].min << endl;
+  //plot([zh,fh],wait=1);
+
+  hd = fh(L,0);
+  hg = fh(0,0);
+  nna= L*n;
+  nnb=hd*n;
+  nnf = sqrt(int1d(Tfh,1)( 1 + square(dx(fh))))*n;
+  nnd = hd*n;
+  //plot( a(nna)+b(nnb)+f(nnf)+d(nnd),wait=1);
+  Th =  buildmesh (a(nna)+b(nnb)+f(nnf)+d(nnd));
+  errv=int1d(Th,f)(square(p-y));
+  cout << "\n\n"<<j <<"------------ errv = " << errv << "\n\n";
+  n += 0.2;  
+}
+plot(p,wait=1);

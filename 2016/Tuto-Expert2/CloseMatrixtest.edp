@@ -1,0 +1,7 @@
+load "CloseMatrix"
+mesh Th=square(10,10);
+cout << " before CloseMatrix "<< endl; 
+matrix   A=  CloseMatrix(Th,0.1); 
+cout << A << endl; 
+A= CloseMatrix(Th,0.1); 
+//cout << A << endl; 

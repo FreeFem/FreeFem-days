@@ -1,0 +1,29 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf100
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww12200\viewh17140\viewkind1
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 \expnd0\expndtw0\kerning0
+Mixed finite element solution of a semi-conductor problem by Dissection sparse direct solver\
+
+\b0 \
+
+\i Atsushi Suzuki, Cybermedia Center, Osaka University
+\i0 \
+\
+The drift-diffusion system describes state of electrostatic potential and\
+electron/hole concentrations inside the semi-conductor device. The current\
+density of electron/hole is expressed as gradient of the Slotboom variable\
+with diffusion coefficient depending on the electrostatic potential\
+exponentially. Finite volume method with Scharfetter-Gummel scheme where\
+the flux is approximated by a piecewise constant and the electrostatic\
+potential by piecewise linear in the control volume is widely used.\
+In this talk, a mixed finite element approximation for the system of\
+current density and concentrations of electron/hole is considered, where\
+current conservation is satisfied as finite volume method. The stiffness matrix\
+is indefinite due to the mixed system and is unsymmetric due to exponentially\
+nonlinear diffusion coefficient. However, Dissection direct solver can perform\
+factorization of such system with an appropriate scaling pre-processing.}

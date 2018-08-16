@@ -1,0 +1,51 @@
+real L=1, H=1, r=0.1;
+real hsize = 0.1;
+real Rey = 100; 
+
+real nu = 2*L/Rey; 
+real dt = 0.1; 
+int nbiter=10;
+border Bas(t=-L,+L) { x = t; y = -H; label=0;}
+border Haut(t=+L,-L) { x = t; y = H; label=1;}
+border Droite(t=-H,+H) { x = L; y = t; label=0;}
+border Gauche(t=H,-H) { x = -L; y = t; label=0;}
+
+mesh Th = buildmesh(
+  Bas(2*L/hsize) + Haut(2*L/hsize)
+  + Droite(2*H/hsize) + Gauche(2*H/hsize) 
+  );
+Th=adaptmesh(Th,hsize,IsMetric=1,splitpbedge=1);  
+ plot(Th,wait=1); 
+ 
+ // def espace element fini 
+ fespace Wh(Th,[P2,P2,P1]);
+ Wh [u1,u2,p]; 
+ Wh [u1p,u2p,pp]; 
+ Wh [v1,v2,q]; 
+ 
+ [u1,u2,p]=[0,0,0] ; // donne initail
+macro Grad(u1,u2) [ dx(u1),dy(u1), dx(u2),dy(u2)]// 
+macro D(u1,u2) [ dx(u1),(dy(u1)+dx(u2))*0.5, (dy(u1)+dx(u2))*0.5 ,dy(u2)]// 
+macro UgradV(u1,u2,v1,v2) [ [u1,u2]'*[dx(v1),dy(v1)] , [u1,u2]'*[dx(v2),dy(v2)] ]// 
+macro div(u1,u2)  (dx(u1)+dy(u2))//
+
+real epsr = 1e-8; 
+ for(int i=0; i<nbiter; ++i)
+ {
+  // [u1p,u2p,pp]=[u1,u2,p]; // methode  de base
+   pp[] = p[]; // Attention copie u1,u2,p dans u1p,u2p,pp
+    solve NSt( [u1,u2,p],[v1,v2,q]) 
+    = int2d(Th) ( [u1,u2]'*[v1,v2]/dt 
+                 + UgradV(u1p,u2p,u1,u2)'*[v1,v2] 
+                 + 2*nu * D(u1,u2)'*D(v1,v2) 
+                 - q* div(u1,u2)
+                 - p* div(v1,v2) 
+                 - epsr* p*q // regulatisation 
+                 )
+     - int2d(Th) ([u1p,u2p]'*[v1,v2]/dt  )
+     + on(1,u1=1,u2=0) + on(0,u1=0,u2=0) ;     
+     plot([u1,u2],p, wait=0);      
+ }
+  
+  
+

@@ -1,0 +1,335 @@
+// correct D, H on 1 july 2013  Thank to Guillame 
+load "isoline" 
+int wait=0;
+
+
+real Rtf = 3.4,Rcoef=1.7;
+real Omega = 2,OmegaC=Omega; 
+func Vtrap = (x*x+y*y)*0.5 +square(x*x+y*y)*0.25  - (x*x+y*y)*square(OmegaC)*0.5;
+
+
+real g=1000; 
+
+
+bool sameth0=0;//  in the loop of Omega using same inital mesh
+// adapt  just in 
+//int nbadap=2;// nb of adapt loop  0 => no adapt..
+real[int]  errs=[0.1];//,0.05,0.02] ; // err adap ... 0.05 (ok)
+int nbopt=500, maxiter=10;
+real[int] tols=[1e-3,1e-5];//,1e-6],1e-7,1e-8]; //  loops of tols 
+// bool Cerclemu = 0; 
+int M=50;//  starting number of point on big circle..
+func Pk = P1;
+func Pk2 = P2; 
+real mu = 50; 
+
+include "getARGV.idp"
+
+ M=getARGV("-M",M);
+ g=getARGV("-g",g);
+ Rcoef=getARGV("-Rcoef",Rcoef);
+ real Rmax= Rcoef * Rtf;
+int nbcas = 1; 
+
+border C(t=0,2*pi){ x= Rmax*cos(t);y=Rmax*sin(t); label=1;}
+mesh Th=buildmesh(C(M));
+func rhoTF = max(0., (mu - Vtrap)/g );
+
+//  computation of mu ...
+func real Computemu(real mmu)
+{
+    mu = mmu;
+        // Compute mu 
+    for( int iter =0; iter < 20 ; ++ iter)
+    {
+        real nu = int2d(Th)(rhoTF) -1.  ;        
+        real dmu =  int2d(Th) (real( (mu - Vtrap) >0) )/g ; 
+        cout << " iter " << iter << " err = " <<nu << " " << mu << endl; 
+    
+        mu -= nu / dmu ;
+        if( abs(nu ) < 1e-15) break; 
+    }
+    assert( abs(int2d(Th)(rhoTF) -1.) < 1e-10);
+    return mu; 
+}
+
+Computemu(50);
+real R0 = sqrt(sqrt(1.+4.*mu)-1);
+assert(R0 < Rmax); 
+
+fespace Vh(Th,Pk);
+fespace Vh2(Th,[Pk,Pk]);
+fespace Wh(Th,Pk2);
+
+macro Grad(u) [dx(u),dy(u)] //
+
+matrix Ab,Cb,M2,WV0,WV1,gM, duu; //  Bilinear part ..
+   int[int] II(1),JJ(1);
+    real[int] CC(1); 
+ 
+varf vAb([wr,wi],[vr,vi]) =
+      int2d(Th) ( 
+       + (Vtrap) * ( wr*vr + wi*vi)*2.  
+       + ( Grad(wr)'*Grad(vr) +  Grad(wi)'*Grad(vi) )      
+      - Omega*(  y *( - dx(wr)*vi + dx(wi)*vr ) 
+               + x *(   dy(wr)*vi - dy(wi)*vr ) )
+      - Omega*(  y *( - dx(vr)*wi + dx(vi)*wr ) 
+               + x *(   dy(vr)*wi - dy(vi)*wr ) )
+               );
+varf vgMW(u,v) = int2d(Th) ( g*u*v) ;             
+varf vCb([ur,ui],[vr,vi]) = int2d(Th) ( ( ur*vr + ui * vi) *2.) ; 
+matrix Hessian;
+matrix MC;
+
+func int DefAbCb()
+{
+     Ab = vAb(Vh2,Vh2); 
+     Cb = vCb(Vh2,Vh2); 
+     gM = vgMW(Wh,Wh); 
+     int[int] u2vc0=[0]; 
+     int[int] u2vc1=[1]; 
+     WV0 = interpolate(Wh,Vh2,U2Vc=u2vc0); 
+     WV1 = interpolate(Wh,Vh2,U2Vc=u2vc1); 
+     matrix dWW0 = WV0'*WV0;
+     matrix dWW1 = WV1'*WV1;
+     duu= dWW0*2+dWW1*2;
+       varf bnznz([vr,vi],[wr,wi]) = int2d(Th) ( wr*vr + wi*vi +   wr*vi + wi*vr );   
+      Hessian=bnznz(Vh2,Vh2); 
+     [II,JJ,CC]= Hessian;
+
+    return 1; 
+} 
+
+func real J1(real[int] & u)
+{
+    Vh2 [ur,ui] ; ur[]=u;
+    real E = int2d(Th) ( 
+         ( Grad(ur)'*Grad(ur) + Grad(ui)'*Grad(ui) ) * 0.5
+       + Vtrap* ( ur*ur + ui * ui)  
+       + g* square( ur*ur + ui * ui) * 0.5
+       - Omega*(  y *( - dx(ur)*ui + dx(ui)*ur ) 
+                + x *(   dy(ur)*ui - dy(ui)*ur ) )
+                );
+       return E;
+}
+
+            
+func real J(real[int] & u)
+{
+    real[int] Wu0 = WV0*u;
+    real[int] Wu1 = WV1*u;
+    real[int] Wu = Wu0.*Wu0;
+    Wu +=  Wu1.*Wu1;
+    real[int] gMWu = gM*Wu;
+    real[int]  Abu = Ab*u;
+    real E =  (Wu'*gMWu+  u'*Abu)  *0.5; 
+    
+    return E;
+}
+
+func real[int] dJ(real[int] & u)
+{
+   Vh2 [ur,ui] ; ur[]=u;     
+ /*   real[int] Wu0 = WV0*u;
+    real[int] Wu1 = WV1*u;
+    real[int] dWu = Wu0*2.+Wu1*2.;
+    real[int] Wu = Wu0.*Wu0;
+    Wu +=  Wu1.*Wu1;*/
+   //  + 2.*g*  ( ur*vr + ui*vi) *( ur*ur + ui*ui) 
+    varf  vggg([uur,uui],[vr,vi]) = int2d(Th) (  2.*g*  ( ur*vr + ui*vi) *( ur*ur + ui*ui) ) ; 
+    real[int] du = Ab*u;
+    du += vggg(0,Vh2);   
+       return du ;
+}
+
+func real[int] dJ1(real[int] & u)
+{
+    Vh2 [ur,ui] ; ur[]=u;
+    varf vdj([aa,bb],[vr,vi]) =
+       int2d(Th) ( 
+         ( Grad(ur)'*Grad(vr) +  Grad(ui)'*Grad(vi) )
+       + Vtrap* ( ur*vr + ui * vi)*2.  
+       + 2.*g*  ( ur*vr + ui*vi) *( ur*ur + ui*ui) 
+       - Omega*(  y *( - dx(ur)*vi + dx(ui)*vr ) 
+                + x *(   dy(ur)*vi - dy(ui)*vr ) )
+       - Omega*(  y *( - dx(vr)*ui + dx(vi)*ur ) 
+                + x *(   dy(vr)*ui - dy(vi)*ur ) )
+                );
+       real [int] du= vdj(0,Vh2);
+       return du ;
+}
+
+func real[int] Constraint(real[int] & u)
+{
+    real[int] Cub = Cb*u;
+    real[int] c(1);
+    c[0] =  u'*Cub*0.5; 
+    return c; 
+}
+func matrix dConstraint(real[int] & u)
+{
+    real[int] Cub = Cb*u;
+    real[int,int] MF(1,Cub.n); 
+    MF(0,:) = Cub;
+    MC=MF;
+}
+
+
+
+func matrix hJ(real[int] & u,real obj,real[int] & l)
+{
+   Vh2 [ur,ui] ; ur[]=u;
+   varf vhj([wr,wi],[vr,vi]) =
+      int2d(Th) ( 
+       obj*( 
+      + g*2.*  ( wr*vr + wi*vi) * ( ur*ur + ui*ui) 
+      + g*4.*  ( ur*vr + ui*vi) * ( wr*ur + wi*ui) 
+               ));
+    matrix H = vhj(Vh2,Vh2);
+  //  cout << "Hessian " << Hessian.nbcoef << endl; 
+    H = H + Ab*obj+ l[0]*Cb;
+    Hessian =H;
+   // cout << " Hessian e " << Hessian.nnz << endl ; 
+    return Hessian;
+}
+
+
+func real[int] Constraint1(real[int] & u)
+{
+    Vh2 [ur,ui] ; ur[]=u;
+    real[int] c(1);
+    c[0] = int2d(Th) ( ur*ur + ui * ui)  ; 
+    return c; 
+}
+//matrix MC;
+func matrix dConstraint1(real[int] & u)
+{
+    Vh2 [ur,ui] ; ur[]=u;
+    varf vc([aa,bb],[vr,vi]) = int2d(Th) ( ( ur*vr + ui * vi) *2.) ;
+    real[int,int] MF(1,u.n);
+    MF(0,:) = vc(0,Vh2);
+    MC=MF;
+}
+
+//matrix Hessian;
+
+func matrix hJ1(real[int] & u,real obj,real[int] & l)
+{
+   Vh2 [ur,ui] ; ur[]=u;
+   varf vhj([wr,wi],[vr,vi]) =
+      int2d(Th) ( 
+       + (obj*Vtrap+ l[0]) * ( wr*vr + wi*vi)*2.  
+       + obj*( 
+        ( Grad(wr)'*Grad(vr) +  Grad(wi)'*Grad(vi) )
+     //  DD of           0.5*g*( ur*ur + ui*ui)^2
+     //  D of  :  2* g*  (ur*vr + ui*vi) *( ur*ur + ui*ui)
+      + g*2.*  ( wr*vr + wi*vi) * ( ur*ur + ui*ui) 
+      + g*4.*  ( ur*vr + ui*vi) * ( wr*ur + wi*ui) 
+      
+      - Omega*(  y *( - dx(wr)*vi + dx(wi)*vr ) 
+               + x *(   dy(wr)*vi - dy(wi)*vr ) )
+      - Omega*(  y *( - dx(vr)*wi + dx(vi)*wr ) 
+               + x *(   dy(vr)*wi - dy(vi)*wr ) )
+               ));
+   // cout << " b hessien hJ1" << endl;  
+         
+    matrix H = vhj(Vh2,Vh2);
+    Hessian=H;
+   // cout << " a hessien hJ1" << endl;            
+
+    //Hessian= H22 + l[0]*HC;
+    return Hessian;
+}
+
+
+load "ff-Ipopt"
+
+Vh<complex> u0 = sqrt( rhoTF);
+Vh ur = real(u0); 
+plot(ur,wait=wait);
+real[int] c=[1];
+real cost=1000; 
+Vh2 [uur,uui] = [ real(u0), imag(u0)] ; 
+Vh2 [uur0,uui0] ;
+real cpu0;
+
+// initialisation 
+OmegaC=Omega; // Just force centrifuge 
+Omega=0.00; // init no rotation just 
+DefAbCb();
+ //    cout << " II.n " << II.n << endl;
+
+for(int step=0; step<2; ++step)
+{ 
+  cout << " IPOPT Step =" << step << " / " << nbcas <<   " Omega =" << Omega << " g =" << g << endl;
+  cpu0 = clock();
+  int ok=0;
+  mesh Th0= Th; 
+  int ntol = 0,nadep=0;
+  for(int kk=1,nok=0;kk<= nbopt; ++kk)
+  {  
+    real err = 1, tol = 1;
+    
+    if(nadep <errs.n  )
+    {
+     Th=adaptmesh(Th,[uur,uui],err=(err=errs[nadep]),nbvx=100000,hmax=Rmax*2*pi/M);
+     [uur,uui] = [uur,uui] ;
+     DefAbCb();
+   //  cout << " II.n " << II.n << endl;
+    }
+   // int[int] II(Vh2.ndof),JJ=0:Vh2.ndof-1; II=0;
+   if(0) {
+    real xJJ =   J(uur[]);
+    real xJJ1 =  J1(uur[]);
+    
+    cout << " J " <<  xJJ << " == " << xJJ1 << " " << xJJ - xJJ1 << endl; 
+    real[int] diff= dJ1(uur[]) - dJ(uur[]);
+    cout << " diff " << diff.linfty << endl;
+    assert(diff.linfty < 1e-5 && abs( xJJ - xJJ1) < 1e-6 );
+    real[int] ll(1); ll=1;  
+    matrix HH = hJ(uur[],1.,ll);  
+    cout << " after HH " << endl; 
+    matrix HH1 = hJ1(uur[],1.,ll);  
+    cout << " after HH1 " << endl; 
+    matrix HHH=HH+ -1*HH1; 
+    int[int] iii(1),jjj(1);
+    real[int] ccc(1); 
+    [iii,jjj,ccc]= HHH;
+   
+    cout <<  " Err Hessian =  " << ccc.linfty <<" " << HH1.nbcoef << " " << HH.nbcoef << endl;
+    assert (ccc.linfty < 1e-5); 
+   }
+  //  cout << " c.n" << c.n << " "  << c <<  endl;   
+    ok=IPOPT(J,dJ,hJ,Constraint,dConstraint,uur[],clb=c,cub=c,structhess=[II,JJ],
+           tol=(tol=tols[ntol]),maxiter=maxiter,objvalue=cost);
+    if(ok < -1000) ok = -1;
+    cout << kk << " IPOPT = " << ok << " J = " << cost << " Th.nv =" << Th.nv 
+         << " Omega =" << Omega << " g =" << g << " tol = " << tols[ntol] << " cpu ="  << clock()-cpu0 << " s" + "  tol =" + tol + " Aerr = "+err  << endl; 
+    if( ok==0) 
+    {
+     Vh uu= sqrt(square(uur)+square(uui));
+     plot(uu,wait=wait, cmm=" Omega =" + Omega+ " g=" + g + " kk " + kk+ " J =" + cost + "  tol =" + tol + " Aerr = "+err  ,dim=3); 
+    }
+    
+    if( (ntol == tols.n-1) && (nadep == errs.n-1) && ok==0) break; 
+    if(ok==0 ) nok++;
+    ntol = min(nok,tols.n-1); 
+    if(errs.n) nadep = min(nok/2,errs.n-1);
+  
+  }
+  cout << " --- IPOPT = " << ok << " J = " << cost << " Th.nv =" << Th.nv << " Omega =" << Omega<< " g =" << g  << " cpu ="  << clock()-cpu0 << " s" <<  endl; 
+   
+  Vh uu= sqrt(square(uur)+square(uui));
+  plot(uu,wait=wait, cmm=" Omega =" + Omega+ " g =" + g + " J =" + cost + "  ok =" + ok ,dim=3);
+  if( sameth0 )
+  {
+    Th=Th0;
+    [uur,uui] = [uur,uui] ;
+  }
+  assert(ok==0);
+  // initialisation 
+Omega=OmegaC; 
+OmegaC=0;
+DefAbCb();
+
+}

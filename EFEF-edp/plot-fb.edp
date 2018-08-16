@@ -1,0 +1,18 @@
+load "Element_P4"
+load "Element_P3"
+mesh Th=square(2,2);
+mesh Tf=square(50,50);
+plot(Th,wait=1);
+fespace Vh(Th,P3);
+fespace Vf(Tf,P1);
+
+Vh vi=0;
+Vf vf;
+int n0= Vh.ndof/2;
+for (int i=n0;i<min(vi[].n,n0+6);++i)
+ {
+    vi[][i]=1;
+    vf=vi;  
+    plot(vf,dim=3,wait=0,cmm=" v"+i,fill=1);
+    vi[][i]=0;
+ }

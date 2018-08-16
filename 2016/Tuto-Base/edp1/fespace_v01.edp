@@ -1,0 +1,20 @@
+/* P1 representation */
+// Parameters
+int nbseg=100;
+real R=1, xc=0, yc=0;
+// border
+border circle(t=0,2*pi){label=1;x=xc+R*cos(t);
+                                y=yc+R*sin(t);}
+// FE mesh
+mesh Th = buildmesh(circle(nbseg));plot(Th);
+// FE space
+fespace Vh(Th, P1);
+Vh u=x*x+y*y;  plot(u, dim=3,fill=1,wait=1);
+// 2d integral
+cout.precision(12);
+real int2dU = int2d(Th)(u);
+cout <<"int2dU="<<int2dU<<endl;
+cout <<" exact="<<pi*R^4/2<<endl;
+real int1dU = int1d(Th,1)(u);
+cout <<"int1dU="<<int1dU<<endl;
+cout <<" exact="<<2*pi*R^3<<endl;

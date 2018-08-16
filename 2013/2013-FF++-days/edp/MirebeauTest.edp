@@ -1,0 +1,13 @@
+load "MetricPk"
+// optimal (opt =1) or suboptimal (opt=0) mesh in norm  $W^{r,p}$  for Pk 
+real  Nt = 1000, r = 1, k =2, p=1,opt=0; // parameter 
+mesh Th=square(20,20,[2*x-1,2*y-1]);
+func f = x^2*y + y^3 + tanh(5*(-2*x + sin(5*y)));
+fespace Metric(Th,[P1,P1,P1]);
+for(int i=0; i<5; i++){
+    plot(Th,wait=true);
+    Metric [m11,m12,m22];// the metric array
+    m11[]=MetricPk(Th,f,kDeg=k,rDeg=r,pExp=p,
+      mass=Nt/2,TriangulationType=opt);
+    Th = adaptmesh(Th,m11,m12,m22,IsMetric=true); }
+

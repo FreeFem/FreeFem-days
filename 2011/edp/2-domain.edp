@@ -1,0 +1,68 @@
+int[int] ll1=[1,1,2,1];
+int[int] ll2=[2,1,1,1];
+mesh Th1=square(10,10,label=ll1);
+mesh Th2=square(10,10,[x,1+y],label=ll2);
+plot(Th1,Th2,wait=1);
+
+
+fespace Vh1(Th1,P1);
+fespace Vh2(Th2,P1);
+
+func f1 = x+y;
+
+func f2 = x-y;
+func ud = 0;
+real k1=1, k2=2;
+macro Grad(u) [dx(u),dy(u)] //
+
+/*
+  boundary condition on Gamma_2 (internal)
+  [u]= 0 
+ => int_Gamma_2 (u1-u2)(v1-v2) *pena
+   ku2*[u] + [k dn(u)] = f 
+*/
+real pena = 0;
+real ku2 ; 
+
+varf va1(u,v) = int2d(Th1)(Grad(u)'*Grad(v)*k1) +int2d(Th1)( f1*v) +
+ int1d(Th1,2)(u*v*pena)+ on(1,u=ud);
+varf va2(u,v) = int2d(Th2)(Grad(u)'*Grad(v)*k2) + int2d(Th2)( f2*v) + 
+int1d(Th2,2)(u*v*pena)+on(1,u=ud);
+// [u1-u2]*[v1-v2]*pena
+// u1
+varf va12(u2,v1) = int1d(Th2,2)(-u2*v1*pena); 
+varf va21(u1,v2) = int1d(Th2,2)(-u1*v2*pena); 
+
+matrix A1=va1(Vh1,Vh1);
+matrix A2=va2(Vh2,Vh2);
+real[int] b1=va1(0,Vh1);
+real[int] b2=va2(0,Vh2);
+
+real[int] x1(Vh1.ndof),x2(Vh1.ndof);
+// independe case ..
+x1 = A1^-1*b1;
+x2 = A2^-1*b2;
+
+Vh1 u1; Vh2 u2;
+u1[]=x1;
+u2[]=x2;
+plot(u1,u2,wait=1,cmm=" decouple " );
+
+matrix A12=va12(Vh2,Vh1);
+matrix A21=va21(Vh1,Vh2);
+matrix A=[ [A1,A12],[A21,A2]];
+
+set(A,solver=sparsesolver);
+
+real[int] B=[b1,b2];
+real[int] X =A^-1*B;
+
+[u1[],u2[]]=X;
+
+plot(u1,u2,wait=1, cmm="couple");
+
+
+
+
+
+

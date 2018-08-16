@@ -1,0 +1,28 @@
+load "ClosePoints"
+int nn=3; 
+real eps = sqrt(5)+0.001;
+
+mesh Th=square(nn,nn,[x*3*nn,y*3*nn]);
+fespace Ph(Th,P0);
+plot(Th); 
+Ph bx=x, by=y; 
+if( nn< 3) 
+for(int i=0; i< Th.nt; ++i)
+{ cout << i << " " << bx[][i] << " " << by[][i] << endl; 
+}
+real[int,int] Q(Th.nt,2);
+Q(:,0)=bx[]; 
+Q(:,1)=by[]; 
+int[int][int] ij(Th.nt);
+Voisinage(Q,Q,eps,ij);
+for(int i=0; i<Th.nt; ++i)
+{
+	cout << i << ", " << bx[][i] << " " << by[][i] << endl ;
+	for( int j=0; j< ij[i].n; ++j )
+	{ 
+	  int k = ij[i][j] ;
+	  cout << "\t" << k << ", " << bx[][k] << " " << by[][k] << endl ;
+   }
+   cout << endl; 
+}
+

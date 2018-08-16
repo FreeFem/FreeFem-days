@@ -1,0 +1,16 @@
+/* Mesh of a circle */
+
+// Parameters
+
+int nbseg=10;
+real R=1, xc=0, yc=0;
+
+// border
+border circle(t=0,2*pi){label=1;
+                        x=xc+R*cos(t);
+                        y=yc+R*sin(t);}
+plot(circle(nbseg),cmm="border");
+
+// FE mesh
+mesh Th = buildmesh(circle(nbseg));
+plot(Th, cmm="mesh of a circle");

@@ -1,0 +1,48 @@
+int  nbresitor=6;
+mesh Th("oven.msh");
+real[int] pr(nbresitor+2), K(nbresitor+2);
+int regi=nbresitor, rege=nbresitor+1, lext=1;
+K=1; K[regi]=10;  // def K
+
+macro Grad(u) [dx(u),dy(u)] //EOM
+fespace Xh(Th,P2);
+Xh u,v;
+int iter=0;
+problem Chaleur(u,v,init=iter)
+     =  int2d(Th)( Grad(u)'*Grad(v)* K[region]) + int1d(Th,lext)(u*v)  
+     + int2d(Th)(pr[region]*v) ;
+  
+Xh[int]  ur(nbresitor);
+
+for(iter=0;iter<nbresitor;++iter) 
+{  pr=0;pr[iter]=1; 
+   Chaleur;
+   ur[iter]=u;plot(ur[iter],fill=1,wait=1);  }
+
+real[int,int] AP(nbresitor,nbresitor);
+real[int] B(nbresitor),PR(nbresitor);
+
+Xh   ui = 100;
+for(int i=0;i<nbresitor;++i)
+{
+    B[i]=int2d(Th,regi)(ur[i]*ui);
+    for(int j=0;j<6;++j)
+       AP(i,j)= int2d(Th,regi)(ur[i]*ur[j]);
+}
+  matrix A=AP; set(A,solver=UMFPACK);
+  PR=A^-1*B;
+  cout << " P R = " << PR << endl;   
+  u[]=0; 
+  for (int i=0;i<nbresitor;++i)
+    u[] += PR[i]*ur[i][];
+  real ErrL2 = sqrt(int2d(Th,regi)(square(u-ui)));
+  real ErrL50 = int2d(Th,regi)(abs(u-ui)^50.)^(1./50.);
+  Xh di=(u-ui)*(region==regi);
+  real ErrLinty= di[].linfty;
+  cout << " Erreur L2 = " <<  ErrL2 << " L infty (L50)" 
+       << ErrL50 << " ~ " << ErrLinty <<   endl;
+    
+  plot(u,wait=1,value=1,nbiso=100); 
+  
+ 
+ 

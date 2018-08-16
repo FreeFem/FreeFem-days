@@ -1,0 +1,18 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf100
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww12800\viewh17740\viewkind1
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 \expnd0\expndtw0\kerning0
+Two-level DD preconditioners for Maxwell equations\
+\
+
+\i\b0 P-H. Tournier ( LJLL/CNRS)\
+
+\i0 \
+This work deals with preconditioning the time-harmonic Maxwell equations with absorption, where the preconditioner is constructed using two-level overlapping Additive Schwarz Domain Decomposition, and the PDE is discretised using finite-element methods of fixed, arbitrary order. The theory shows that if the absorption is large enough, and if the subdomain and coarse mesh diameters are chosen appropriately, then classical two-level overlapping Additive Schwarz Domain Decomposition preconditioning (with PEC boundary conditions on the subdomains) performs optimally \'96 in the sense that GMRES converges in a wavenumber-independent number of iterations \'96 for the problem with absorption.\
+Numerical experiments illustrate this theoretical result and also (i) explore replacing the PEC boundary conditions on the subdomains by impedance boundary conditions, and (ii) show that the preconditioner for the problem with absorption is also an effective preconditioner for the problem with no absorption. The numerical results include two examples arising from applications; the first (a problem with absorption arising from medical imaging) shows the robustness of the preconditioner against heterogeneity, and the second (scattering by a COBRA cavity) shows good scalability of the preconditioner with up to 3000 processors.\
+}

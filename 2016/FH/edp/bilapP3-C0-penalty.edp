@@ -1,0 +1,50 @@
+// Cimpa summer scholl ITT Bombay 
+// C0 interior penality method
+// Schema for S. Brenner
+// F. Hecht juin 2015 ..
+
+load "Element_P3" // for P3
+load "Element_PkEdge" // for P3
+
+
+int n=100,nn=n+10;
+real[int] xx(nn),yy(nn);
+
+mesh Th=square(10,10);  // mesh definition of $\Omega$
+//Th=splitmesh3(Th);
+fespace Vh(Th,P3);      // finite element space
+fespace Eh(Th,P1edge);
+// intalledg  dn(lap(u) v  - dn(grad(u)).
+
+//  {dnn(} [dn(v)] 
+macro bilaplacien(u,v) ( dxx(u)*dxx(v)+dyy(u)*dyy(v)+2.*dxy(u)*dxy(v)) // fin macro 
+real f=1;
+Vh [u],[v];
+real sigma = 100;
+macro dn(u) (dx(u)*N.x+dy(u)*N.y)//
+macro dnn(u) (dxx(u)*N.x*N.x+dyy(u)*N.y*N.y+2.*dxy(u)*N.x*N.y)//
+solve bilap([u],[v]) =
+    int2d(Th)(  bilaplacien(u,v) ) 
+  + intalledges(Th) (   jump(dn(u))*jump(dn(v))*sigma/lenEdge
+                      + mean(dnn(u))*jump(dn(v))/2. 
+                      + mean(dnn(v))*jump(dn(u))/2. ) 
+   - int2d(Th)(f*v)
+   
+   + on(1,2,3,4,u=0) 
+; 
+   
+plot(u,cmm="u", wait=1,fill=1);
+real umax = u[].max; 
+int err =  (abs(umax-0.0012782) > 1e-4); 
+cout << " uu max " << umax << " ~  0.0012782  , err = " << err 
+     << " " << abs(umax-0.0012782) <<endl; 
+Eh jumpdnu=jump(dn(u));
+cout << " norm  jump : " << sqrt(intalledges(Th) (   jump(dn(u))*jump(dn(u)))) << endl ;
+plot(jumpdnu, wait=1);
+for (int i=0;i<=n;i++)
+ {
+   xx[i]=real(i)/n;
+   yy[i]=u(0.5,real(i)/n); // value of uh at point (0.5, i/10.) 
+ }
+ plot([xx(0:n),yy(0:n)],wait=1);
+ assert(err==0); 

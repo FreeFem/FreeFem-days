@@ -1,0 +1,20 @@
+load "PETSc"
+load "msh3"
+mesh3 Th("tripod.small.mesh");
+fespace Vh(Th, P1);
+varf vPb(u, v) = int3d(Th)(dx(u) * dx(v) + dy(u) * dy(v) + dz(u) * dz(v)) + on(1, u = 0.0);
+matrix Mat = vPb(Vh, Vh);
+int[int] arrayIntersection(0);
+int[int][int] restrictionIntersection(0);
+real[int] D(Vh.ndof);
+D = 1.0;
+
+{
+    dmatrix A(Mat, arrayIntersection, restrictionIntersection, D);
+}
+
+Th = trunc(Th, true, renum = true);
+Mat = vPb(Vh, Vh);
+{
+    dmatrix A(Mat, arrayIntersection, restrictionIntersection, D);
+}

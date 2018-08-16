@@ -1,0 +1,229 @@
+-- FreeFem++ v  3.230000 (date Dim  9 jui 2013 17:17:45 CEST)
+ Load: lg_fem lg_mesh lg_mesh3 eigenvalue 
+    1 :  // ------------------------------------------------------------
+    2 : {  // get mesh information (version 1.37)
+    3 :   mesh Th=square(2,2);
+    4 :   // get data of the mesh 
+    5 :   int nbtriangles=Th.nt;
+    6 :   cout << " nb of Triangles = " << nbtriangles << endl;
+    7 :   for (int i=0;i<nbtriangles;i++)
+    8 :     for (int j=0; j <3; j++)
+    9 :       cout << i << " " << j << " Th[i][j] = "
+   10 : 	   << Th[i][j] << "  x = "<< Th[i][j].x  << " , y= "<< Th[i][j].y 
+   11 : 	   << ",  label=" << Th[i][j].label << endl;
+   12 : 	    
+   13 : //   Th(i)   return   the vextex i of Th
+   14 : //   Th[k]   return   the triangle k of Th.
+   15 : //   Th.be(i)  return  the boundary element 
+   16 :   fespace femp1(Th,P1);
+   17 :   femp1 Thx=x,Thy=y; 
+   18 :   // get vertices information : 
+   19 :   int nbvertices=Th.nv;
+   20 :   cout << " nb of vertices = " << nbvertices << endl;
+   21 :   for (int i=0;i<nbvertices;i++)
+   22 : 	cout << "Th(" <<i  << ") : "   // << endl;	
+   23 : 	     << Th(i).x << " " << Th(i).y  << " " << Th(i).label // version 2.19 
+   24 : 	     << "       old method: " << Thx[][i] << " " << Thy[][i] << endl;
+   25 : 
+   26 : // method to find information of point (0.55,0.6) 
+   27 :   int it00 = Th(0.55,0.6).nuTriangle;// then triangle numbe 
+   28 :   int nr00 = Th(0.55,0.6).region;
+   29 :   
+   30 :   real area00 = Th[it00].area; // new in version 2.19 
+   31 :   real nrr00 = Th[it00].region; // new in version 2.19 
+   32 :   real nll00 = Th[it00].label; // same as region in this case.
+   33 :       
+   34 :  //Hack  to get a triangle contening point x,y
+   35 :   //     or   region number
+   36 :   // -----------------------------------------
+   37 :   fespace femp0(Th,P0);
+   38 :   femp0 nuT; // a P0 function  to get triangle numbering
+   39 :     for (int i=0;i<Th.nt;i++)
+   40 :      nuT[][i]=i; 
+   41 :   femp0 nuReg=region; // a P0 function to get the region number
+   42 :   //  inquire 
+   43 :   int it0=nuT(0.55,0.6); //  number of triangle Th's contening point (0.55,0,6);
+   44 :   int nr0=nuReg(0.55,0.6); //  number of region of Th mesh contening point (0.55,0,6);
+   45 :   // dump  
+   46 :   cout << "  point (0.55,0,6) :triangle number " << it00 << " " << it00 
+   47 :        << ", region = " << nr0 << " == " << nr00 << ",  area K " << area00 << endl;
+   48 : 
+   49 :   // new method to get boundary inforamtion 
+   50 :  
+   51 :   // version >3.4-1
+   52 :   // --------- new stuff -----------------
+   53 :   int k=0,l=1,e=1;
+   54 :   Th.nbe ; // return the number of boundary element \hfilll
+   55 :   Th.be(k);   // return the boundary element k $\in \{0,...,Th.nbe-1\}$ \hfilll
+   56 :   Th.be(k)[l];   // return the vertices l $\in \{0,1\}$ of  boundary element k \hfilll
+   57 :   Th.be(k).Element ;   // return the triangle contening the  boundary element k \hfilll
+   58 :   Th.be(k).whoinElement ;   // return the egde number of triangle contening the  boundary element k \hfilll
+   59 :   Th[k].adj(e) ; // return adjacent triangle to k by edge e, and change the value of e to \hfilll
+   60 :   // the corresponding edge in the adjacent triangle
+   61 :   Th[k] == Th[k].adj(e) ;// non adjacent triangle return the same 
+   62 :   Th[k] != Th[k].adj(e) ;// true adjacent triangle 
+   63 :   
+   64 :   cout << " print mesh connectivity " << endl;
+   65 :   int nbelement = Th.nt; 
+   66 :   for (int k=0;k<nbelement;++k)
+   67 :     cout << k << " :  " << int(Th[k][0]) << " " << int(Th[k][1]) << " " <<  int(Th[k][2])
+   68 : 	 << " , label  " << Th[k].label << endl; 
+   69 :   //  
+   70 :   
+   71 :   for (int k=0;k<nbelement;++k)
+   72 :     for (int e=0,ee;e<3;++e) 
+   73 :       //  remark FH hack:  set ee to e, and ee is change by method adj, 
+   74 :       //  in () to make difference with  named parameters. 
+   75 :       {
+   76 : 	    cout << k <<  " " << e << " <=>  " << int(Th[k].adj((ee=e))) << " " << ee  
+   77 : 	     << "  adj: " << ( Th[k].adj((ee=e)) != Th[k]) << endl;  
+   78 :       }
+   79 :       // note :     if k == int(Th[k].adj(ee=e)) not adjacent element 
+   80 : 
+   81 : 
+   82 :   int nbboundaryelement = Th.nbe; 
+   83 :   Th.be;
+   84 :     for (int k=0;k<nbboundaryelement;++k)
+   85 :       cout << k << " : " <<  Th.be(k)[0] << " " << Th.be(k)[1] << " , label " << Th.be(k).label 
+   86 : 	   <<  " tria  " << int(Th.be(k).Element) << " " << Th.be(k).whoinElement <<  endl; 
+   87 :     
+   88 : }
+   89 : //   test to catch bogus boundary ( just a test)
+   90 : {
+   91 : int err;
+   92 : real c0,c1;
+   93 : c0=0;
+   94 : c1=0;
+   95 : mesh Th;
+   96 : for( int i=0;i<=4;i++)
+   97 : {
+   98 :     c1=sin(i*pi/8);
+   99 : try 
+  100 : {
+  101 : err=0; 
+  102 : border a(t=0,2*pi){ x=cos(t); y=sin(t);label=1;}
+  103 : border b(t=0,2*pi){ x=c0+0.3*cos(t); y=c1+0.3*sin(t);label=2;}
+  104 : plot(a(50)+b(30),wait=1);
+  105 : Th   = buildmesh(a(50)+b(30));
+  106 : }
+  107 : catch(...)
+  108 : {
+  109 :   err=1;
+  110 :   plot(a(50)+b(30),wait=1,cmm="bogus border ",ps="bogusborder.eps");  
+  111 : }
+  112 : if(err==0)
+  113 :   plot(Th,wait=1,cmm="mesh ok");
+  114 : }
+  115 : }
+  116 :  sizestack + 1024 =2120  ( 1096 )
+
+  -- Square mesh : nb vertices  =9 ,  nb triangles = 8 ,  nb boundary edges 8
+ nb of Triangles = 8
+0 0 Th[i][j] = 0  x = 0 , y= 0,  label=4
+0 1 Th[i][j] = 1  x = 0.5 , y= 0,  label=1
+0 2 Th[i][j] = 4  x = 0.5 , y= 0.5,  label=0
+1 0 Th[i][j] = 0  x = 0 , y= 0,  label=4
+1 1 Th[i][j] = 4  x = 0.5 , y= 0.5,  label=0
+1 2 Th[i][j] = 3  x = 0 , y= 0.5,  label=4
+2 0 Th[i][j] = 1  x = 0.5 , y= 0,  label=1
+2 1 Th[i][j] = 2  x = 1 , y= 0,  label=2
+2 2 Th[i][j] = 5  x = 1 , y= 0.5,  label=2
+3 0 Th[i][j] = 1  x = 0.5 , y= 0,  label=1
+3 1 Th[i][j] = 5  x = 1 , y= 0.5,  label=2
+3 2 Th[i][j] = 4  x = 0.5 , y= 0.5,  label=0
+4 0 Th[i][j] = 3  x = 0 , y= 0.5,  label=4
+4 1 Th[i][j] = 4  x = 0.5 , y= 0.5,  label=0
+4 2 Th[i][j] = 7  x = 0.5 , y= 1,  label=3
+5 0 Th[i][j] = 3  x = 0 , y= 0.5,  label=4
+5 1 Th[i][j] = 7  x = 0.5 , y= 1,  label=3
+5 2 Th[i][j] = 6  x = 0 , y= 1,  label=4
+6 0 Th[i][j] = 4  x = 0.5 , y= 0.5,  label=0
+6 1 Th[i][j] = 5  x = 1 , y= 0.5,  label=2
+6 2 Th[i][j] = 8  x = 1 , y= 1,  label=3
+7 0 Th[i][j] = 4  x = 0.5 , y= 0.5,  label=0
+7 1 Th[i][j] = 8  x = 1 , y= 1,  label=3
+7 2 Th[i][j] = 7  x = 0.5 , y= 1,  label=3
+ nb of vertices = 9
+Th(0) : 0 0 4       old method: 0 0
+Th(1) : 0.5 0 1       old method: 0.5 0
+Th(2) : 1 0 2       old method: 1 0
+Th(3) : 0 0.5 4       old method: 0 0.5
+Th(4) : 0.5 0.5 0       old method: 0.5 0.5
+Th(5) : 1 0.5 2       old method: 1 0.5
+Th(6) : 0 1 4       old method: 0 1
+Th(7) : 0.5 1 3       old method: 0.5 1
+Th(8) : 1 1 3       old method: 1 1
+  point (0.55,0,6) :triangle number 7 7, region = 0 == 0,  area K 0.125
+ print mesh connectivity 
+0 :  0 1 4 , label  0
+1 :  0 4 3 , label  0
+2 :  1 2 5 , label  0
+3 :  1 5 4 , label  0
+4 :  3 4 7 , label  0
+5 :  3 7 6 , label  0
+6 :  4 5 8 , label  0
+7 :  4 8 7 , label  0
+0 0 <=>  3 1  adj: 1
+0 1 <=>  1 2  adj: 1
+0 2 <=>  0 2  adj: 0
+1 0 <=>  4 2  adj: 1
+1 1 <=>  1 1  adj: 0
+1 2 <=>  0 1  adj: 1
+2 0 <=>  2 0  adj: 0
+2 1 <=>  3 2  adj: 1
+2 2 <=>  2 2  adj: 0
+3 0 <=>  6 2  adj: 1
+3 1 <=>  0 0  adj: 1
+3 2 <=>  2 1  adj: 1
+4 0 <=>  7 1  adj: 1
+4 1 <=>  5 2  adj: 1
+4 2 <=>  1 0  adj: 1
+5 0 <=>  5 0  adj: 0
+5 1 <=>  5 1  adj: 0
+5 2 <=>  4 1  adj: 1
+6 0 <=>  6 0  adj: 0
+6 1 <=>  7 2  adj: 1
+6 2 <=>  3 0  adj: 1
+7 0 <=>  7 0  adj: 0
+7 1 <=>  4 0  adj: 1
+7 2 <=>  6 1  adj: 1
+0 : 0 1 , label 1 tria  0 2
+1 : 1 2 , label 1 tria  2 2
+2 : 2 5 , label 2 tria  2 0
+3 : 5 8 , label 2 tria  6 0
+4 : 6 7 , label 3 tria  5 0
+5 : 7 8 , label 3 tria  7 0
+6 : 0 3 , label 4 tria  1 1
+7 : 3 6 , label 4 tria  5 1
+  --  mesh:  Nb of Triangles =    834, Nb of Vertices 443
+  --  mesh:  Nb of Triangles =    840, Nb of Vertices 446
+ Missing  Edge 41 v0 =  41[0.187381,0.982287] v1= 42[0.0627905,0.998027] 0  0x10ca585f0 crossing with  [8, 7]
+ Missing  Edge 43 v0 =  43[-0.0627905,0.998027] v1= 44[-0.187381,0.982287] 0  0x10ca57438 crossing with  [9, 10]
+ they is 2 lost edges 
+ The boundary is crossing may be!
+ Fatal error in the meshgenerator 10
+  current line = 102
+Meshing error: Bamg
+ number : 10, 
+ catch Err bamg 
+ Missing  Edge 40 v0 =  40[0.309017,0.951057] v1= 41[0.187381,0.982287] 0  0x10ca59b50 crossing with  [2, 0]
+ Missing  Edge 44 v0 =  44[-0.187381,0.982287] v1= 45[-0.309017,0.951057] 0  0x10ca58e18 crossing with  [15, 16]
+ they is 2 lost edges 
+ The boundary is crossing may be!
+ Fatal error in the meshgenerator 10
+  current line = 102
+Meshing error: Bamg
+ number : 10, 
+ catch Err bamg 
+ Missing  Edge 40 v0 =  40[0.309017,0.951057] v1= 41[0.187381,0.982287] 0  0x10ca59b50 crossing with  [0, 30]
+ Missing  Edge 44 v0 =  44[-0.187381,0.982287] v1= 45[-0.309017,0.951057] 0  0x10ca599e8 crossing with  [16, 17]
+ they is 2 lost edges 
+ The boundary is crossing may be!
+ Fatal error in the meshgenerator 10
+  current line = 102
+Meshing error: Bamg
+ number : 10, 
+ catch Err bamg 
+times: compile 0.004135s, execution 0.016087s,  mpirank:0
+ CodeAlloc : nb ptr  2995,  size :337864 mpirank: 0
+Bien: On a fini Normalement

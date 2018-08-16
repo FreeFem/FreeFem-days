@@ -1,0 +1,50 @@
+load "medit"
+load "isoline"
+
+int[int] lab=1:22;
+mesh Th("bottle.msh");
+Th=change(Th, rmInternalEdges=1);
+Th=adaptmesh(Th,IsMetric=1,0.1,nbvx=100000); 
+fespace Vh(Th,P1);
+Vh dist;
+plot(Th,wait=1);
+
+func  real Diameter(mesh &Th)
+{
+    fespace Wh(Th,P1);
+    Wh u=x,v=y;
+    return max(u[].max-u[].min,v[].max-v[].min); 
+}
+macro grad(u) [dx(u),dy(u)]//  
+{
+savemesh(Th,"bottle.mesh");
+Vh u=x,v=y;
+real diam = Diameter(Th); 
+solve Pb(u,v,tgv=1e100) = int2d(Th) ( grad(u)'*grad(v) ) - int2d(Th)(v) + on(lab,u=-1e-20); 
+plot(u,wait=1);
+savesol("bottle.sol",Th,u);
+exec("mshdist bottle; test $? != 0 && rm bottle.sol;");
+dist[]=readsol("bottle.sol");
+dist[] *= diam; 
+}
+plot(dist,wait=1,dim=3,cmm=" dist "); 
+
+Vh T,TT;
+real T0 = 98;
+real c = 1;
+real F=1; 
+solve Heat(T,TT) = int2d(Th) ( grad(T)'*grad(TT) ) + int1d(Th,lab)( c*T*TT) - int1d(Th,lab) (c*(T0*TT) )
+-int2d(Th)(TT*F) + on(lab,T=99);
+cout<< " T max =" << T[].max << " " << T[].min << endl; 
+plot(T, wait=1); 
+
+real[int,int] xy(3,1),xy0(3,1);
+int[int] be(1),be0(1);
+int nbc= isoline(Th,T,xy,close=1,iso=100,beginend=be,smoothing=0.);
+real[int] diso(xy.m); 
+for(int i=0; i<diso.n; ++i)
+{
+  diso[i]=dist(xy(0,i),xy(1,i)) ;
+  cout << i << " " << xy(0,i) << " " << xy(1,i) << " " << diso[i] << endl; 
+}
+cout << " dist min = " << diso.min << " max =  " << diso.max << endl; 

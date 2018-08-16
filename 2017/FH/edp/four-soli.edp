@@ -1,0 +1,72 @@
+// version 2017 awith Robin B.C 
+//  k dn(T) + alpha*(T-Te) =0 
+// version valide on  18 sep. 2014 ..
+
+bool w = 0; 
+
+
+mesh Th;
+
+try {
+    Th=readmesh("four2.msh");
+}
+catch(...)  { // file no exist => rebuild ..
+	include "Th-four.edp"
+	Th=readmesh("four2.msh");
+}
+real kr =1;
+real kc = 10;
+real k0 = 0.5; 
+real alpha = 1; 
+real Te = 25,TTe=Te;
+real Td = 180; 
+real[int] k=[kr,kr,kr,kr,kr,kr, kc, k0]; 
+real[int] f=[1,1,1,1,1,1, 0,0]; 
+fespace Vh(Th,P1);
+plot(Th,wait=w);
+//  probleme avec temperature donne ..
+Vh T,TT; 
+Vh[int] Tf(7);
+f=0; 
+macro grad(u) [dx(u),dy(u)]//EOM 
+solve thermic(T,TT)= 
+int2d(Th)(k[region]*(grad(T)'*grad(TT))) 
+- int2d(Th)(f[region] *TT) 
++ int1d(Th,1)(alpha*T*TT)
+- int1d(Th,1)(alpha*TTe*TT)
+
+; 
+Tf[6]= T; // T^0 
+cout << " T^0 min " << Tf[6][].min << " max " <<Tf[6][].max << endl; 
+plot( T, wait=w,cmm=" T^0  "); 
+for(int i=0;i<6;++i)
+{ 
+    f=0;
+    f[i]=1; 
+    cout << i << " f =" << f << endl;
+    TTe=0;
+    thermic;
+    Tf[i]= T;
+    plot(Tf[i], wait=w,cmm=" T^f_"+i ); 
+}
+TTe=Te; 
+real[int,int] B(6,6),B1(6,6);
+real[int] C(6),F(6);
+load "lapack" 
+
+for(int i=0;i<6;++i)
+ for(int j=0; j<6; ++j)
+   B(i,j) = int2d(Th,6)(Tf[i]*Tf[j]); 
+for(int i=0;i<6;++i)
+   C[i]=    int2d(Th,6)((Td-Tf[6])*Tf[i]); 
+   
+ B1=B^-1;
+ F= B1*C;
+ cout << " F = " << F << endl; 
+ T[]=Tf[6][];// copie les degrees de liberte 
+ for (int i=0;i<6;++i)
+  T[] += F[i]*Tf[i][]; 
+ real err = int2d(Th,6)( square(T-Td))/int2d(Th,6)(1.); 
+ cout << " err = " << err << " " << int2d(Th,6)(1.) <<endl;
+ plot(T, wait=1, cmm=err ); 
+   

@@ -1,0 +1,5 @@
+object "Vx" class series
+member 0 value file "pippo.data","Vx_0" position 1
+member 1 value file "pippo.data","Vx_1" position 2
+
+end

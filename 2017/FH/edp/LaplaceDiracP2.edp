@@ -1,0 +1,20 @@
+load "MetricPk"
+ real[int] xdelta = [0.25,0.6], ydelta = [0.25,0.6]
+          , cdelta=[1.,2.];
+ mesh Th=square(10,10);          verbosity=0;
+ 
+ for(int iter=1;iter < 20;iter++)
+ { fespace Vh(Th,P2);     // P1 FE space
+  Vh uh,vh;  // unkown and test function. 
+  matrix D = interpolate(Vh,xdelta,ydelta); 
+  real[int]  b= D*cdelta;  b= -b;
+  solve laplace(uh,vh) =                 
+      int2d(Th)( dx(uh)*dx(vh) + dy(uh)*dy(vh) )  + b
+      + on(1,2,3,4,uh=0) ;     
+  plot(uh,wait=1,dim=3,fill=1);
+  fespace Mh3(Th,[P1,P1,P1]); Mh3 [m11,m12,m22];
+  real mass=100*iter^1.5;
+  m11[]=MetricPk(Th,uh,kDeg=2,mass=mass,MetricType=1);
+  Th = adaptmesh(Th,m11,m12,m22,IsMetric=true,nbvx=100000);
+  cout << " NT = " << Th.nt << " NT/Mass " <<  Th.nt/ mass << endl; 
+ }

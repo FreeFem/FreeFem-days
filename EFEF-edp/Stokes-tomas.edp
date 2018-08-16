@@ -1,0 +1,201 @@
+load "Element_P4"
+load "Element_P3"
+int qfo=10;
+func Pk=P4;
+func Pk1=P3;
+func Pk1dc=P2dc;
+int kkk=2;
+int ww=0;
+bool scootzhang=1 ;
+int NNX=40;
+bool struct = 0;
+string ops="f3-"+struct+scootzhang+".eps";
+string sfxt="f3-"+struct+scootzhang+".txt";
+string title="  error curve, ";
+if( struct) title =title+ " Structured meshes ";
+else  title =title+ " Unstructured meshes ";
+if(scootzhang)  title =title+ " Scott Zhang Inter. ";
+else title =title+ " Clement Inter. ";
+
+macro Curl(u3) [dy(u3),-dx(u3)] //
+macro curl(u1,u2) (dx(u2)-dy(u1)) //
+macro grad(u) [dx(u),dy(u)] //
+macro div(u1,u2) (dx(u1)+dy(u2)) //
+
+func psi=sin(x)*sin(x)*sin(y)*sin(y);
+func U2= -0.2e1 * sin(x) * pow(sin(y), 0.2e1) * cos(x);// dy psi
+func U1=  0.2e1 * pow(sin(x), 0.2e1) * sin(y) * cos(y);// dx psi
+func U1x= 0.4e1 * sin(x) * sin(y) * cos(x) * cos(y);
+func U1y=0.2e1 * pow(sin(x), 0.2e1) * pow(cos(y), 0.2e1) - 0.2e1 * pow(sin(x), 0.2e1) * pow(sin(y), 0.2e1);
+func U2x=-0.2e1 * pow(cos(x), 0.2e1) * pow(sin(y), 0.2e1) + 0.2e1 * pow(sin(x), 0.2e1) * pow(sin(y), 0.2e1);
+func U2y= -0.4e1 * sin(x) * sin(y) * cos(x) * cos(y);
+func LapU1=0.4e1 * pow(cos(x), 0.2e1) * sin(y) * cos(y) - 0.12e2 * pow(sin(x), 0.2e1) * sin(y) * cos(y);
+func LapU2=0.12e2 * sin(x) * pow(sin(y), 0.2e1) * cos(x) - 0.4e1 * sin(x) * pow(cos(y), 0.2e1) * cos(x);
+
+
+
+
+func P=cos(x)*cos(y);
+func Px=-sin(x)*cos(y);
+func Py=-cos(x)*sin(y);
+//  U,P 
+real nu=1.;
+func f1 = -nu*LapU1 + Px;
+func f2 = -nu*LapU2 + Py;
+
+
+{
+  ofstream ftxt(sfxt);//  to empty  the file 
+}
+for(int NN=5,KK=5;NN<=NNX;NN+=KK)
+{
+  KK+=KK;
+  KK = min(KK,20);
+  mesh Th=square(NN,NN,[pi*x,pi*y]);
+  real hsize = pi/NN;
+  if(!struct) // trick to build uniforme mesh.
+    Th=adaptmesh(Th,hsize,IsMetric=1,nbvx=1000000,keepbackvertices=0);
+  else 
+    hsize*= sqrt(2.); 
+  
+  fespace Wh(Th,[Pk,Pk,Pk]);
+  fespace Vh(Th,Pk1);
+  fespace Vdch(Th,Pk1dc);
+  fespace Ph(Th,P0);
+  Ph hhh=hTriangle;
+  real hmoy= hhh[].sum/hhh[].n;
+  real hmax= hhh[].max;
+  hhh[] -= hmoy;
+  real hsig =  hhh[].l2/sqrt(real( hhh[].n));
+  
+  real ctk=-1./49.348;// magic constant : 1 over first eigen value of Laplace operator on K hat.
+  Wh [u1e,u2e,pe]=[U1,U2,P];
+  if(ww)
+    plot([u1e,u2e],pe,wait=ww,cmm=" exact");
+  matrix DD;
+  {
+    varf vMtk(p,q)=int2d(Th,qforder=qfo)(hTriangle*hTriangle*ctk*p*q);
+    matrix Mtk=vMtk(Vdch,Vdch);
+    int[int] c2=[2];//  2 second componte 
+    matrix Dx = interpolate(Vdch,Wh,U2Vc=c2,op=1);
+    matrix Dy = interpolate(Vdch,Wh,U2Vc=c2,op=2);
+    
+    { // verif ...
+      Wh [uu,vv,pp]=[0,0,x*x+10*y*y+3*x*y];
+      Vdch px,py;
+      px[]= Dx*uu[];
+      py[]= Dy*uu[];
+      px = px - (2*x	+ 3*y);
+      py = py - (20*y+ 3*x);
+      assert( px[].linfty< 1e-10);
+      assert( py[].linfty< 1e-10);
+    }
+    //cout << "Dx = " << Dx << endl;
+    //cout << "Dy = " << Dy << endl;
+    // construction of the P1dc operator:
+    // IPh = Id - Ih*Ith.
+    // where Id is the Identity
+    //       Ih the Injection               from P1 continuous to P1 discontinuous.
+    //       Ith the interpoaltion operator form P1 discontinuous to continuous
+    //           Scoot and Zhang operator  (interpolation matrix)
+    //           L2 projection with mass lumping to get a no full matrix 
+    //              as a Clement operator.
+    matrix Ih = interpolate(Vdch,Vh);
+    matrix Ith = interpolate(Vh,Vdch);
+    if(!scootzhang)
+      { //  Clement's Operator  or L2 projection with mass lumping
+	varf vsigma(u,v)=int2d(Th)(v);
+	Vh sigma; sigma[]=vsigma(0,Vh); 
+	varf vP2L(u,v)=int2d(Th,qft=qf1pTlump)(u*v/sigma);
+	Ith=vP2L(Vdch,Vh);
+      }
+    //cout << "Ih: " << Ih << endl;
+    matrix IPh =  Ih*Ith ; 
+    //cout << "Ih: " << Ih << endl;
+    // IPh = Ih*IPh;
+    Vdch dd1=1;
+    matrix Idh=dd1[]; // 
+    //cout << "Idh: " << Idh << endl; 
+    IPh = Idh + (-1.)*IPh;  //   matrix  :  I - \Pi_h
+
+    {// verif..   0 on continuous funtion. 
+      Vdch www=x+10*y,ww;
+      ww[]=IPh*www[];
+      assert(ww[].linfty<1e-10);
+    }
+    
+    
+    //cout << " IPh " << IPh << endl;
+    matrix DDx = IPh*Dx;
+    matrix DDy = IPh*Dy;
+    
+    matrix DDxx= Mtk*DDx; DDxx = DDx'*DDxx;
+matrix DDyy= Mtk*DDy; DDyy = DDy'*DDyy;
+    DD= DDxx + DDyy; //  DDx'*Mtk * DDx + DDy'*Mtk * DDy 
+    
+  }
+  
+  { //  trick to compute the max coef of the matrix DD
+    int[int] ll(1),cc(1); real[int] aa(1);
+    [ll,cc,aa]=DD;
+    cout << " DD: min / max " << aa.min << " " << aa.max  << endl;
+    Wh [uu,vv,pp]=[0,0,x*x];
+    Wh [uuu,vvv,ppp];
+    uuu[]= DD*pp[];
+    if(ww)
+      plot(ppp,wait=ww);
+  }
+  varf va([u1,u2,p],[v1,v2,q]) =
+    int2d(Th,qforder=qfo)( grad(u1)'* grad(v1) * nu +  grad(u2)'* grad(v2) * nu 
+	       - div(u1,u2)*q - div(v1,v2)*p - 1e-10*p*q )
+    + int2d(Th,qforder=qfo)(f1*v1+f2*v2)
+    + on(1,2,3,4,u1=0.,u2=0.);
+  
+  matrix A= va(Wh,Wh,solver=UMFPACK);
+  A = A + DD;
+  set(A,solver=UMFPACK);
+  real[int] b=va(0,Wh);
+  
+  Wh [u1,u2,p];
+  u1[]=A^-1*b;
+  
+  plot([u1,u2],p,wait=ww);
+  
+  real errPH1 = sqrt(int2d(Th,qforder=qfo)( square(dx(p)-Px)+square(dy(p)-Py) ) );
+  real errPL2 = sqrt(int2d(Th,qforder=qfo)( square((p)-P)) );
+  real errUH1 = sqrt(int2d(Th,qforder=qfo)( square(dx(u1)-U1x)+square(dy(u1)-U1y)  + square(dx(u2)-U2x)+square(dy(u2)-U2y) ) );
+  real errUL2 = sqrt(int2d(Th,qforder=qfo)( square(u1-U1)  + square(u2-U2) ) );
+  cout  << " NN  hsize   errpH1   errPL2   errUL2  errUH1 truemax hmoy hsig "<< endl;
+  cout  << NN<< " " << hsize << " "<< errPH1 << " " << errPL2 << " "<< errUL2 << " " << errUH1 << " " 
+	<< hmax << " " << hmoy << " " << hsig << endl;
+  {
+    ofstream ftxt(sfxt,append);
+    ftxt << NN<< " " << hsize << " "<< errPH1 << " " << errPL2 << " "<< errUL2 << " " << errUH1 
+	 << " " << hmax << " " << hmoy << " " << hsig << endl;
+  }
+  u1[] -= u1e[];
+  plot([u1,u2],p,wait=ww,cmm=" err " );
+  plot(u1,wait=ww,cmm=" err u1" );
+  plot(u2,wait=ww,cmm=" err u2" );
+  plot(p,wait=ww,cmm=" err p" );
+  
+ }
+{ // build the Gnuplot command file... 
+  ofstream gp("cmd-gp-"+struct+scootzhang);
+  gp << "set logscale xy\n";
+  gp << "set term postscript\n";
+  gp << "set output \""+ops+"\"\n";
+  gp << "set title \""+title+"\"\n";
+  gp << "call \"pp\" \""+sfxt+"\"\n";
+  gp << "set output \n";
+  gp << "set term aqua\n";
+  gp << "replot\n";
+  gp << "quit\n";
+  //  the script gnuplot call pp..
+  ofstream pp("pp");
+  pp << "plot \"$0\" u 2:3 t \"p H1\" w l ,\"$0\" u 2:4 t \"p/L2\"  w l ,\"$0\" u 2:5 t \"U/L2\" w l ,\"$0\" u 2:6 t \"U/H1\" w l ,0.9*x**"+kkk+",0.7*x*"+(kkk+1)+",0.1*x**"+(kkk+2)+" \n";
+	
+}// to close the file ...
+
+exec("gnuplot <cmd-gp-"+struct+scootzhang);
+

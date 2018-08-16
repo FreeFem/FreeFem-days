@@ -1,0 +1,36 @@
+load "medit"
+include "cube.idp"
+int[int]  Nxyz=[20,5,5];
+real [int,int]  Bxyz=[[0.,5.],[0.,1.],[0.,1.]];
+int [int,int]  Lxyz=[[1,2],[2,2],[2,2]];
+mesh3 Th=Cube(Nxyz,Bxyz,Lxyz);
+// Alu ...
+real rhoAlu = 2600;
+real alu11=  1.11e11 ; 
+real alu12 = 0.61e11 ;
+real alu44= (alu11-alu12)*0.5;
+func Aalu = [  [alu11, alu12,alu12,   0.   ,0.    ,0.  ],
+               [alu12, alu11,alu12,   0.   ,0.   ,0.   ],
+               [alu12, alu12,alu11,   0.   ,0.   ,0.   ],
+               [0. ,   0. ,   0. ,    alu44,0.   ,0.   ],
+               [0. ,   0. ,   0. ,    0.   ,alu44,0.   ],
+               [0. ,   0. ,   0. ,    0.   ,0.   ,alu44]   ];
+real gravity = -9.81;
+
+fespace Vh(Th,[P1,P1,P1]);
+Vh [u1,u2,u3], [v1,v2,v3];
+
+macro Strain(u1,u2,u3)  [dx(u1),dy(u2),dz(u3),(dz(u2)+dy(u3)),(dz(u1)+dx(u3)),(dy(u1)+dx(u2))] // EOM
+macro div(u1,u2,u3) ( dx(u1)+dy(u2)+dz(u3) ) // EOM
+  
+solve Lame([u1,u2,u3],[v1,v2,v3])=
+  int3d(Th)(  Strain(v1,v2,v3)'*(Aalu*Strain(u1,u2,u3))  )
+  - int3d(Th) ( rhoAlu*gravity*v3)
+  + on(1,u1=0,u2=0,u3=0) ;
+real dmax= u1[].max;
+cout << " max deplacement = " << dmax << endl;
+real coef= 0.1/dmax;
+int[int] ref2=[1,0,2,0];// just to see 
+mesh3 Thm=movemesh3(Th,transfo=[x+u1*coef,y+u2*coef,z+u3*coef],label=ref2);
+plot(Th,Thm, wait=1,cmm="coef  amplification = "+coef );
+medit("Th-Thm",Th,Thm);

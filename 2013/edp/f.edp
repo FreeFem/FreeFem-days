@@ -1,0 +1,8 @@
+load "f"
+cout << " f0(10) " << f0(10) << endl;
+cout << " f00(10) " << f00(10) << endl;
+cout << " f0s(10) " << f0s(10) << endl;
+real[int,int] A(1,1);
+A(0,0) =123;  
+cout << ReadEnviFile(A,"small.envi.txt");
+cout << A << endl;  

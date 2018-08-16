@@ -1,0 +1,21 @@
+mesh Th = square(10,10);
+fespace Vh(Th,P2);
+
+real K = 1, T0=1, f =1; 
+
+Vh u,v,w;
+u = 0; 
+// Newton method
+macro Grad(u) [dx(u),dy(u)]// 
+for(int iter = 0; iter < 20; ++ iter)
+{
+   solve TangentPB(w,v) =
+    int2d(Th) ( K * Grad(w)'*Grad(v) ) 
+    + int1d(Th) ( 4*w*v*(u-T0)^3)
+    - int2d(Th)( K * Grad(u)'*Grad(v) - f*v )
+    - int1d(Th) ( v*(u-T0)^4) ;
+    u[] -= w[]; 
+    cout << " err = " <<  w[].linfty  << endl;
+    if( w[].linfty < 1e-6) break; 
+    plot(u,wait=1);
+}

@@ -1,0 +1,7 @@
+load "TrivialMatrix"
+mesh Th=square(10,10);
+cout << " before TrivailMatrix "<< endl; 
+matrix   A=  CloseMatrix(Th,0.1); 
+cout << A << endl; 
+A= CloseMatrix(Th,0.2); 
+cout << A << endl; 

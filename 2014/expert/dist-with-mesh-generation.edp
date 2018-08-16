@@ -1,0 +1,96 @@
+load "medit"
+mesh Th("bottle.msh");
+
+Th=change(Th, rmInternalEdges=1);
+Th=adaptmesh(Th,IsMetric=1,0.1,nbvx=100000); 
+
+plot(Th,wait=1);  
+plot(Th); 
+macro grad(u) [dx(u),dy(u)]//
+fespace Vh(Th,P1);
+// fisrt build  the temperature field  T 
+// such than is isoline 100. existe ... 
+Vh T,TT;
+real T0 = 98;
+real c = 1;
+real F=1; 
+int[int] lab=1:22; 
+solve Heat(T,TT) 
+= int2d(Th) ( grad(T)'*grad(TT) ) + int1d(Th,lab)( c*T*TT) - int1d(Th,lab) (c*(T0*TT) )
+-int2d(Th)(TT*F) + on(lab,T=99);
+cout<< " T max =" << T[].max << " " << T[].min << endl; 
+plot(T, wait=1);
+// end of the computation of the temperature field  T 
+ 
+//  use plugin isoline to compute a isoline a use it in freefem++
+load "isoline"
+
+real[int,int] xy(3,1),xy0(3,1);
+int[int] be(1),be0(1);
+int nbc= isoline(Th,T,xy,close=1,iso=100,beginend=be,smoothing=0.);
+cout << " nbc " << nbc << endl; 
+// show the lines 
+
+Vh  t0;
+varf von(u,v) = on(lab,u=1); 
+t0[] = von(0,Vh,tgv=1); 
+plot(t0, wait=1);  
+int nbc0= isoline(Th,t0,xy0,close=1,iso=1,beginend=be0,smoothing=0.);
+int i0 = be[0], i1 = be[1]-1; // begin and end  the  connexe line comp. c       
+int i00 = be0[0], i01 = be0[1]-1; // begin and end  the  connexe line comp. c       
+
+plot([xy(0,i0:i1),xy(1,i0:i1)],[xy0(0,i00:i01),xy0(1,i00:i01)],wait=1);
+border curve(t=0,1;i) 
+{ int c =i; 
+  int i0 = be[2*c], i1 = be[2*c+1]-1;   
+  P=Curve(xy,i0,i1,t); 
+  label=1; 
+} 
+
+border curve0(t=0,1;i) 
+{ int c =i; 
+  int i0 = be0[2*c], i1 = be0[2*c+1]-1;   
+  P=Curve(xy0,i0,i1,t); 
+  label=2; 
+} 
+real hsize = 0.1; // the mesh size ... 
+int[int]  NN0(nbc0), NN(nbc);
+for(int i=0; i< nbc0; ++i)
+  NN0[i]= xy0(2,be0(2*i+1)-1)/ hsize;
+for(int i=0; i< nbc; ++i)
+  NN[i]= - xy(2,be(2*i+1)-1)/ hsize;
+
+mesh Th1= buildmesh(curve(NN)+curve0(NN0)); 
+real area0= Th1.area;  
+Th1 = emptymesh(Th1);
+// bug in empty mesh (fill the hole )
+// warning error if  more 1 region .. 
+// remove the hole ... 
+
+
+    int reg0=-1;
+int count=0; 
+for( int i =0; i<10; ++i)
+     {
+        real ai=int2d(Th1,i)(1.);
+	if( abs(ai-area0) < area0*1e-7) reg0=i;
+	if(ai) ++count;
+	if(ai)
+	cout << i <<  " region = " << ai << " " << area0 <<  " " << reg0 << endl; 
+     }
+assert(count ==2); 
+Th1 = trunc(Th1, region == reg0); 
+plot(Th1, wait=1);
+// now compute the dist by build de varf to get the  dist 
+varf vdist(u,v) = int1d(Th1,1)( v*2*area/lenEdge/lenEdge);
+fespace Ph0(Th1,P0);
+Ph0 dist,xx0=x, yy0=y; 
+
+dist[] = vdist(0,Ph0);
+dist[] = dist[] ? dist[] : 3; 
+int itmin = dist[].imin;
+cout << " min = " << itmin << " " << dist[][itmin] 
+     << " " << xx0[][itmin] << " " << yy0[][itmin]<<endl; 
+ 
+plot(dist,fill=1,cmm = " dist min = " +  dist[].min );  
+

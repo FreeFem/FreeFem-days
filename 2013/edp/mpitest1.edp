@@ -1,0 +1,23 @@
+int i ;  
+verbosity = 0; 
+assert(mpisize<=100);
+int N = (100+mpisize-1) / mpisize;
+
+for (int step=0; step < N;  ++step)
+{
+   i = mpisize*step + mpirank +1; 
+   if( i <= 100) 
+   {
+   func f = i;
+   func g = sin(real(i));
+   func K = exp(real(i));
+     mesh Thi = square(10,10,[x*i, y*i]); 
+     macro grad(u) [dx(u),dy(u)] //
+     fespace Vhi(Thi,P1); 
+     Vhi ui,v; 
+     solve Pbi( ui,v) = int2d(Thi)( K*grad(ui)'*grad(v))
+        -int2d(Thi) (f*v) 
+	+ on(1,2,3,4,ui= g); 
+     cout << " ui max " << ui[].max << " i = " << i << " mpirank = " << mpirank << endl; 
+   }
+} 

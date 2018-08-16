@@ -1,0 +1,51 @@
+func g=cos(2*x)*cos(2*y); // valeur au bord
+int nn=10;
+mesh Th=square(nn,nn,[x*pi,y*pi]);  // mesh definition of $\Omega$
+fespace Vh(Th,P1);      // finite element space
+fespace Ph(Th,P1dc);      // for  optimization  to store 1 + dx(u)^2+dy(u)^2
+Vh u=g; //  the current value of the solution
+
+Ph alpha; // of store  $ 1 + (|\nabla u|^2)$
+
+// the fonctionnal to minimise
+func real J(real[int] & xx)
+  {
+    Vh u;u[]=xx; 
+    real r=int2d(Th)( sqrt(1 +dx(u)*dx(u) + dy(u)*dy(u) ) ) ;
+    cout << "J(x) =" << r << " " << xx.min <<  " " << xx.max << endl;
+    return r;
+  }
+  
+// the grad of the fonctionnal
+func real[int] dJ(real[int] & xx)
+  {
+    verbosity=1;
+    Vh u;u[]=xx; 
+    Vh alpha=sqrt(1. +dx(u)*dx(u) + dy(u)*dy(u) ); // optimization 
+    varf au(uh,vh) = int2d(Th)( 1./alpha*( dx(u)*dx(vh) + dy(u)*dy(vh) ) )
+     + on(1,2,3,4,uh=0);
+     xx= au(0,Vh);
+     verbosity=5;
+    return xx; // warning no return of local array  
+  }
+ // initial value
+ 
+ verbosity=5;
+ u=0.;
+ for(int iter=1;1;iter++)
+ {
+  Vh onGamma=0;
+  varf vonGamma(u,v)=int1d(Th)(v/lenEdge);
+  onGamma[]=vonGamma(0,Vh);
+  onGamma = onGamma !=0;
+  u=  u * (1-onGamma) + onGamma*g;	
+ int conv=NLCG(dJ,u[],nbiter=100,eps=1e-5);
+ plot(u,dim=3,fill=1); 
+  cout << " the  surface =" << J(u[])  << endl;
+  if(iter == 2 )break;
+  nn*=2;
+  Th=square(nn,nn,[x*pi,y*pi]); 
+//  conv=NLCG(dJ,u[],nbiter=100,eps=1e-5); 
+  cout << " Iter " << iter << "  the  surface =" << J(u[])  << endl;
+ } 
+plot(u,dim=3,fill=1);

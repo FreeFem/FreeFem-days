@@ -1,0 +1,56 @@
+load "medit"
+include "cube.idp"
+int[int]  Nxyz=[30,7,7];
+real [int,int]  Bxyz=[[0.,5.],[0.,1.],[0.,.5]];
+int [int,int]  Lxyz=[[1,2],[2,2],[2,2]];
+mesh3 Th=Cube(Nxyz,Bxyz,Lxyz);
+// Alu ...
+real rhoalu = 2600;
+real alu11=  1.11e11 ; 
+real alu12 = 0.61e11 ;
+real alu44= (alu11-alu12)*0.5;
+func Aalu = [  [alu11, alu12,alu12,   0.   ,0.    ,0.  ],
+               [alu12, alu11,alu12,   0.   ,0.   ,0.   ],
+               [alu12, alu12,alu11,   0.   ,0.   ,0.   ],
+               [0. ,   0. ,   0. ,    alu44,0.   ,0.   ],
+               [0. ,   0. ,   0. ,    0.   ,alu44,0.   ],
+               [0. ,   0. ,   0. ,    0.   ,0.   ,alu44]   ];
+real gravity = -9.81;
+
+fespace Vh(Th,[P1,P1,P1]);
+Vh [u1,u2,u3], [v1,v2,v3];
+
+macro Strain(u1,u2,u3)  [dx(u1),dy(u2),dz(u3),(dz(u2)+dy(u3)),(dz(u1)+dx(u3)),(dy(u1)+dx(u2))] // EOM
+macro div(u1,u2,u3) ( dx(u1)+dy(u2)+dz(u3) ) // EOM
+  
+varf vLame([u1,u2,u3],[v1,v2,v3])=
+  int3d(Th)(  Strain(v1,v2,v3)'*(Aalu*Strain(u1,u2,u3))  )
+  + on(1,u1=0,u2=0,u3=0) ;
+varf vMass([u1,u2,u3],[v1,v2,v3])=
+  int3d(Th)(  [v1,v2,v3]'*[u1,u2,u3]*rhoalu  );
+ 
+matrix A= vLame(Vh,Vh,solver=sparsesolver); 
+matrix B= vMass(Vh,Vh,solver=CG,eps=1e-20); 
+
+int nev=20;  // number of computed eigen valeu close to sigma
+
+real[int] ev(nev); // to store nev eigein value
+Vh[int] [eu1,eu2,eu3](nev);   // to store nev eigen vector
+
+
+int k=EigenValue(A,B,sym=true,value=ev,vector=eu1,tol=1e-10);
+//   tol= the tolerace
+//   maxit= the maximal iteration see arpack doc.
+//   ncv   see arpack doc.
+//  the return value is number of converged eigen value.
+k=min(k,nev); //  some time the number of converged eigen value 
+              // can be greater than nev;
+
+for (int i=0;i<k;i++)
+{
+  real coef= 0.5/eu1[i][].linfty;
+  mesh3 Thm=movemesh3(Th,transfo=[x+eu1[i]*coef,y+eu2[i]*coef,z+eu3[i]*coef]);
+  //plot(Th,Thm, wait=1,cmm=i+"/"+k+"coef  amplification = "+coef );
+ // medit("Thm-"+ev[i],Thm,wait=1);
+ plot(Thm,wait=1,cmm=i+"/"+k+"coef  amplification = "+coef , fill=1);
+}

@@ -1,0 +1,18 @@
+load "Element_P4"
+load "Element_P3"
+mesh Th=square(4,4);
+mesh Tf=square(40,40);
+plot(Th,wait=1);
+fespace Vh(Th,P3);
+fespace Vf(Tf,P1);// a fine mesh 
+
+Vh vi=0;
+Vf vf;
+int n0= Vh.ndof/2;
+for (int i=n0;i<min(vi[].n,n0+20);++i)
+ {
+    vi[][i]=1;
+    vf=vi; //  interpole de basic function on fine mesh space. 
+    plot(Th,vf,dim=2,wait=1,cmm=" v"+i,fill=0);
+    vi[][i]=0;
+ }

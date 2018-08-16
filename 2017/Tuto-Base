@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr">
+
+  <head>
+<base href="https://www.ljll.math.upmc.fr/" />
+    <meta charset="utf-8"/>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="viewport" content="width=device-width,height=device-height,initial-scale=1.0"/>
+	<meta name="description" content="Laboratoire Jacques-Louis Lions" />
+
+	
+
+	
+
+	
+
+	  <title>Laboratoire Jacques-Louis Lions</title> 
+
+    <link href="/images/favicon.gif" type="image/gif" rel="icon">
+    <link href="/images/favicon.ico" type="image/x-icon" rel="shortcut icon">
+    <meta content="Laboratoire Jacques-Louis Lions - UPMC - Université Pierre et Marie Curie" name="author">
+    <meta content="UPMC - Université Pierre et Marie Curie" name="copyright">
+    <meta content="2 days" name="revisit-aftert">
+    <meta content="fr" name="language">
+    <meta content="IE=8" http-equiv="X-UA-Compatible">
+    <meta name="keywords" content="Laboratoire Jacques-Louis Lions, Laboratoire, Jacques-Louis, Lions, Mathématiques, LJLL, Université, sciences, technologies, médecine, Curie, Paris, paris 6, paris VI, UPMC, Jussieu, Pitié-Salpêtrière, Saint-Antoine, Cordeliers, Roscoff, Banyuls-sur-mer, Villefranche-sur-mer, mathématiques, informatique, physique, chimie, ingénierie, biologie, sciences de la Vie, sciences de la Terre.">
+	<meta name="maintainer" value="Clement DIVRY" />
+    <link href="/fr/rss.xml" title="Fil RSS des actualités de la page d'accueil du site du LJLL" type="application/rss+xml" rel="alternate">
+    <link rel="stylesheet" type="text/css" href="/css/print.css" media="print">
+    <link rel="stylesheet" type="text/css" href="/css/jquery.autocomplete.css">
+    <link rel="stylesheet" type="text/css" href="/css/thickbox.css">
+    <link rel="stylesheet" type="text/css" href="/css/patch.css">
+    <link rel="stylesheet" type="text/css" href="/css/upmc-page-layout.css">
+    <link rel="stylesheet" type="text/css" href="/css/upmc-page-layout-fr.css">
+    <link rel="stylesheet" type="text/css" href="/css/upmc-labo-layout.css">
+    <link rel="stylesheet" type="text/css" href="/css/upmc-page-swap-img_to_txt.css">
+    <link rel="stylesheet" type="text/css" href="/css/upmc-labo-coul-bleu.css">
+    <link rel="stylesheet" type="text/css" href="/css/upmc-labo-coul-bleu-fr.css">
+    <link rel="stylesheet" type="text/css" href="/css/upmc-page-subsubmenu.css">
+    <link rel="stylesheet" type="text/css" href="/css/ljll-custom.css">
+    <link rel="stylesheet" type="text/css" href="/css/ljll-custom-mobile.css">
+    <link rel="stylesheet" type="text/css" href="/css/trombinoscope.css">
+
+    <!--[if IE ]>
+	<link rel="stylesheet" type="text/css" href="/css/patch-ie.css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="/css/upmc-page-ie7.css" media="screen" />
+	<![endif]-->
+
+    <!--[if lte IE 6]>
+	<link rel="stylesheet" type="text/css" href="/css/patch-ie6.css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="/css/upmc-page-ie6.css" media="screen" />
+	<![endif]-->
+
+    <link rel="stylesheet" type="text/css" rel="stylesheet" href="/css/upmc-page-actu.css" type="text/css">
+
+    <!--[if IE 8]>
+	<link rel="stylesheet" type="text/css" href="/css/upmc-page-actu-bo-ie8.css" media="screen" />
+	<![endif]-->
+    <!--[if IE 7]>
+	<link rel="stylesheet" type="text/css" href="/css/upmc-page-actu-bo-ie7.css" media="screen" />
+	<![endif]-->
+    <!--[if lte IE 6]>
+	<link rel="stylesheet" type="text/css" href="/css/upmc-page-actu-bo-ie6.css" media="screen" />
+	<![endif]-->
+    <script type="text/javascript" src="/js/agenda_popup.js"></script>
+
+    <script type="text/javascript" src="/js/page-subsubmenu.js"></script>
+    <script type="text/javascript" src="/js/jquery.js"></script>
+    <script type="text/javascript" src="/js/page-scripts.js"></script>
+    <script type="text/javascript" src="/js/page-menu.js"></script>
+    <script type="text/javascript" src="/js/jquery.treeview.js"></script>
+    <script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
+    <script type="text/javascript" src="/js/jquery.bgiframe.min.js"></script>
+    <script type="text/javascript" src="/js/jquery.dimensions.js"></script>
+
+
+
+	<link href="/plugins-dist/organiseur/lib/fullcalendar/fullcalendar.css" rel="stylesheet" />
+	<link href="plugins-dist/organiseur/lib/fullcalendar/fullcalendar.print.css" rel="stylesheet" media="print" />
+	<script type="text/javascript">/* <![CDATA[ */
+var box_settings = {tt_img:true,sel_g:"#documents_portfolio a[type='image/jpeg'],#documents_portfolio a[type='image/png'],#documents_portfolio a[type='image/gif']",sel_c:".mediabox",trans:"elastic",speed:"200",ssSpeed:"2500",maxW:"90%",maxH:"90%",minW:"400px",minH:"",opa:"0.9",str_ssStart:"Diaporama",str_ssStop:"Arrêter",str_cur:"{current}/{total}",str_prev:"Précédent",str_next:"Suivant",str_close:"Fermer",splash_url:""};
+var box_settings_splash_width = "600px";
+var box_settings_splash_height = "90%";
+var box_settings_iframe = true;
+/* ]]> */</script>
+<!-- insert_head_css --><link rel="stylesheet" href="plugins-dist/mediabox/colorbox/black-striped/colorbox.css" type="text/css" media="all" /><link rel='stylesheet' type='text/css' media='all' href='plugins-dist/porte_plume/css/barre_outils.css' />
+<link rel='stylesheet' type='text/css' media='all' href='spip.php?page=barre_outils_icones.css' />
+<link rel='stylesheet' type='text/css' media='all' href='plugins/auto/seminaire/styles/calendrier-seminaire.css' />
+<script src="/js/moment.js"></script>
+	<script src="/js/jquery-fullcalendar.js"></script>
+    <script type="text/javascript" src="/js/ljll-mobile.js"></script>
+
+    
+<script src="prive/javascript/jquery.js?1497878951" type="text/javascript"></script>
+
+<script src="prive/javascript/jquery.form.js?1497878951" type="text/javascript"></script>
+
+<script src="prive/javascript/jquery.autosave.js?1497878951" type="text/javascript"></script>
+
+<script src="prive/javascript/jquery.placeholder-label.js?1497878951" type="text/javascript"></script>
+
+<script src="prive/javascript/ajaxCallback.js?1497878951" type="text/javascript"></script>
+
+<script src="prive/javascript/jquery.cookie.js?1497878951" type="text/javascript"></script>
+<!-- insert_head -->
+	<script src="plugins-dist/mediabox/javascript/jquery.colorbox.js?1497878957" type="text/javascript"></script>
+	<script src="plugins-dist/mediabox/javascript/spip.mediabox.js?1497878957" type="text/javascript"></script><script type='text/javascript' src='plugins-dist/porte_plume/javascript/jquery.markitup_pour_spip.js'></script>
+<script type='text/javascript' src='plugins-dist/porte_plume/javascript/jquery.previsu_spip.js'></script>
+<script type='text/javascript' src='spip.php?page=porte_plume_start.js&amp;lang=fr'></script>
+
+
+
+
+  </head>
+
+  <body>
+
+    <p id="easy-access">
+      <a accesskey="s" href="/~hecht/ftp/ff++days/2017/Tuto-Base#content_anchor">Aller au contenu</a>&nbsp;
+      <a href="/~hecht/ftp/ff++days/2017/Tuto-Base#navigation">Aller au menu</a>&nbsp;
+      <a accesskey="4" href="/~hecht/ftp/ff++days/2017/Tuto-Base#research">Aller à la recherche</a>
+    </p>
+
+    <div class="maincontainer">
+      <div id="mobile_menu" class="leftcolumn">
+
+	<div style="background-image: url('/images/illus-leftcolumn9.gif');" id="illus" class="illus">
+	  <script type="text/javascript">
+	    <!--
+
+		var images_style = [
+
+		"/images/illus-leftcolumn10.gif",
+		"/images/illus-leftcolumn1.gif",
+		"/images/illus-leftcolumn2.gif",
+		"/images/illus-leftcolumn3.gif",
+		"/images/illus-leftcolumn4.gif",
+		"/images/illus-leftcolumn5.gif",
+		"/images/illus-leftcolumn6.gif",
+		"/images/illus-leftcolumn7.gif",
+		"/images/illus-leftcolumn8.gif",
+		"/images/illus-leftcolumn9.gif"
+		];
+
+		var img_number = Math.floor((Math.random() * images_style.length));
+
+		document.getElementById("illus").style.backgroundImage = "url(" + images_style[img_number] + ")";
+
+	      -->
+	  </script>
+
+	  <div class="m-0">
+
+	    <a title="Logo du site" href="/" accesskey="1" class="logo">
+	      <img class="logo_desktop" src="/images/logo_ljll.gif" alt="" />
+	      <img class="logo_mobile" src="/images/ljll_logo_fond_bleu.png" alt="" />
+	    </a>
+	    <div class="title">
+	      <h1>
+		<span class="hidden-L">Bienvenue - </span>
+		<strong>Laboratoire Jacques-Louis Lions</strong>
+		<br>
+		<br>
+	      </h1>
+	    </div>
+	  </div>
+
+	  <div id="submenu_ljll_1" class="submenu">
+	    <a name="navigation"><!--empty--></a>
+	    <h2>
+	      <span class="hidden-L"><!--empty-->Navigation de la rubrique&nbsp;</span>
+	      <a title="Aller à " href="/"></a>
+	    </h2>
+
+	    <ul>
+	      <li class="not-selected">
+		<a href="/fr/" title="Bienvenue" class="first">Accueil</a>
+	      </li>
+
+	      
+		
+
+		  <li class="not-selected">
+		    <a title="Aller à Le Laboratoire" href="fr/presentation/" class="top-border">Le Laboratoire</a>
+		    
+
+		    
+
+		    <ul>
+
+
+
+			  
+
+
+			  
+				<li>
+				  <a title="Aller à Origine du LJLL" href="fr/presentation/origine_du_ljll" class="current">Origine du LJLL</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à Science pour tous" href="fr/presentation/science-pour-tous" class="current">Science pour tous</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à Partenaires scientifiques &amp; institutionnels" href="fr/presentation/partenaires-scientifiques-institutionnels" class="current">Partenaires scientifiques &amp; institutionnels</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à Partenariats industriels" href="fr/presentation/article/partenariats-industriels" class="current">Partenariats industriels</a>
+				</li>
+			  
+
+
+
+
+		    </ul>
+		  </li>
+
+		
+
+		  <li class="not-selected">
+		    <a title="Aller à Recrutement" href="fr/recrutement/" class="top-border">Recrutement</a>
+		    
+
+		    
+
+		    <ul>
+
+
+
+			  
+
+
+			  
+
+
+
+
+		    </ul>
+		  </li>
+
+		
+
+		  <li class="not-selected">
+		    <a title="Aller à Membres" href="fr/membres/" class="top-border">Membres</a>
+		    
+
+		    
+
+		    <ul>
+
+
+
+			  
+
+
+			  
+
+
+
+
+		    </ul>
+		  </li>
+
+		
+
+		  <li class="not-selected">
+		    <a title="Aller à Séminaires" href="fr/seminaires/" class="top-border">Séminaires</a>
+		    
+
+		    
+
+		    <ul>
+
+
+
+			  
+			  
+				<li>
+				  <a title="Aller à Séminaire du Laboratoire" href="fr/seminaires/article/seminaire-du-laboratoire" class="current">Séminaire du Laboratoire</a>
+				</li>
+			  
+			  
+				<li>
+				  <a title="Aller à GdT Analyse non-linéaire" href="fr/seminaires/gt-analyse-non-lineaire" class="current">GdT Analyse non-linéaire</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à GdT Calcul des Variations" href="fr/seminaires/article/gdt-calcul-des-variations" class="current">GdT Calcul des Variations</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à GdT Contrôle" href="fr/seminaires/gt-controle" class="current">GdT Contrôle</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à GdT FRIT" href="fr/seminaires/gt-frit" class="current">GdT FRIT</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à GdT Homogénéisation (HMS)" href="fr/seminaires/gt-homogeneisation-hms" class="current">GdT Homogénéisation (HMS)</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à GdT ITER" href="fr/seminaires/article/gdt-iter" class="current">GdT ITER</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à GdT LRC Manon" href="fr/seminaires/gt-lrc-manon" class="current">GdT LRC Manon</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à GdT Mathématiques et chimie " href="fr/seminaires/article/gdt-mathematiques-et-chimie" class="current">GdT Mathématiques et chimie </a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à GdT Mathématiques et informatiques" href="fr/seminaires/article/gdt-mathematiques-et-informatiques" class="current">GdT Mathématiques et informatiques</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à GdT Maths,Bio et  Santé" href="fr/seminaires/gt-maths-bio-et-sante" class="current">GdT Maths,Bio et  Santé</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à GdT Optimisation" href="fr/seminaires/article/gdt-optimisation" class="current">GdT Optimisation</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à GdT Relativité Générale" href="fr/seminaires/article/gdt-relativite-generale" class="current">GdT Relativité Générale</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à GdT Rencontres LJLL-INRIA" href="fr/seminaires/article/gdt-rencontres-ljll-inria" class="current">GdT Rencontres LJLL-INRIA</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à GdT Thésards" href="fr/seminaires/article/gdt-thesards" class="current">GdT Thésards</a>
+				</li>
+			  
+			  
+
+
+			  
+
+
+
+
+		    </ul>
+		  </li>
+
+		
+
+		  <li class="not-selected">
+		    <a title="Aller à Recherche" href="fr/recherche/" class="top-border">Recherche</a>
+		    
+
+		    
+
+		    <ul>
+
+
+
+			  
+
+
+			  
+				<li>
+				  <a title="Aller à Publications" href="fr/recherche/publications" class="current">Publications</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à Logiciels" href="fr/recherche/logiciels" class="current">Logiciels</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à Vitrine" href="fr/recherche/vitrine" class="current">Vitrine</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à Nos thèmes" href="fr/recherche/article/nos-themes" class="current">Nos thèmes</a>
+				</li>
+			  
+
+
+
+
+		    </ul>
+		  </li>
+
+		
+
+		  <li class="not-selected">
+		    <a title="Aller à Formation" href="fr/formation/" class="top-border">Formation</a>
+		    
+
+		    
+
+		    <ul>
+
+
+
+			  
+
+
+			  
+				<li>
+				  <a title="Aller à Offres de stages, thèses et postdocs" href="fr/formation/offres-de-stages-theses-et-postdocs" class="current">Offres de stages, thèses et postdocs</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à Enseignement" href="fr/formation/article/enseignement" class="current">Enseignement</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à Training" href="fr/formation/article/training" class="current">Training</a>
+				</li>
+			  
+
+
+
+
+		    </ul>
+		  </li>
+
+		
+
+		  <li class="not-selected">
+		    <a title="Aller à Informations pratiques" href="fr/informations-pratiques/" class="top-border">Informations pratiques</a>
+		    
+
+		    
+
+		    <ul>
+
+
+
+			  
+
+
+			  
+				<li>
+				  <a title="Aller à Plan d&#8217;accès" href="fr/informations-pratiques/article/plan-d-acces" class="current">Plan d&#8217;accès</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à Accueil des nouveaux arrivants" href="fr/informations-pratiques/accueil-des-nouveaux-arrivants" class="current">Accueil des nouveaux arrivants</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à Formulaires missions et fournisseurs" href="fr/informations-pratiques/article/formulaires-missions-et-fournisseurs" class="current">Formulaires missions et fournisseurs</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à Responsables de rubriques" href="fr/informations-pratiques/article/responsables-de-rubriques" class="current">Responsables de rubriques</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à Salle de visio-conférence" href="fr/informations-pratiques/article/salle-de-visio-conference" class="current">Salle de visio-conférence</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à Réservation de salles" href="fr/informations-pratiques/article/reservation-de-salles" class="current">Réservation de salles</a>
+				</li>
+			  
+
+
+
+
+		    </ul>
+		  </li>
+
+		
+
+		  <li class="not-selected">
+		    <a title="Aller à Evènements" href="fr/evenements/" class="top-border">Evènements</a>
+		    
+
+		    
+
+		    <ul>
+
+
+
+			  
+
+
+			  
+				<li>
+				  <a title="Aller à Leçons Jacques-Louis Lions" href="fr/evenements/lecons-jacques-louis-lions" class="current">Leçons Jacques-Louis Lions</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à Thèses" href="fr/evenements/theses" class="current">Thèses</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à Workshops et conférences" href="fr/evenements/workshops-et-conferences" class="current">Workshops et conférences</a>
+				</li>
+			  
+				<li>
+				  <a title="Aller à Autres actualités" href="fr/evenements/actualites" class="current">Autres actualités</a>
+				</li>
+			  
+
+
+
+
+		    </ul>
+		  </li>
+
+		
+
+		  <li class="not-selected">
+		    <a title="Aller à Administration du site" href="fr/administration-du-site/" class="top-border">Administration du site</a>
+		    
+
+		    
+
+		    <ul>
+
+
+
+			  
+
+
+			  
+
+
+
+
+		    </ul>
+		  </li>
+
+		
+
+		  <li class="not-selected">
+		    <a title="Aller à Intranet" href="fr/intranet/" class="top-border">Intranet</a>
+		    
+
+		    
+
+		    <ul>
+
+
+
+			  
+
+
+			  
+
+
+
+
+		    </ul>
+		  </li>
+
+		
+	      
+
+	    </ul>
+
+
+	  </div>
+
+	  <div id="submenu_ljll_2" class="innertube">
+	    <div class="links">
+	      <h2 class="hidden-L">Navigation secondaire</h2>
+	      <ul>
+
+			<li>
+		  <a title="Agenda" class="datebook" href="/~hecht/ftp/ff++days/2017/Tuto-Base#" onclick="javascript:agenda_popup(); return false;">Agenda</a>
+		</li>
+
+		<li>
+		  <a title="YouTube" class="youtube-ljll" href="https://www.youtube.com/channel/UCoj8rmlGqm0q-Gq-ujPFUgA" target="_blank">Chaîne YouTube</a>
+		</li>
+		<li>
+		  <a title="Fil RSS" class="rsslabo" href="/rss">Fil RSS</a>
+		</li>
+		<div></div>
+		<li class="myupmc">
+		  <a title="" href="http://monupmc.upmc.fr"><span class="">Mon <strong>UPMC</strong></span></a>
+		</li>
+		<li class="myupmc">
+		  <a target="_blank" title="WEB MAIL" href="http://webmail.ljll.math.upmc.fr">
+		    <span class=""><strong>WEB MAIL</strong></span>
+		  </a>
+		</li>
+	      </ul>
+	    </div>
+	  </div>
+
+	  <div id="submenu_ljll_3" class="innertube">
+	    <h2 class="hidden-L">Partenariats</h2>
+	    <div class="partenariats">
+	      <a href="http://www.cnrs.fr" title="Lien vers entite CNRS">
+		<img src="/images/logo2-cnrs.gif" alt="CNRS">
+	      </a>
+	      <br>
+	      <br>
+	      <a href="http://www.upmc.fr" title="Lien vers entite UPMC">
+		<img src="/images/LOGO_SCIENCES_DEF_CMJN.jpg" width=200 alt="UPMC">
+	      </a>
+	      <br>
+	      <br>
+	      <a href="http://www.univ-paris-diderot.fr" title="Lien vers entite Paris Diderot">
+		<img src="/images/logo_P7.png" alt="UPMC">
+	      </a>
+	    </div>
+	  </div>
+
+	</div>
+
+
+
+<!--
+	<div id="mobile-menu-top-button-wrapper">
+	  <a href="/~hecht/ftp/ff++days/2017/Tuto-Base#" onclick="javascript:mobile_menu(); return false;" id="mobile-menu-top-button">
+		<span id="mobile_menu_text">V</span>
+	  </a>
+	</div>
+-->
+	<div id="mobile-menu-top-button-wrapper">
+	  <div id="appendice_wrapper_mobile">
+		<div id="appendice">
+		  <div id="appendice_botright"></div>
+		  <div id="appendice_botleft"></div>
+		  <div id="appendice_bot"></div>
+		  <a href="/~hecht/ftp/ff++days/2017/Tuto-Base#" onclick="javascript:mobile_menu(); return false;" id="appendice_rond">
+			<span id="mobile_menu_text">V</span>
+		  </a>
+		</div>
+	  </div>
+	</div>
+
+
+  </div>
+
+      <!-- DEBUT DU CONTENU DE LA PAGE -->
+  <!-- RUBRIQUE ACCUEIL -->
+  
+  <div class="contentwrapper">
+    <div class="contentcolumn">
+      <div class="innertube">
+
+	<!-- DEBUT TOP PAGE -->
+	<div class="researchandaccess fluid">
+	  <div class="toolslinks">
+	    <div class="toolslinks fluid">
+	      <div class="flags">
+		<a title="Aller à la version française" class="flag frenchactif" href="/fr/">
+		  <span class="hidden-D">Version française</span>
+		</a>
+		<a title="Go to English version" class="flag english" href="/en/">
+		  <span class="hidden-D" lang="en">English version</span>
+		</a>
+	      </div>
+	      <ul>
+		<li>
+		  <a title="Aller aux contacts" accesskey="7" class="contact" href="/fr/contact.html">Contacts</a> |
+		</li>
+		<li>
+		  <a title="Aller au plan du site" accesskey="3" class="sitemap" href="/fr/plan_du_site.html">Plan du site</a> |
+		</li>
+		<li>
+		  <a title="Aller à l'annuaire" href="http://www.annuaire.upmc.fr/upmc">Annuaire</a> |
+		</li>
+		<li>
+		  <a title="Aller au plan d'accès" href="/fr/campus.html">Plan d'accès</a> |
+		</li>
+	      </ul>
+	    </div>
+	  </div>
+	</div>
+
+
+	<div class="breadcrumbandtitle fluid">
+	  <h2 class="hidden-L">Fil d'arianne</h2>
+	  <div class="breadcrumb">
+	    <a title="Bienvenue" href="/fr/" class="home">Accueil</a> / Erreur
+	  </div>
+	  <h2>Erreur</h2>
+	</div>
+
+	<!-- FIN TOP PAGE -->
+
+	
+	
+
+	<div class="col-sm-offset-1 col-sm-11">
+	  <div class="content">
+	    <a name="content_anchor"><!--empty--></a>
+	    <div class="content-focus">
+
+	      <div class="refonte">
+  <a href="mailto:webmestres@ljll.math.upmc.fr?subject=[BUG SITE WEB] Nouveau bug rencontré&body=Décrivez au maximum le bug rencontré pour que nous puissions le constater et/ou reproduire le cas d'erreur%0AJoignez si possible le lien des pages impactées / sur lesquelles vous avez rencontré le bug / dysfonctionnement%0A">
+    <div class="background">
+      <div class="innertube">
+	<p>
+	  Merci de nous faire remonter tout bug ou dysfonctionnement rencontré sur le site en cliquant ici
+	  <br /><br />
+	</p>
+      </div>
+    </div>
+  </a>
+</div>
+		<!--
+<div class="focus">
+  <div class="innertube">
+    <p>Postes Enseignants-Chercheurs : </p>
+    <p>
+      Cliquer&nbsp; sur&nbsp; :
+      <a href="http://postes.smai.emath.fr/" onclick="window.open(this.href);return false">
+	Operation POSTES sur le site de la SMAI
+	<img class="external" alt="Nouvelle fenêtre" src="/images/external.gif">
+      </a>
+    </p>
+    <p>
+      Cliquer sur :
+      <a href="https://www.galaxie.enseignementsup-recherche.gouv.fr/ensup/candidats.html" onclick="window.open(this.href);return false">
+	GALAXIE
+	<img class="external" alt="Nouvelle fenêtre" src="/images/external.gif">
+      </a>
+    </p>
+    <p>&nbsp;</p>
+    <p>
+      Cliquer sur :
+      <a href="/fr/recrutement.html">
+	les postes ouverts au Laboratoire Jacques-Louis Lions
+      </a>
+    </p>
+    <p>&nbsp;</p>
+    <p>
+      »
+      <a href="/fr/index/postes.html" title="En savoir plus sur  " class="align-R">
+	En savoir +
+      </a>
+    </p>
+  </div>
+</div>
+-->
+		<div class="chiffrescles">                      
+  <h3 class="hidden-L">Chiffres-clé</h3>
+  <div class="innertube">
+    <!--empty-->
+    <h3>Chiffres clefs</h3>
+    <h4>217 personnes travaillent au LJLL</h4>
+    <h5>83 personnels permanents</h5>
+    
+<p>47 enseignants chercheurs</p>
+<p>13 chercheurs CNRS</p>
+<p>9 chercheurs INRIA</p>
+<p>2 chercheurs CEREMA</p>
+<p>12 ingénieurs, techniciens et personnels administratifs</p>
+<h5>134 personnels non permanents</h5>
+    
+<p>85 doctorants</p>
+<p>16 post-doc et ATER</p>
+<p>5 chaires et délégations</p>
+<p>12 émérites et collaborateurs bénévoles</p>
+<p>16 visiteurs</p>
+<p>&nbsp;</p>
+<p>Chiffres janvier 2014</p>
+<p>&nbsp;</p>
+</div>
+</div>
+		  <div class="avoir">                                      
+  <h3 class="hidden-L">A voir</h3>
+  <div class="innertube">
+    <!--empty-->
+    
+<p>    <a href="http://www.federation.math.jussieu.fr/" target="_blank"><br class='autobr' />
+      <img style="width:87px;height:68px;" alt="" src="/images/logoFRMPC_quadri.jpg" border="0"><br class='autobr' />
+    </a></p>
+<p>    <a href="http://www.inria.fr" target="_blank"><br class='autobr' />
+      <img style="width:88px;height:22px;" alt="" src="/images/logo_INRIA.png" border="0"><br class='autobr' />
+    </a></p>
+<p>    <a href="http://www.ufrmath.upmc.fr/"><br class='autobr' />
+      <img style="width:100px;height:47px;" alt="" src="/images/logo_ufr.jpg" border="0"><br class='autobr' />
+    </a></p>
+<p>    <a href="https://www.math.univ-paris-diderot.fr/"><br class='autobr' />
+      <img style="width:70px;height:70px;float:null;" alt="" src="/images/logoufr_math_p7.jpg" border="0"><br class='autobr' />
+    </a></p>
+<p>    <a href="http://www.sciencesmaths-paris.fr/"><br class='autobr' />
+      <img style="width:100px;height:43px;" alt="" src="/images/rtra.png" border="0"><br class='autobr' />
+    </a></p>
+<p>    <a href="http://www.ed386.upmc.fr/"><br class='autobr' />
+      <img style="width:200px;height:39px;" alt="" src="/images/edcsm.gif" border="0"><br class='autobr' />
+    </a></p>
+<p>    <a href="http://www.agence-maths-entreprises.fr"><br class='autobr' />
+      <img style="width:150px;" alt="" src="/images/logoAMIES800.jpg" border="0"><br class='autobr' />
+    </a><br class='autobr' />
+    <a href="http://www.carnot-smiles.fr/"><br class='autobr' />
+      <img style="width:150px;" alt="" src="/images/Carnot-SMILES.jpg" border="0"><br class='autobr' />
+    </a></p>
+<p>    <a href="http://smai.emath.fr"><br class='autobr' />
+      <img style="width:60px;height:60px;" alt="" src="/images/smai.gif" border="0"><br class='autobr' />
+    </a></p>
+<p>    <a href="http://www.rdm-idf.fr/"><br class='autobr' />
+      <img style="width:62px;height:50px;float:null;" alt="" src="/images/Logo-DIM-Biotherapies-conforme.jpg" border="0"><br class='autobr' />
+    </a></p>
+</div>
+</div>
+
+
+
+<!--
+<div class="avoir">
+  <h3 class="hidden-L">A voir</h3>
+  <div class="innertube">
+    <p><br></p>
+
+
+    <a href="http://www.federation.math.jussieu.fr/" target="_blank">
+      <img style="width:87px;height:68px;" alt="" src="/images/logoFRMPC_quadri.jpg" border="0">
+    </a>
+
+    <a href="http://www.inria.fr" target="_blank">
+      <img style="width:88px;height:22px;" alt="" src="/images/logo_INRIA.png" border="0">
+    </a>
+
+    <a href="http://www.ufrmath.upmc.fr/">
+      <img style="width:100px;height:47px;" alt="" src="/images/logo_ufr.jpg" border="0">
+    </a>
+
+    <a href="https://www.math.univ-paris-diderot.fr/">
+      <img style="width:70px;height:70px;float:null;" alt="" src="/images/logoufr_math_p7.jpg" border="0">
+    </a>
+
+    <a href="http://www.sciencesmaths-paris.fr/">
+      <img style="width:100px;height:43px;" alt="" src="/images/rtra.png" border="0">
+    </a>
+
+    <a href="http://www.ed386.upmc.fr/">
+      <img style="width:200px;height:39px;" alt="" src="/images/edcsm.gif" border="0">
+    </a>
+
+    <a href="http://www.agence-maths-entreprises.fr">
+      <img style="width:80px;height:80px;" alt="" src="/images/logoAMIES800.jpg" border="0">
+    </a>
+
+    <a href="http://smai.emath.fr">
+      <img style="width:60px;height:60px;" alt="" src="/images/smai.gif" border="0">
+    </a>
+
+    <a href="http://www.rdm-idf.fr/">
+      <img style="width:62px;height:50px;float:null;" alt="" src="/images/Logo-DIM-Biotherapies-conforme.jpg" border="0">
+    </a>
+
+</p>
+</div>
+</div>
+-->
+	    </div>
+
+	    <div class="content-left">
+	      <h3>Erreur 404 : page non trouvée</h3>
+	      <div class="content-div">
+
+		<!-- ERREUR 404 -->
+		<span style="font-size: 14px; margin: 20px auto;">
+		  <br />
+		  La page que vous souhaitez consulter n'a pas été trouvée.<br />
+		  <a href="/">Retour à l'accueil du site</a>
+		</span>
+		
+
+	      </div>
+	    </div>
+	  </div>
+	</div>
+      </div>
+    </div>
+
+
+    <!-- FIN CONTENU DE LA PAGE -->
+
+<div class="footer clear-B">
+  <div class="adress">
+    <div class="innertube">
+      UPMC<br>
+      4 place Jussieu 75005 Paris, France<br>
+      Tél. ++33 1 44 27 44 27
+    </div>
+  </div>
+  <div class="footerlinks">
+    <div class="innertube">
+      <a title="Aller à Mentions légales" accesskey="8" href="/contenu/article/mentions-legales">Mentions légales</a> |
+      <a title="Aller à Accessibilité" accesskey="0" href="/contenu/article/accessibilite">Accessibilité</a>
+    </div>
+  </div>
+</div>
+</div>
+
+</body>
+</html>

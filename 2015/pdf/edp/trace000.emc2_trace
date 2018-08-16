@@ -1,0 +1,70 @@
+ 'GENERAUX        ' 'CONSTRUCTION    ' 0. 0.
+ 'GESTION_ECRAN   ' 'ECHELLE         ' 0. 0.
+ 'N_CALCULETTE    ' '1               ' 0. 0.
+ 'N_CALCULETTE    ' '.               ' 0. 0.
+ 'N_CALCULETTE    ' '0               ' 0. 0.
+ 'N_CALCULETTE    ' '0               ' 0. 0.
+ 'N_CALCULETTE    ' '0               ' 0. 0.
+ 'N_CALCULETTE    ' '0               ' 0. 0.
+ 'N_CALCULETTE    ' '=               ' 0. 0.
+ 'GESTION_ECRAN   ' 'C_MASQUE        ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  0.  0.
+ 'CONSTRUCTION    ' 'SPLINE          ' 0. 0.
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY' -9.81637192  1.42914677
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY' -6.95887184  3.41352177
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY' -2.24928856  4.55123043
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY' -.899913788  4.4983139
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  1.95758629  3.06956387
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  5.3177948  1.98477173
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  7.14341927  1.66727161
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  7.85779381  2.48748016
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  8.36050224  3.09602165
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  9.68341827  4.31310558
+ 'CONSTRUCTION    ' 'ARC             ' 0. 0.
+ 'CONSTRUCTION    ' 'SPLINE          ' 0. 0.
+ 'DESIGN_CONSTR   ' 'POINT/p         ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  9.76279449  4.31310558
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  9.31300163  3.01664734
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  9.23362732  .767688751
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  9.41883659 -1.58710289
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  10.2919617 -2.22210312
+ 'CONSTRUCTION    ' 'CONTOURAGE      ' 0. 0.
+ 'CONSTRUCTION    ' 'SPLINE          ' 0. 0.
+ 'DESIGN_CONSTR   ' 'POINT/p         ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  10.3184185 -2.38085318
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  8.65154457 -2.08981133
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  5.05321121 -1.42835283
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  3.09529495 -.131895065
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  1.3490448 -.105436325
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY'  .608211517 -.264185905
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY' -2.38158035 -3.75668621
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY' -5.23908043 -3.22751951
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY' -6.19158077 -3.22751951
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY' -10.3190804 -1.904603
+ 'DESIGN_CONSTR   ' 'P MOUSE/m       ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY' -10.7159557  .264980316
+ 'DESIGN_CONSTR   ' 'POINT/p         ' 0. 0.
+ 'ECRAN           ' 'XXXX__YYYY' -9.84283066  1.3497715

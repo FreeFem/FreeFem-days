@@ -1,0 +1,43 @@
+load "PETSc"
+assert(mpisize == 1);
+mesh Th = square(10, 10);
+fespace Vh(Th, [P2, P2, P1]);
+
+macro grad(u)[dx(u), dy(u)]// EOM
+macro div(u)(dx(u) + dy(u#B))// EOM
+
+varf a([u, uB, p], [v, vB, q]) = int2d(Th)(grad(u)' * grad(v) + grad(uB)' * grad(vB) - div(u) * q - div(v) * p)
+                    + on(1, 2, 4, u = 0, uB = 0) + on(3, u = 1, uB = 0);
+
+real tgv = -1.0;
+matrix A = a(Vh, Vh, tgv = tgv);
+
+int[int] arrayIntersection(0);
+int[int][int] restrictionIntersection(0);
+real[int] D(Vh.ndof);
+D = 1.0;
+dmatrix Mat(A, arrayIntersection, restrictionIntersection, D);
+
+Vh [u, uB, p], [f, fB, q];
+[u, uB, p] = [1.0, 1.0, 2.0];
+
+/*
+set(Mat, sparams = "-ksp_monitor -ksp_type fgmres -pc_type fieldsplit -pc_fieldsplit_type schur " +
+" -pc_fieldsplit_schur_factorization_type upper " +
+" -fieldsplit_0_ksp_type gmres -fieldsplit_0_pc_type none " +
+" -fieldsplit_1_ksp_type preonly " +
+" -fieldsplit_1_pc_type none", fields = u[]);
+*/
+
+string[int] names(2);
+names[0] = "velocity";
+names[1] = "pressure";
+set(Mat, sparams = "-ksp_monitor -ksp_type fgmres -pc_type fieldsplit -pc_fieldsplit_type schur " +
+" -pc_fieldsplit_schur_factorization_type upper " +
+" -fieldsplit_velocity_ksp_type gmres -fieldsplit_velocity_pc_type gamg -fieldsplit_velocity_pc_gamg_sym_graph true " +
+" -fieldsplit_pressure_ksp_type preonly " +
+" -fieldsplit_pressure_pc_type none", fields = u[], names = names);
+
+f[] = a(0, Vh, tgv = tgv);
+u[] = Mat^-1 * f[];
+plot([u, uB], p, wait = true, value = true, coef = 0.1);

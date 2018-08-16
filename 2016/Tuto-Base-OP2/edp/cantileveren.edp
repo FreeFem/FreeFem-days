@@ -1,0 +1,287 @@
+////////////////////////////////////////////
+//                                        //
+// Geometric optimization of a cantilever //
+//       (compliance minimization)        //
+//                                        //
+//      Ecole Polytechnique, MAP 562      //
+//  Copyright G. Allaire, O. Pantz, 2004  //
+//                                        //
+////////////////////////////////////////////
+ofstream compli("cantilever.obj") ;
+ofstream grad("cantilever.grad") ;
+string save="cantilever";	// Prefix of all backup files
+int niter=20;			// Number of iterations
+real errelas=0.05;		// Threshold or error level for mesh adaptation 
+real pasinit=1.;	        // Initial descent step
+real pasef;			// Effective descent step
+real muv;			// Lagrange multiplier associated to the volume constraint
+real pasmu=2;                   // Refreshing step for the Lagrange multiplier
+int nsaved=0;			// Initialization of the backup index
+real compliance;		// Compliance
+real volume0;			// Initial volume 
+real volume;			// Volume of the deformed shape
+string caption;			// Caption for the graphics
+real norm;			// Gradient norm
+real product;			// Scalar product between the current gradient and the previous one 
+bool back=false;		// Control parameter in case of stepping back 
+real E=15;			// Young modulus
+real nu=0.35;			// Poisson coefficient (between -1 et 1/2)
+real pi=4*atan(1) ;
+func g1=0;  			// Applied forces 
+func g2=-1;
+
+//////////////////////////////////////////
+// Computation of the Lame coefficients //
+//////////////////////////////////////////
+real lambda=E*nu/((1.+nu)*(1.-2.*nu));
+real mu=E/(2.*(1.+nu));
+
+////////////////////////////////////////////////////
+// Function defining the region to optimize       //
+// (=1 on the optimizable boundary, =0 elsewhere) //
+////////////////////////////////////////////////////
+
+func cut=1-(x>8.5)*(abs(y)<1.5)-(x<0.5)*(y>1.5)*(y<4.5)-(x<0.5)*(y<-1.5)*(y>-4.5);
+
+// definition of the free boundary to optimize
+func real d1(real & tt) 
+ {
+ return 9.0*tt;;
+	};
+func real d2(real & tt) 
+ {return -4.+3.*tt;};
+
+func real b1(real & tt)
+ {real r=1.-tt;
+  return d1(r);
+ };
+func real b2(real & tt)
+ {real r=1.-tt;
+return  -d2(r);};
+
+///////////////////////		1:Dirichlet boundary condition
+// Domain definition // 	2:Neumann or free boundary condition
+///////////////////////		3:Non-homogeneous Neumann or applied load
+mesh Sh;
+
+border a(t=-1,1)  { x=9; y=t;label=3; };	// bord droit de la forme
+border c1(t=4,2)  { x=0; y=t;label=1; };	// bord gauche de la forme
+border c2(t=2,-2) { x=0; y=t;label=2; };
+border c3(t=2,4)  { x=0; y=-t;label=1; };
+border b(t=0,1)   { x=b1(t); y=b2(t);label=2; };// upper boundary of the shape 
+border d(t=0,1)   { x=d1(t); y=d2(t);label=2; };// lower boundary of the shape
+
+real ray=0.5 ;
+border z1(t=0,2*pi) {x=7.5+ray*cos(t);y=0.+ray*sin(t);label=2;};
+border z2(t=0,2*pi) {x=6.+ray*cos(t);y=0.8+ray*sin(t);label=2;};
+border z3(t=0,2*pi) {x=6.+ray*cos(t);y=-0.8+ray*sin(t);label=2;};
+border z4(t=0,2*pi) {x=4.5+ray*cos(t);y=0.+ray*sin(t);label=2;};
+border z5(t=0,2*pi) {x=3.+ray*cos(t);y=-1.+ray*sin(t);label=2;};
+border z6(t=0,2*pi) {x=3.+ray*cos(t);y=1.+ray*sin(t);label=2;};
+border z7(t=0,2*pi) {x=1.5+ray*cos(t);y=0.+ray*sin(t);label=2;};
+
+////////////////////////////////////////
+// Building two meshes                //
+// (Sh = fine mesh, Th = coarse mesh) //
+////////////////////////////////////////
+//Sh= buildmesh (b(30)+c3(10)+c2(20)+c1(10)+d(30)+a(20)+z1(-10)+z2(-10)+z3(-10)+z4(-10)+z5(-10)+z6(-10));
+Sh= buildmesh (b(30)+c3(10)+c2(10)+c1(10)+d(30)+a(20)+z1(-10)+z2(-10)+z3(-10)+z4(-10)+z5(-10)+z6(-10)+z7(-10));
+//Sh= buildmesh (b(30)+c3(10)+c2(10)+c1(10)+d(30)+a(20)+z1(-10)+z2(-10)+z3(-10)+z4(-10));
+//Sh= buildmesh (b(30)+c3(10)+c2(10)+c1(10)+d(30)+a(20));
+
+mesh Th=Sh;
+
+/////////////////////////////////////////////
+// Definition of the finite element spaces //
+/////////////////////////////////////////////
+fespace Vh1(Sh,P1);
+fespace Vh2(Sh,[P2,P2]);
+fespace Wh2(Th,[P2,P2]);
+
+Vh2 [u,v],[w,s],[eu,ev];
+Vh1 gradient, energ;
+Wh2 [ui,vi],[eui,evi],[ui2,vi2],[eui2,evi2];
+
+///////////////////////
+// Elasticity system //
+///////////////////////
+problem elasticity([u,v],[w,s]) =
+    int2d(Sh)(
+               2.*mu*(dx(u)*dx(w)+dy(v)*dy(s)+((dx(v)+dy(u))*(dx(s)+dy(w)))/2.)
+              +lambda*(dx(u)+dy(v))*(dx(w)+dy(s))
+	)
+    -int1d(Sh,3)(g1*w+g2*s)	           
+    +on(1,u=0,v=0)
+;
+//////////////////////////////////
+// Extending the shape gradient //
+//      (inside the shape)      //
+//////////////////////////////////
+problem extension([eu,ev],[w,s]) =
+    int2d(Sh)(
+	dx(eu)*dx(w)+dy(eu)*dy(w)+dx(ev)*dx(s)+dy(ev)*dy(s)+eu*w+ev*s
+	)
+     -int1d(Sh,2) ((w*N.x+s*N.y)*(2*mu*(dx(u)^2+dy(v)^2+((dx(v)+dy(u))^2)/2.)
+              +lambda*(dx(u)+dy(v))^2 - muv)*cut)
+	+on(1,3,eu=0,ev=0)	           
+    ;
+///////////////////////////////////////
+// Computation of the initial volume //
+// (which will be the target volume) //
+///////////////////////////////////////
+volume0=int1d(Sh)(x*N.x+y*N.y)/2;
+cout <<"Initial volume = "<<volume0 <<endl;
+
+//////////////////////////////
+//      Initialization      //
+//////////////////////////////
+int iter;
+// Solving the elasticity system
+elasticity;
+
+// Computation of the shape gradient (for the compliance)
+energ=2*mu*(dx(u)^2+dy(v)^2+((dx(v)+dy(u))^2)/2.)+lambda*(dx(u)+dy(v))^2;
+
+// Evaluation of the Lagrange multiplier associated to the volume constraint
+muv=int1d(Sh,2)(energ)/int1d(Sh,2)(1.);
+muv=0.08;
+gradient=(energ-muv)*cut;
+
+// Initial compliance 
+real compliance0=int1d(Sh,3)(g1*u+g2*v);
+
+// Adapting the fine mesh
+Sh=adaptmesh (Sh,u,v,err=errelas);
+
+// Initialization of the descent step
+pasef=pasinit;
+
+// We keep in memory the current mesh
+mesh Thprec=Th;
+
+// Impression de la forme initiale
+caption="Initial shape, Compliance "+compliance0+", Volume "+volume0;
+plot(Sh,energ,fill=1,wait=0,value=1,cmm=caption);
+
+///////////////////////////////
+//     Optimization loop     //
+///////////////////////////////
+for (iter=1;iter< niter;iter=iter+1)
+{
+cout <<"Iteration " <<iter <<" -------------------------------------------" <<endl;
+
+// Solving the elasticity system
+elasticity;
+
+// Computing the compliance
+compliance=int1d(Sh,3)(g1*u+g2*v);
+cout<<"Compliance = "<<compliance<<endl;
+compli << compliance  << endl ;
+
+// The elastic displacement, computed on the fine mesh Sh, is 
+// interpolated on the coarse mesh Th, defining the geometry.
+[ui,vi]=[u,v];
+
+// Computing the volume
+volume=int1d(Sh)(x*N.x+y*N.y)/2;
+cout <<"Volume = "<<volume <<endl;
+
+///////////////////////////////////////
+// Computation of the shape gradient //
+// (objective function = compliance) //
+///////////////////////////////////////
+
+energ=  2*mu*(dx(u)^2+dy(v)^2+((dx(v)+dy(u))^2)/2.)+lambda*(dx(u)+dy(v))^2;
+gradient=energ*cut;
+
+// Refreshing the Lagrange multiplier associated to the volume constraint
+muv=0.5*muv+0.5*int1d(Sh,2)(gradient)/int1d(Sh,2)(cut)+pasmu*(volume-volume0)/volume0;
+//muv=muv+0.1*(volume-volume0)/volume0; //not very effective...
+cout << "Lagrange multiplier = " << muv << endl ;
+
+gradient=gradient-muv*cut;
+
+///////////////////////////////////////////////////
+// Plot the shape gradient and the current shape //
+///////////////////////////////////////////////////
+caption="Iteration "+iter+", Compliance "+compliance+", Volume "+volume;
+plot(Sh,energ,fill=1,value=1,cmm=caption);
+
+// Extension of the shape gradient inside the shape
+extension;
+
+// The shape gradient, computed on the fine mesh Sh, is 
+// interpolated on the coarse mesh Th, defining the geometry.
+[eui,evi]=[eu,ev];
+
+// On calcule la norm (au carré) du gradient de forme
+norm=int2d(Th)(dx(eui)^2+dx(evi)^2+dy(eui)^2+dy(evi)^2+eui^2+evi^2);
+grad<<sqrt(norm)<<endl;
+// Comparison of the shape gradient with the previous one 
+product=int2d(Th)(dx(eui)*dx(eui2)+dx(evi)*dx(evi2)+dy(eui)*dy(eui2)+dy(evi)*dy(evi2)+eui*eui2+evi*evi2);
+
+/////////////////////////////////
+// Refreshing the descent step //
+/////////////////////////////////
+// If the current shape gradient is in the same direction as the previous one
+// (product>0), then we increase the descent step. If not (product<0), we step 
+// back and we decrease the descent step (thus avoidng oscillations). 
+
+if ((product<0)&(!back))
+    {pasef=pasef*norm/(norm-product)/4.;
+     cout<<"******* Descent step too large: step back !!! *******"<<endl;
+     Th=Thprec;
+     back=true;}
+else
+    {back=false;}
+;
+if ((product>0)&(product<(norm/2.)))
+    {pasef=pasef*2*norm/(2*norm-product);
+     cout<<"We increase the descent step"<<endl;}
+;
+if (product>(norm/2.))
+    {pasef=pasef*4./3.;
+     cout<<"We increase the descent step"<<endl;}
+;
+
+// We keep in memory the current mesh
+Thprec=Th;
+
+//////////////////////////////////////////////////////
+// We move the coarse mesh Th defining the geometry //
+//         (only if we do not step back)            //
+//////////////////////////////////////////////////////
+// If triangles are inverted when moving the mesh, 
+// the descent step is reduced. 
+
+if (!back)
+{
+real aa,minaire=checkmovemesh (Th,[x,y])/100.;
+while (minaire > (aa=checkmovemesh(Th,[x+pasef*eui,y+pasef*evi])) )
+ {
+  cout << "******* Problem of inverted triangle: the descent step is reduced, " << minaire << " > " << aa<<" *******"<< endl;
+  pasef= pasef/2;
+  }
+Th = movemesh (Th,[x+pasef*eui,y+pasef*evi]);
+
+cout<<"Effective descent step = "<<pasef<<endl;
+
+// The elastic displacement and the shape gradient are interpolated
+// on the deformed shape.
+[ui2,vi2]=[0,0];
+[eui2,evi2]=[0,0];
+ui2[]=ui[]; vi2[]=vi[];
+eui2[]=eui[];evi2[]=evi[];
+};
+
+// The mesh is refined/adapted before solving the elasticity system. 
+Sh=adaptmesh(Th,[ui2,vi2],[eui2,evi2],err=errelas);
+// The mesh Th is adapted to be coarse and uniform as much as possible.
+Th=adaptmesh(Sh,5,0,5,IsMetric=1,ratio=0,omega=200,splitpbedge=1,hmin=0.05,abserror=1);
+};
+
+// We save and plot the final shape
+
+caption="Final shape, Iteration "+iter+", Compliance "+compliance+", Volume "+volume;
+plot(Sh,energ,fill=1,value=1,cmm=caption);
+

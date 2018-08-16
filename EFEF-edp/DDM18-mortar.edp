@@ -1,0 +1,160 @@
+//  Mortar  (4 sub domain) 
+//  with matrix ---
+//  ------------
+
+func f=1+x+y;
+real g=1; 
+
+macro Grad(u) [ dx(u), dy(u) ] //
+int nbsd=4;
+int labext= nbsd+1;
+real meshsize=0.03; 
+real meshsizem=meshsize*1.5; 
+bool noconforme=1;
+include "DDM18-mortar-msh.edp"
+
+mesh Thm=Tha;
+Thm=adaptmesh(Thm,meshsizem,IsMetric=1,thetamax=60);
+Thm=adaptmesh(Thm,meshsizem,IsMetric=1,thetamax=60);
+
+Thm=emptymesh(Thm);
+mesh Thmm=Thm;
+Thmm=trunc(Thm,split=4,1); // for fine integration
+Thmm=emptymesh(Thmm);
+
+plot(Thm,wait=1);
+
+verbosity=1;
+
+plot(Thm,wait=1);
+
+mesh Th0=trunc(Tha,region==regi[0],split=1);// les sous domaines
+mesh Th1=trunc(Tha,region==regi[1],split=1);// 
+mesh Th2=trunc(Tha,region==regi[2],split=1);// 
+mesh Th3=trunc(Tha,region==regi[3],split=1);// 
+
+if(noconforme)
+{
+ Th0=adaptmesh(Th0,meshsize*1,IsMetric=1,nbvx=100000,thetamax=60);
+ Th1=adaptmesh(Th1,meshsize*1.2,IsMetric=1,nbvx=100000,thetamax=60);
+ Th2=adaptmesh(Th2,meshsize*0.9,IsMetric=1,nbvx=100000,thetamax=60);
+ Th3=adaptmesh(Th3,meshsize*1.1,IsMetric=1,nbvx=100000,thetamax=60);
+}
+plot(Th0,Th1,Th2,Th3,Thm,wait=1);
+
+fespace Lh(Thm,P1);
+fespace RTh(Thm,[P0edge,P0edge]);
+ RTh [Nmx,Nmy]; // ne marche pas car la normal 
+//                             n'est definie que une un bord
+varf  vNN([ux,uy],[nx,ny]) = int1d(Thm,1)(( nx*N.x + ny*N.y)/lenEdge);
+Nmx[]= vNN(0,RTh);
+
+// les joint P0 sur le squelette 
+// -----   \int [q] l + \int[p] m 
+Lh  lh=0,rhsl=0;
+
+
+// remark: operator # is  the concatenation operator in macro 
+macro defspace(i)
+
+   cout << " Domaine " << i<< " --------" << endl;
+   fespace Vh#i(Th#i,P1);
+   fespace Eh#i(Th#i,P0edge);
+   Vh#i u#i,v#i, rhs#i;
+
+varf veps#i(u,v)= int1d(Th#i,1,qforder=10)( (Nmx*N.x + Nmy*N.y)*v/lenEdge);
+   Eh#i eps#i = 0;
+   eps#i[]= veps#i(0,Eh#i);
+   eps#i = -real(eps#i <-0.00001) + real(eps#i >0.00001);
+   
+   varf vLapM#i([u#i],[v#i]) =
+       int2d(Th#i)(  Grad(u#i)'*Grad(v#i)  )
+    +  int2d(Th#i) (f*v#i)   +  on(labext,u#i=g);  
+   varf  vrhsM#i(u#i,v#i) =   on(labext,u#i=g);
+   varf cc#i([l],[u]) = int1d(Thmm,1,qforder=3)(l*u*eps#i);
+   matrix C#i = cc#i(Lh,Vh#i);
+   matrix A#i = vLapM#i(Vh#i,Vh#i,solver=GMRES);
+   cout << " ... done "<< endl;
+   rhs#i[]=vLapM#i(0,Vh#i);
+//  fin macro defspace(i) 
+
+
+
+
+
+
+
+defspace(0)
+defspace(1)
+defspace(2)
+defspace(3)
+
+  plot(eps0,eps1,eps2,eps3,cmm="eps 0,1,2,3",wait=1,value=1);
+
+
+lh[]=0;
+varf  vDD(u,v) = int2d(Thm)(u*v*1e-10);
+
+
+
+//
+
+matrix DD=vDD(Lh,Lh);
+
+matrix M=[ 
+  [ A0 ,0  ,0  ,0  ,C0 ],
+  [ 0  ,A1 ,0  ,0  ,C1 ],
+  [ 0  ,0  ,A2 ,0 , C2 ],
+  [ 0  ,0  ,0  ,A3, C3 ],
+  [ C0',C1',C2',C3',DD ] 
+ ];
+
+real[int] xx(M.n);
+
+real[int] bb =[rhs0[], rhs1[],rhs2[],rhs3[],rhsl[] ];
+set(M,solver=UMFPACK);
+
+xx = M^-1 * bb;
+
+[u0[],u1[],u2[],u3[],lh[]] = xx; // dispatch the solution 
+
+plot(u0,u1,u2,u3,cmm="u1,u2,u3,u4",wait=1); 
+
+
+int itera=0;
+
+varf  vbc(u,v) =   int1d(Thm,labext)(v);
+real[int] lbc(Lh.ndof),lbc0(Lh.ndof);
+lbc=vbc(0,Lh);
+lbc0=0;
+
+func real[int] SkPb(real[int] &l)
+{ 
+   int verb=verbosity;   verbosity=0;   itera++;
+   v0[] = rhs0[]; v0[]+= C0* l; u0[] = A0^-1*v0[];
+   v1[] = rhs1[]; v1[]+= C1* l; u1[] = A1^-1*v1[];
+   v2[] = rhs2[]; v2[]+= C2* l; u2[] = A2^-1*v2[];
+   v3[] = rhs3[]; v3[]+= C3* l; u3[] = A3^-1*v3[];
+   l  = C1'*u1[];    l += C0'*u0[];   l += C2'*u2[];
+   l += C3'*u3[];   l= lbc ? lbc0: l; 
+    plot(u0,u1,u2,u3,wait=0,cmm="direct");
+   verbosity=verb; 
+   return l ;
+};
+verbosity=100;
+lh[]=0;
+LinearCG(SkPb,lh[],eps=1.e-4,nbiter=100);
+plot(u0,u1,u2,u3,wait=1,cmm="CG");
+  
+verbosity=1; 
+fespace Vha(Tha,P1);
+Vha vah,uah;
+solve vLapMM([uah],[vah]) =
+       int2d(Tha)(  Grad(uah)'*Grad(vah) )
+    -  int2d(Tha) (f*vah)
+    +  on(labext,uah=g)
+   ;
+verbosity =3;
+plot(uah,u0,u1,u2,u3,cmm="uah",wait=1); 
+
+

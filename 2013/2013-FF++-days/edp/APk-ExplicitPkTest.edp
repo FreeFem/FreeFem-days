@@ -1,0 +1,24 @@
+load "MetricPk"
+int  Nt = 1000, r = 1, k =3,p=1; // def of the parameter ..
+mesh Th=square(20,20,[2*x-1,2*y-1]);
+func f = x^2*y + y^3 + tanh(5*(-2*x + sin(5*y))); 
+fespace Metric(Th,[P1,P1,P1]);
+
+for(int i=0; i<5; i++){
+        plot(Th,wait=true);
+	Metric [m11,m12,m22];	
+        m11[]=MetricPk(Th,f,   kDeg=p,rDeg=r,mass=Nt/2,
+        TriangulationType=1);
+        Th = adaptmesh(Th,m11,m12,m22,IsMetric=true);
+
+}
+plot(Th,wait=true,ps="ThM1.eps");
+for(int i=0; i<5; i++){
+        plot(Th,wait=true);
+	Metric [m11,m12,m22];	
+        m11[]=MetricPk(Th,f,   kDeg=p,rDeg=r,mass=Nt/2,
+        TriangulationType=0);
+        Th = adaptmesh(Th,m11,m12,m22,IsMetric=true);
+}
+
+plot(Th,wait=true,ps="ThM0.eps");
