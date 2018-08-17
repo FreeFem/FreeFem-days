@@ -1,5 +1,4 @@
-# FreeFem-days
-FreeFem-days previous editions archives
+# FreeFem Days Conference - previous editions archives
 
 ## 2017
 
