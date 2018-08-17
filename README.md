@@ -3,10 +3,10 @@ FreeFem-days previous editions archives
 
 ## 2017
 
-|	Speaker	|	Days 1 - 2017	|
+|	Speaker	|	Day 1 - 2017	|
 |	 ------------- 	|	 ------------- 	|
 |	F. Hecht (LJLL, UPMC)	|	Introduction |
-|	Y. Maday (LJLL, UPMC) 	|	Présentation de l'institut Carnot Smiles	|
+|	Y. Maday (LJLL, UPMC) 	|	Présentation de l'[Institut Carnot Smiles](http://www.carnot-smiles.fr/) [PDF](https://github.com/FreeFem/FreeFem-days/blob/master/2017/pdf/YM.pdf)|
 |	F. Hecht (LJLL, UPMC) 	|	FreeFem++ : status  and future  (pdf,zip (data: FH.pdf + all edp script))	|
 |	P&#x2011;H.&#160;Tournier (LJLL/CNRS)	|	Two-level DD preconditioners for Maxwell equations  (abstract, slides) |
 |	S-M. Kaber (LJLL/ UPMC)	|	Partial fraction decomposition and parallel computing. (abstract, slides)	|
@@ -16,9 +16,7 @@ FreeFem-days previous editions archives
 |	P-H. Tournier / G. Sadaka	|	Basic Tutorial (part 1): generate a mesh, solve a linear PDE, ... (tutorial directory)	|
 |	F. Hecht	|	Expert Tutorial (part 1): How-to speed up and or parallelize a script (tutorial directory)	|
 
-
-
-|	Speaker	|	Days 2 - 2017	|
+|	Speaker	|	Day 2 - 2017	|
 |	 ------------- 	|	 ------------- 	|
 |	O. Pironneau	|	Variational Inequalities for Contacts with Eulerian formulations (abstract, slides)	|
 |	Atsushi Suzuki<br>(Osaka University)	|	Mixed finite element solution of a semi-conductor problem by Dissection sparse direct solver (abstract, slides)	|
