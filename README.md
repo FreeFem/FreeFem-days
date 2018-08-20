@@ -61,7 +61,7 @@
 |	F. Hecht (LJLL, UPMC)	| FreeFem++ solver: status  and future ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2015/pdf/Hecht.pdf), [EDP scripts](https://github.com/FreeFem/FreeFem-days/tree/master/2015/pdf/edp))	|
 |	A. Le Hyaric (LJLL, UPMC)	|	New ways to use FreeFem++ ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2015/pdf/LeHyaric.pdf))	|
 |	F. Hecht (LJLL, UPMC)	|	Some Idea to use FreeFem++ ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2015/pdf/Hecht.pdf)) )	|
-|	F. Nataf (LJLL / Alpines / LJLL-INRIA)	|	Une théorie de type Schwarz pour l’algorithme de P.L. Lions (_not available_)	|
+|	F. Nataf (LJLL / Alpines / LJLL-INRIA)	|	Une théorie de type Schwarz pour l'algorithme de P.L. Lions (_not available_)	|
 |	O. Pironneau & G. Vergez	|	Basic Tutorial (part 1): generate a mesh, solve a linear PDE, ... ([directory (zip)](https://github.com/FreeFem/FreeFem-days/blob/master/2015/Basic_tutorial.zip))	|
 |	F. Hecht & I. Danaila	|	Expert Tutorial (part 1): How to compile ff++, add new finite element, and gag ([directory](https://github.com/FreeFem/FreeFem-days/blob/master/2015/expert-dir))	|
  
@@ -113,3 +113,34 @@
 |	J. Mullaert	|	Numerical Methods for Incompressible Fluid-Structure Interaction ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Mullaert.pdf))	|
 |	A. Suzuki, F. X. Roux	|	A dissection solver with kernel detection for unsymmetric matrices in FreeFem++ ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Suzuki-dissection.pdf))	|
 |	F. Ben Belgacem	|	A Finite Element Method for an Ill-posed Oxygen-Balance Model ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Belgacem.pdf))	|
+
+## 2013
+
+|	Speaker	|	Day 1 - 2013	|
+|	 ------------- 	|	 ------------- 	|
+|	F. Hecht	| Introduction	|
+|	F. Hecht 	|	FreeFem++ solver: status  and future ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/2013-FF++-days/2013-ff++-days.pdf), [EDP scripts](https://github.com/FreeFem/FreeFem-days/blob/master/2013/2013-FF++-days/edp))	|
+|	F. Hecht	|	FreeFem++ :  Latest News ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/2013-FF++-days/2013-ff++-days.pdf), [EDP scripts](https://github.com/FreeFem/FreeFem-days/blob/master/2013/2013-FF++-days/edp))	|
+|	A. Le Hyaric	|	FreeFem++  CS news and developpement process	|
+|	I. Danaila	|	Basic Tutorial (part 1): generate a mesh, solve a linear PDE, use the Newton method for nonlinear PDEs, use a formulation with matrices, examples with steady and time evolution simple PDEs	|
+|	F. Hecht	|	Expert Tutorial (part 1): link with other softwares ([directory](https://github.com/FreeFem/FreeFem-days/blob/master/2013/edp))	|
+
+|	Speaker	|	Day 2 - 2013	|
+|	 ------------- 	|	 ------------- 	|
+|	R. Duboscq	|	GPELab : une toolbox Matlab pour le calcul d'états stationnaires et la dynamique d’équations de Gross-Pitaevski ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/Duboscq.pdf))	|
+|	S. Auliac	|	Bose-Einstein Condensate Simulations with FreeFem++ ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/Auliac_compressed.pdf))	|
+|	G. Vergez	|	Méthodes numériques et simulation de condensats de Bose-Einstein ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/Vergez.pdf))	|
+|	P. Parnaudeau	|	Expérience numérique : Simulation d'un condensat de Bose-Einstein ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/Parnaudeau.pdf))	|
+|	B. Lévy	|	Anisotropic Suface Remeshing	|
+|	G. Sadaka	|	Basic Tutorial (part 2)	|
+|	F. Hecht	|	Expert Tutorial (part 2) ([directory](https://github.com/FreeFem/FreeFem-days/blob/master/2013/edp))	|
+
+|	Speaker	|	Day 3 - 2013	|
+|	 ------------- 	|	 ------------- 	|
+|	R. Chakir	|	A non intrusive reduced basis method for fluid dynamics problem ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/chakir.pdf))	|
+|	P. Jolivet	|	HPC tools for FreeFem++  ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/jolivet.pdf))	|
+|	P. Ventura	|	Analysis of Surface Acoustic Waves Transducer Having Aperiodic Multi Electrode Cells Using a Coupled FEM/ BIE Numerical Model ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/ventura.pdf)) )	|
+|	D. Yacobi	|	_not available_	|
+|	G. Pitton	|	Numerical investigation of buoyancy driven flows in tight lattice fuel bundles ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/Pitton.pdf))	|
+|	M. Youcef	|	Modeling of PET preform cooling in Injection Molding Process ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/Youcef.pdf))	|
+|	Hideki Oka	|	FreeFem++ and Physiome Platform ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/Hideki-Oka_compressed.pdf))	|
