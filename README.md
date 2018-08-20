@@ -144,3 +144,31 @@
 |	G. Pitton	|	Numerical investigation of buoyancy driven flows in tight lattice fuel bundles ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/Pitton.pdf))	|
 |	M. Youcef	|	Modeling of PET preform cooling in Injection Molding Process ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/Youcef.pdf))	|
 |	Hideki Oka	|	FreeFem++ and Physiome Platform ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/Hideki-Oka_compressed.pdf))	|
+
+## 2012
+
+|	Speaker	|	Day 1 - 2012	|
+|	 ------------- 	|	 ------------- 	|
+|	F. Hecht	|	Introduction	|
+|	F. Hecht	|	FreeFem++ solver: status and future	|
+|	F. Hecht	|	FreeFem++ :  Last News	|
+|	P. Jolivet	|	HPC tools for FreeFem++ ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2012/P-Jolivet.pdf))	|
+|	F. Hecht	|	Some tricks	|
+|	G. D. McBain	|	Domain decomposition techniques for discontinuous interfacial conditions ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2012/McBain.pdf))	|
+|	G. Sadaka	|	Tsunamis wave modeling using a Finite Volume Method and a Finite Element Method in FreeFem++ ([movie](http://www.lamfa.u-picardie.fr/sadaka/FreeFem++/FV_FF_Day.mov))	|
+|	R. Chakir	|	A non-intrusive reduced basis method for heat transfer problem ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2012/R-Chakir.pdf))	|
+|	G. Sadaka	|	Basic Tutorial: part 1	|
+|	F. Hecht	|	Expert Tutorial: part 1 - link with other software ([directory](https://github.com/FreeFem/FreeFem-days/blob/master/2012/edp-tutorial-hecht))	|
+
+|	Speaker	|	Day 2 - 2012	|
+|	 ------------- 	|	 ------------- 	|
+|	K. P. Gostaf	|	3D simulations : items to keep in mind ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2012/Gostaf.pdf))	|
+|	M.José Cano	|	Creation of interactive simulations with EJS and FreeFem++ ([web presentation](https://prezi.com/cp9x923lblyi/creation-of-interactive-simulations-with-ejs-and-freefem/))	|
+|	P-H. Tournier	|	Simulation of water and nutrient uptake by plant roots ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2012/P-H-Tournier.pdf))	|
+|	A. Le Hyaric	|	On FreeFem++-cs	|
+|	C. Dapogny	|	Shape Optimization with a level-set based mesh deformation method ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2012/C-Dapogny.pdf))	|
+|	E. Godlewski	|	Presentation [AMIES](http://www.agence-maths-entreprises.fr/) et du [Forum Emploi Math](https://www.forum-emploi-maths.org/)	|
+|	John Wise	|	Reduced modelling and parameter optimisation with POD: Application in Groundwater Flow ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2012/John_Wise.pdf))	|
+|	Iztok Bajc	|	Photonic modes in colloidal/complex nematic resonators ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2012/Bajc.pdf))	|
+|	G. Sadaka	|	Basic Tutorial: part 2	|
+|	F. Hecht	|	Expert Tutorial (HPC): part 2 ([directory](https://github.com/FreeFem/FreeFem-days/blob/master/2012/edp-tutorial-hecht))	|
