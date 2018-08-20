@@ -76,3 +76,40 @@
 |	D. Le Hardy (Phd LTN , Université de Nantes)	|	Résolution de l’équation du transfert radiatif 3D avec FreeFem++ ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2015/pdf/David.pdf), [slides](https://github.com/FreeFem/FreeFem-days/blob/master/2015/pdf/LeHardy.pdf)))	|
 |	G. Vergez & P-H Tournier	|	Basic Tutorial (part 2) ([directory (zip)](https://github.com/FreeFem/FreeFem-days/blob/master/2015/Basic_tutorial.zip))	|
 |	F. Hecht	|	Expert Tutorial (part 2):  a None trivail use of FreeFem++ ([directory](https://github.com/FreeFem/FreeFem-days/blob/master/2015/expert-dir))	|
+
+## 2014
+
+|	Speaker	|	Day 1 - 2014	|
+|	 ------------- 	|	 ------------- 	|
+|	F. Hecht	|	Introduction	|
+|	F. Hecht 	|	FreeFem++ solver: status  and future ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Hecht.pdf))	|
+|	P. Jolivet	|	FreeFem++ , mpi parallel solve ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Jolivet.pdf))	|
+|	A. Le Hyaric	|	FreeFem++-cs, the FreeFem++ Graphical Interface ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/LeHyaric.pdf))	|
+|	O. Pantz & I. Danaila	|	Basic Tutorial (part 1): generate a mesh, solve a linear PDE, use the Newton method for nonlinear PDEs, use a formulation with matrices, examples with steady and time evolution simple PDEs ([directory](https://github.com/FreeFem/FreeFem-days/blob/master/2014/tuto-base-II))	|
+|	F. Hecht  	|	Expert Tutorial (part 1): link with other softwares ([directory](https://github.com/FreeFem/FreeFem-days/blob/master/2014/expert))	|
+
+|	Speaker	|	Day 2 - 2014	|
+|	 ------------- 	|	 ------------- 	|
+|	K. Ohmori, N. Yamaguchi	|	Numerical investigation of two-fluid flows by FreeFem++ ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Yamaguchi.pdf))	|
+|	F. Ortegón and al	|	Heat treating of steel Helical Gear  ([abstract](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Ortegon.pdf), [slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Ortegon-slides.pdf), [bibliography](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Ortegon-TermalProc2_compressed.pdf))	|
+|	A. Suzuki	|	Numerical simulations of the Gross-Pitaevskii equation by pseudo-spectral and finite element methods ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Suzuki-Bec.pdf))	|
+|	G. Vergez	|	A FreeFem++ toolbox for computing stationary states of rotating Bose-Einstein condensates  ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Vergez.pdf))	|
+|	Q. Tang 	|	Numerical simulation of the dynamics of the rotating dipolar Bose-Einstein condensates ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Tang.pdf))	|
+|	L. Untereiner	|	Visualization of Bose-Einstein Condensates (_not available_)	|
+|	F. Hecht and O. Pironneau 	|	Basic Tutorial (part 2) ([directory](https://github.com/FreeFem/FreeFem-days/blob/master/2014/tuto-base-II))	|
+|	P. Jolivet	|	Expert Tutorial (part 2):  HPC with  FreeFem++ ([directory](https://github.com/FreeFem/FreeFem-days/blob/master/2014/expert))	|
+
+|	Speaker	|	Day 3 - 2014	|
+|	 ------------- 	|	 ------------- 	|
+|	I. Bajc	|	Driving metric mesh adaptivity in a nonlinear minimization scheme ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Bajc.pdf))	|
+|	J. Hammond	|	An application of FreeFem++ with non-intrusive reduced basis methods ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Hammond.pdf))	|
+|	B. Barrois	|	Simulation des flux d’air dans une salle informatique ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Barrois.pdf))	|
+|	O. Moktari	|	Débruitage et réhaussement à partir d'une équation de diffusion non linéaire; application à l'inpainting ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Moktari.pdf))	|
+|	P.H. Tournier	|	Water and nutrient uptake by plant root systems ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Tournier.pdf))	|
+|	P. Ventura	|	Mutual admittance of an infinite periodic Surface Acoustic Waves transducer using an original coupled FEM/BIE numerical model ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Ventura.pdf))	|
+|	M. Oumouni 	|	Numerical analysis and simulation of the spreading and dispersion using FreeFem++ ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Oumouni.pdf))	|
+|	M. Mint Brahim	|	Hybrid Dual Raviart–Thomas FEM in composit media ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/MintBrahim.pdf))	|
+|	M. Giacomini	|	A guaranteed a posteriori error estimator for certified boundary variation algorithm ([abstract](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Giacomini.pdf), [slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Giacomini-slides.pdf))	|
+|	J. Mullaert	|	Numerical Methods for Incompressible Fluid-Structure Interaction ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Mullaert.pdf))	|
+|	A. Suzuki, F. X. Roux	|	A dissection solver with kernel detection for unsymmetric matrices in FreeFem++ ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Suzuki-dissection.pdf))	|
+|	F. Ben Belgacem	|	A Finite Element Method for an Ill-posed Oxygen-Balance Model ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Belgacem.pdf))	|
