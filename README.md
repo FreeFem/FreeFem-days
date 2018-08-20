@@ -26,6 +26,8 @@
 |	O. Pironneau |	Basic Tutorial (part 2): (_not available_)	|
 |	F. Hecht |	Expert Tutorial (part 2): a None trivial use of FreeFem++ ([tutorial directory](https://github.com/FreeFem/FreeFem-days/tree/master/2017/Tuto-Expert2)) |
 
+---
+
 ## 2016
 
 |	Speaker	|	Day 1 - 2016	|
@@ -53,6 +55,8 @@
 |	O. Pantz & O. Pironneau |	Basic Tutorial (part 2): ([tutorial directory](https://github.com/FreeFem/FreeFem-days/tree/master/2016/Tuto-Base-OP2))	|
 |	F. Hecht |	Expert Tutorial (part 2): a None trivial use of FreeFem++ ([tutorial directory](https://github.com/FreeFem/FreeFem-days/tree/master/2016/Tuto-Expert2)) |
 
+---
+
 ## 2015
 
 |	Speaker	|	Day 1 - 2015	|
@@ -76,6 +80,8 @@
 |	D. Le Hardy (Phd LTN , Université de Nantes)	|	Résolution de l’équation du transfert radiatif 3D avec FreeFem++ ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2015/pdf/David.pdf), [slides](https://github.com/FreeFem/FreeFem-days/blob/master/2015/pdf/LeHardy.pdf)))	|
 |	G. Vergez & P-H Tournier	|	Basic Tutorial (part 2) ([directory (zip)](https://github.com/FreeFem/FreeFem-days/blob/master/2015/Basic_tutorial.zip))	|
 |	F. Hecht	|	Expert Tutorial (part 2):  a None trivail use of FreeFem++ ([directory](https://github.com/FreeFem/FreeFem-days/blob/master/2015/expert-dir))	|
+
+---
 
 ## 2014
 
@@ -114,6 +120,8 @@
 |	A. Suzuki, F. X. Roux	|	A dissection solver with kernel detection for unsymmetric matrices in FreeFem++ ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Suzuki-dissection.pdf))	|
 |	F. Ben Belgacem	|	A Finite Element Method for an Ill-posed Oxygen-Balance Model ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2014/pdf/Belgacem.pdf))	|
 
+---
+
 ## 2013
 
 |	Speaker	|	Day 1 - 2013	|
@@ -144,6 +152,8 @@
 |	G. Pitton	|	Numerical investigation of buoyancy driven flows in tight lattice fuel bundles ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/Pitton.pdf))	|
 |	M. Youcef	|	Modeling of PET preform cooling in Injection Molding Process ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/Youcef.pdf))	|
 |	Hideki Oka	|	FreeFem++ and Physiome Platform ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2013/Hideki-Oka_compressed.pdf))	|
+
+---
 
 ## 2012
 
