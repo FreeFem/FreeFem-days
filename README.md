@@ -1,5 +1,35 @@
 # FreeFem Days Conference - previous editions archives
 
+## 2018
+
+| Speaker | Day 1 - 2018 |
+| ------- | ------------ |
+| F. Hecht (LJLL, UPMC) | Introduction to FreeFem++ version 4 ([PDF and examples](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2018/FH.zip)) |
+| S. Garnotel (Airthium) | FreeFem++ project update: GitHub, new documentation, new website, the module repository, and a lot more ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2018/slides/GARNOTEL_ffdays2018.pdf)) |
+| I. Danaila | Beginner class (_not available_) |
+| F. Hecht | Expert class ([Directory](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2018/tuto-expert1), [zip](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2018/tuto-expert1.zip)) |
+
+| Speaker | Day 2 - 2018 |
+| ------- | ------------ |
+| F. Hecht (LJLL, UPMC) | Introduction |
+| A. Suzuki (Osaka University) | Dissection sparse direct solver for indefinite finite element matrices and application to a semi-conductor problem ([PDF](https://github.com/FreeFem/FreeFem-days/blob/master/2018/pdf/AS.pdf), [slides](https://github.com/FreeFem/FreeFem-days/blob/master/2018/slides/talk-AS.pdf)) |
+| P. Jolivet (IRIT-CNRS, Toulouse) | Hig-Performance Radiative Transport Equation Solver ([PDF](https://github.com/FreeFem/FreeFem-days/blob/master/2018/pdf/PJ.pdf)], [slides](https://github.com/FreeFem/FreeFem-days/blob/master/2018/slides/talk-PJ.pdf))] |
+| D. Fabre (IMFT-UPS, Toulouse) | StabFem : a Matlab/Octave interface to FreeFem++ for flow instabilities and wave problems, designed for research and education ([PDF](https://github.com/FreeFem/FreeFem-days/blob/master/2018/pdf/DF.pdf), [zip](https://github.com/FreeFem/FreeFem-days/blob/master/2018/slides/AD.zip)) |
+| P-L. Rothé (ENPC - INRIA) | Running computations with the Multi-scale Finite element approach (MsFEM) in FreeFem++ ([PDF](https://github.com/FreeFem/FreeFem-days/blob/master/2018/pdf/PLR.pdf), [slides](https://github.com/FreeFem/FreeFem-days/blob/master/2018/slides/Rothe.pdf)) |
+| J. Moulin (ONERA-DAAA) | Augmented Lagrangian approach for large-scale linear stability analysis of incompressible flows and its extension to fluid-structure interaction ([PDF](https://github.com/FreeFem/FreeFem-days/blob/master/2018/pdf/JM.pdf), [slides](https://github.com/FreeFem/FreeFem-days/blob/master/2018/slides/Moulin.pdf)) |
+| G. Sadaka | FreeVol++: 2D Finite volume solver inside FreeFem++ ([PDF](https://github.com/FreeFem/FreeFem-days/blob/master/2018/pdf/GS.pdf), [slides](https://github.com/FreeFem/FreeFem-days/blob/master/2018/slides/talk-GS.pdf)) |
+| P. Frey & C. Dapogny (LJLL - LJK, IMAG) | [MMG](https://www.mmgtools.org/) remeshing tool presentation |
+
+| Speaker | Day 2 - 2018 |
+| ------- | ------------ |
+| A. Fourmont (INRIA, SED) | New RT 3d element and Surface Finite Elements in FreeFem++ ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2018/slides/talk-AF.pdf)) |
+| F. Hecht, A. Fourmont (LJLL, INRIA, SED) | FreeFEM++'s kernel presentation and classes for developers (part I) ([sip of files to build an user language](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2018/Base-lg.zip)) |
+| F. Hecht, A. Fourmont (LJLL, INRIA, SED) | FreeFEM++'s kernel presentation and classes for developers (part II) |
+| O. Pironneau (LJLL, UPMC) | Type recognition of PDEs using Deep Learning ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2018/slides/talk-OP.pdf), [zip](https://github.com/FreeFem/FreeFem-days/blob/master/2018/slides/OP-codes.zip)) |
+| F. Nataf, P-H. Tournier (LJLL, CNRS) | Parallel freefem++ and new DDM user interface |
+| O. Pantz | Beginner class |
+| F. Hecht | Expert class ([directory](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2018/tuto-expert2), [zip](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2018/tuto-expert2.zip)) |
+
 ## 2017
 
 |	Speaker	|	Day 1 - 2017	|
@@ -68,7 +98,7 @@
 |	F. Nataf (LJLL / Alpines / LJLL-INRIA)	|	Une théorie de type Schwarz pour l'algorithme de P.L. Lions (_not available_)	|
 |	O. Pironneau & G. Vergez	|	Basic Tutorial (part 1): generate a mesh, solve a linear PDE, ... ([directory (zip)](https://github.com/FreeFem/FreeFem-days/blob/master/2015/Basic_tutorial.zip))	|
 |	F. Hecht & I. Danaila	|	Expert Tutorial (part 1): How to compile ff++, add new finite element, and gag ([directory](https://github.com/FreeFem/FreeFem-days/blob/master/2015/expert-dir))	|
- 
+
 |	Speaker	|	Day 2 - 2015	|
 |	 ------------- 	|	 ------------- 	|
 |	F. Bonaldi (PhD Université de Montpellier)	|	Numerical Modeling of Kirchhoff-Love Plates with Rotational Inertia ([slides](https://github.com/FreeFem/FreeFem-days/blob/master/2015/pdf/Bonaldi_compressed.pdf))	|
