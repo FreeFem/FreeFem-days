@@ -21,7 +21,7 @@
 // corresponding to gnuplot visualization
 // --------------------------------------------------
 include "getARGV.idp"
-load "MUMPS_FreeFem"
+load "MUMPS_mpi"
 load "shell"
 load "scotch"
 load "pipe"
