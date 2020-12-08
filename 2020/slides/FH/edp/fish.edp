@@ -1,0 +1,13 @@
+//exec("emc2");// 1st of April , 2004 : Houston fish 
+mesh Th("fish.msh");
+fespace Xh(Th,P1);
+
+macro Grad(u) [dx(u),dy(u)] // EOM
+Xh p,q; 
+solve laplace(p,q,solver=CG) =
+   int2d(Th)(  Grad(p)'*Grad(q)    )
+   -  int2d(Th) ( 1*q)
+  + on(2,p=2);   //  int on gamma 
+
+plot(p,fill=1,wait=1,value=0);  
+

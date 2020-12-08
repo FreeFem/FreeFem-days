@@ -1,0 +1,27 @@
+load "isoline"
+mesh Thg("bec-f.msh");
+fespace Vg(Thg,P2); Vg<complex> ug;
+{ ifstream f("bec-f2.rst"); int j;f >>j >> ug[]; }
+mesh Th=Thg;//trunc(Thg,1,split=2); 
+fespace Vh(Th,P1), Ph(Th,P0); 
+int k =2;
+Vh u ; u=abs(ug);
+plot(u, wait=1);
+Ph r;
+int[int] lm=findalllocalmin(Th,u[],r[]);
+plot(r,wait=1);
+//   for fit build a small case .. 
+real r0=107; //r(0,0); 
+mesh Tho= trunc(Th,r==r0);
+savemesh(Tho,"/tmp/Thopt.msh");
+{ofstream f("/tmp/Thoptu.txt"); fespace Vo(Tho,P1); Vo uo=u; f << uo[]; Vo<complex> uoc= ug;
+f << uoc[]; 
+Vo tx =  imag(dx(uoc)*conj(uoc))/max(norm(uoc),0.0001);
+Vo ty =  imag(dy(uoc)*conj(uoc))/max(norm(uoc),0.0001);
+plot([tx,ty]);//  OK 
+
+ }
+plot(r,Tho,wait=1,fill=1);
+r[]/=lm.n;
+ u[]/= u[].max;u[]-=1; 
+plot(r,u,fill=1,wait=1,nbiso=100);

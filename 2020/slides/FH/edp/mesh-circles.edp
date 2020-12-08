@@ -1,0 +1,10 @@
+verbosity=0;
+ border Co(t=0,2*pi) { x=cos(t); y=sin(t); label=1;}
+ border Ci(t=0,2*pi) { x=cos(t)/2; y=sin(t)/2; label=2;}
+ plot(Co(300)+Ci(150),wait=1);
+ mesh Thf=buildmesh(Co(300)+Ci(150)); // without hole
+ // tow  region:
+ cout <<" The two Region of Thf : " <<  Thf(0,0).region<< " " << Thf(0,0.9).region << endl; 
+ plot(Thf,wait=1);
+  mesh Thh=buildmesh(Co(30)+Ci(-15)); // with	 hole
+ plot(Thh,wait=1);

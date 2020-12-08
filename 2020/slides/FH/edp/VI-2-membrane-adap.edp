@@ -1,0 +1,156 @@
+// variationnal inequality 
+// --------------------------
+//  Probleme:
+//  $ - \mu1 \Delta u1 = f1 , \quad u1=g1 \on \Gamma, \quad u1 < u2   $
+//  $ - \mu2 \Delta u2 = f2 , \quad u2=g2 \on \Gamma, \quad u1 < u2   $
+//  algo of   Primal-Dual Active set strategy as a semi smooth Newton Method
+//   HinterMuller , K. Ito, K. Kunisch 
+//  to appeared in SIAM Option
+// Thank to O. Pironneau 
+// --------------------------
+// F. Hecht
+//  -----------------------
+//  Changement de variable: 
+//  -  Delta u1 = f1/mu1, u1=g1 / Gamma
+//  -  Delta u2 = f2/mu2  u2=g2 /Gamma
+//   u1 < u2    u1 - u2 < 0 
+// u = -u2+u1, uu = u1+u2;
+ func g1 =0; func g2= 0.05;
+ func f1 = 1;
+ func f2= -1; 
+ real mu1=1,mu2=2; 
+ mesh Th=square(10,10);
+ real eps=1e-10;
+ fespace Vh(Th,P1);     // P1 FE space
+ int n = Vh.ndof; // number of Degree of freedom
+ Vh uh,uhp,Ah;              // unkown and test function. 
+real[int] rhs(n);
+real cc=1000; 
+ func f =  f1/mu1-f2/mu2;                 //  right hand side function 
+ func ff=  f1/mu1+f2/mu2;                 //  right hand side function 
+ func g = g1-g2;                 //  boundary condition function
+ func gg=g2+g1;                 //  boundary condition function
+ func gmax=0;
+ Vh umax=gmax;
+//
+macro Grad(u) [dx(u),dy(u)]//EOM
+real tol=0.05,tolmin=0.002;  
+real tgv = 1e30;
+real res=0;
+ varf a(uh,vh) =                    //  definion of  the problem 
+    int2d(Th)( (dx(uh)*dx(vh) + dy(uh)*dy(vh)) ) //  bilinear form
+  - int2d(Th)( f*vh )                          //  linear form
+  + on(1,2,3,4,uh=-g);                      //  boundary condition form
+varf vM(uh,vh) = int2d(Th)(uh*vh);
+
+
+matrix A=a(Vh,Vh,tgv=tgv,solver=CG);
+matrix AA=a(Vh,Vh);
+matrix M=vM(Vh,Vh);
+rhs = a(0,Vh,tgv=tgv);
+real[int] Aii(n),Aiin(n),Ah1(n),b(n);
+
+Aii=A.diag; // get the diagonal of the matrix 
+//cout << " Aii= " << Aii << endl;
+Ah =0;
+uhp=0;
+Vh lh=0;
+int kadapt=0,kkadapt=0;
+Vh uuh=0,vvh;
+Vh u1,u2;
+uuh=uuh;
+solve Pp(uuh,vvh,solver=CG) = int2d(Th)( Grad(uuh)'*Grad(vvh) ) - int2d(Th)(vvh*ff)
++ on(1,2,3,4,uuh=gg);
+func bool plot1d()
+{
+  int nn=100;
+
+  real[int] xx(nn+1),yy(nn+1),zz(nn+1),pp(nn+1);
+  for (int i=0;i<=nn;i++)
+   {
+   
+     xx[i]=i/real(nn);
+     yy[i]=u1(0.5,i/real(nn));
+     zz[i]=u2(0.5,i/real(nn));
+    }
+   plot([xx,yy],[xx,zz],wait=1,cmm="u1/u2 x=0.5 cup");
+}
+
+for(int iter=0;iter<100;++iter)
+{
+  
+  // solve the problem plot(uh); // to see the result
+  b = rhs;
+  //  add new lock condition on i / if (Ah[i] ==1 )
+  Ah1= 1.; Ah1  -= Ah[];  // Ah1  = ! Ah 
+  b = Ah[] .* umax[];  b *= tgv;       b  -=  Ah1 .* rhs;
+  Aiin = Ah[] *  tgv; Aiin  +=  Ah1  .* Aii;
+  A.diag = Aiin;
+  set(A,solver=CG); // important to change precondiconning 
+  uh[] = A^-1* b;
+  lh[] = AA * uh[];
+  lh[] += rhs;
+  //  plot(lh,wait=1);
+  Ah = ( lh + cc*( umax- uh)) < 0.; 
+  u1= (uh+uuh)/2;
+  u2= (-uh+uuh)/2;
+  plot(u1,u2,dim=3,wait=1);
+ 
+  // plot(Ah, wait=1,cmm=" lock ",value=1 );
+  //plot(uh,umax,wait=1,cmm="uh & umax",dim=3,fill=1);
+  real[int] d(n),Md(n);
+  d= uh[]-uhp[];    
+  Md = M*d;
+  real err = sqrt(Md'*d);
+  Md=M*uh[];
+  Ah1=1.;
+  real intuh  = (Ah1'*Md); // int uh; 
+  cout << " err norm L2 " << err << " "
+       << " int uh = " << intuh  
+      <<  " kkadapt =" << kkadapt <<endl;
+  res = intuh;
+  if(err< eps && kkadapt ) break;
+  bool adapt = err< eps || (iter%5 == 4)  ;
+  if(adapt)
+    { 
+      kadapt++;
+      Th=adaptmesh(Th,[uh,uuh],err=tol);
+      kkadapt = tol == tolmin; // we reacht  the bound       
+      tol = max(tol/2,tolmin);
+       cout << " ++ tol = " << tol << "  " << kadapt << " " << kkadapt <<endl;
+      //plot(Th,wait=0);
+      uhp=uhp;
+      n=uhp.n;	
+      uh=uh;
+      Ah=Ah;
+      lh=lh;
+      umax = gmax; 
+      A=a(Vh,Vh,tgv=tgv,solver=CG);
+      AA=a(Vh,Vh);
+      M=vM(Vh,Vh);
+      Aii.resize(n);	
+      Aiin.resize(n);
+      Ah1.resize(n);
+      b.resize(n);
+      rhs.resize(n); 
+      Aii=A.diag; // get the diagonal of the matrix 
+      rhs = a(0,Vh,tgv=tgv);
+ 
+      uuh=uuh;
+      solve Pp(uuh,vvh,solver=CG) = int2d(Th)( Grad(uuh)'*Grad(vvh) ) 
+        - int2d(Th)(vvh*ff)
+        + on(1,2,3,4,uuh=gg);     
+    }
+  uhp[]=uh[];
+  plot1d();
+} 
+//savemesh(Th,"mm",[x,y,uh*10]);
+plot(uh,dim=3,wait=1);
+
+Aiin=M*uh[];
+Aii=1.;
+cout << " -- int uh = " << res  << endl;
+//assert( abs(res-0.0288611) < 0.001);  
+  
+  // u = -u2+u1, uu = u1+u2;
+

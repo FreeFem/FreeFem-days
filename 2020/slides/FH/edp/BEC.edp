@@ -1,0 +1,319 @@
+// correct D, H on 1 july 2013  Thank to Guillame 
+load "ff-Ipopt"
+load "isoline" 
+int wait=0;
+
+
+
+real Rtf = 3.4,Rcoef=2.5;
+real g=1000; 
+int nbopt=500, maxiter=20;
+real Omega = 3,OmegaC=0; 
+func Vtrap = (x*x+y*y)*0.5 +square(x*x+y*y)*0.25  - (x*x+y*y)*square(OmegaC)*0.5;
+
+
+
+
+
+bool sameth0=0;//  in the loop of Omega using same inital mesh
+// adapt  just in 
+//int nbadap=2;// nb of adapt loop  0 => no adapt..
+real[int]  errs=[0.5, 0.1,0.05];//,0.05,0.02] ; // err adap ... 0.05 (ok)
+
+real[int] tols=[5e-1,1e-1,1e-2,1e-4,1e-6,1e-8];//,1e-6],1e-7,1e-8]; //  loops of tols 
+// bool Cerclemu = 0; 
+int M=50;//  starting number of point on big circle..
+func Pk = P1;
+real mu = 50; 
+
+include "getARGV.idp"
+
+ M=getARGV("-M",M);
+ g=getARGV("-g",g);
+ Rcoef=getARGV("-Rcoef",Rcoef);
+ real Rmax= Rcoef * Rtf;
+int nbcas = 1; 
+
+border C(t=0,2*pi){ x= Rmax*cos(t);y=Rmax*sin(t); label=1;}
+mesh Th=buildmesh(C(M));
+func rhoTF = max(0., (mu - Vtrap)/g );
+
+//  computation of mu ...
+
+func real Computemu(real mmu)
+{
+    mu = mmu;
+        // Compute mu 
+    for( int iter =0; iter < 20 ; ++ iter)
+    {
+        real nu = int2d(Th)(rhoTF) -1.  ;        
+        real dmu =  int2d(Th,levelset=-(mu - Vtrap)) (1.)/g ; 
+        cout << " iter " << iter << " err = " <<nu << " " << mu << " " << abs(int2d(Th)(rhoTF) -1.) << endl; 
+    
+        mu -= nu / dmu ;
+        if( abs(nu ) < 1e-10) break; 
+    }
+    assert( abs(int2d(Th)(rhoTF) -1.) < 1e-10);
+    return mu; 
+}
+
+Computemu(1000);
+cout << " mu = " << mu  << endl; 
+real R0 = sqrt(sqrt(1.+4.*mu)-1);
+cout << " R0 = " << R0 << " " << Rmax << endl;
+assert(R0 < Rmax); 
+
+fespace Vh(Th,Pk);
+fespace Vh2(Th,[Pk,Pk]);
+macro Grad(u) [dx(u),dy(u)] //
+
+func real J(real[int] & u)
+{
+    Vh2 [ur,ui] ; ur[]=u;
+    real E = int2d(Th) ( 
+         ( Grad(ur)'*Grad(ur) + Grad(ui)'*Grad(ui) ) * 0.5
+       + Vtrap* ( ur*ur + ui * ui)  
+       + g* square( ur*ur + ui * ui) * 0.5
+       - Omega*(  y *( - dx(ur)*ui + dx(ui)*ur ) 
+                + x *(   dy(ur)*ui - dy(ui)*ur ) )
+                );
+       return E;
+}
+
+func real[int] dJ(real[int] & u)
+{
+    Vh2 [ur,ui] ; ur[]=u;
+    varf vdj([aa,bb],[vr,vi]) =
+       int2d(Th) ( 
+          ( Grad(ur)'*Grad(vr) +  Grad(ui)'*Grad(vi) )
+       + Vtrap* ( ur*vr + ui * vi)*2.  
+       + 2.*g*  ( ur*vr + ui*vi) *( ur*ur + ui*ui) 
+       - Omega*(  y *( - dx(ur)*vi + dx(ui)*vr ) 
+                + x *(   dy(ur)*vi - dy(ui)*vr ) )
+       - Omega*(  y *( - dx(vr)*ui + dx(vi)*ur ) 
+                + x *(   dy(vr)*ui - dy(vi)*ur ) )
+                );
+       real [int] du= vdj(0,Vh2);
+       return du ;
+}
+
+func real[int] Constraint(real[int] & u)
+{
+    Vh2 [ur,ui] ; ur[]=u;
+    real[int] c(1);
+    c[0] = int2d(Th) ( ur*ur + ui * ui)  ; 
+    return c; 
+}
+matrix MC;
+func matrix dConstraint(real[int] & u)
+{
+    Vh2 [ur,ui] ; ur[]=u;
+    varf vc([aa,bb],[vr,vi]) = int2d(Th) ( ( ur*vr + ui * vi) *2.) ;
+    real[int,int] MF(1,u.n);
+    MF(0,:) = vc(0,Vh2);
+    MC=MF;
+}
+
+matrix Hessian;
+
+func matrix hJ(real[int] & u,real obj,real[int] & l)
+{
+   Vh2 [ur,ui] ; ur[]=u;
+   varf vhj([wr,wi],[vr,vi]) =
+      int2d(Th) ( 
+       + (obj*Vtrap+ l[0]) * ( wr*vr + wi*vi)*2.  
+       + obj*( 
+         ( Grad(wr)'*Grad(vr) +  Grad(wi)'*Grad(vi) )
+      + g*2.*  ( wr*vr + wi*vi) * ( ur*ur + ui*ui) 
+      + g*4.*  ( ur*vr + ui*vi) * ( wr*ur + wi*ui) 
+      
+      - Omega*(  y *( - dx(wr)*vi + dx(wi)*vr ) 
+               + x *(   dy(wr)*vi - dy(wi)*vr ) )
+      - Omega*(  y *( - dx(vr)*wi + dx(vi)*wr ) 
+               + x *(   dy(vr)*wi - dy(vi)*wr ) )
+               ));
+    Hessian = vhj(Vh2,Vh2);
+    //Hessian= H22 + l[0]*HC;
+    return Hessian;
+}
+
+func real  dist(real[int] P,real[int] Q)
+{
+   // cout << P << " " << Q << endl; 
+    real[int] PQ = P+(-1.)*Q; 
+    return PQ.l2; 
+}
+func real Rdisque(int j,real[int,int] &xy, int[int] & be,real[int] &p,real eps)
+{
+    //  calcul du barycentre ..
+    int i0= be(2*j);
+    int i1= be(2*j+1)-1;
+    int n =i1-i0; 
+    plot(Th,[xy(0,i0:i1),xy(1,i0:i1)], wait=0, cmm=" curve "+j); 
+    //cout << " ----- " <<xy(0:2,i0) << " " << xy(0:2,i1) <<endl; 
+    //cout << "  " << i0 << " " << i1 << " " << dist(xy(0:1,i0),xy(0:1,i1)) << endl; 
+    real ret=0;
+    if( dist(xy(0:1,i0),xy(0:1,i1)) < eps)
+    { // close curve ..
+      real[int]  G(2    ); 
+      for(int i=i0; i<i1; ++i)
+        G += xy(0:1,i); 
+      G *= 1./(i1-i0);  
+      real[int] Rg(n);
+      for(int i=0; i<n; ++i)
+         Rg[i]=dist(G,xy(0:1,i0+i));
+      real rmean  = Rg.sum/n; 
+      real rmin = Rg.min, rmax=Rg.max; 
+      Rg -= rmean;
+      real sigma = Rg.l2/sqrt(real(n)); 
+     // cout << " R " << rmean << " " << rmin << " " << rmax << " " << sigma << endl; 
+      if( ( ( rmean - rmin) < rmean*0.3 )  &  ( ( rmax - rmean) < rmean*0.4 ) )
+       { 
+         ret = rmean;   
+       }
+       p=G;
+     }
+    return ret; 
+}
+func int  QnuHole(mesh & Th,real[int] & v,real[int,int] & holes)
+{
+  int nbiso = 1;
+  
+  fespace Wh(Th,P1);
+  fespace Ph(Th,P0);
+  Ph hh = hTriangle; 
+  Wh u; u[]=v;  
+  real eps = hh[].max*1e-3; 
+  real Dl0 =  sqrt(Th.area/pi)*2/5; // pi R^2 = a 
+  real umin = v.min, umax=v.max; 
+  real du = (umax-umin)/ (nbiso);
+  real u0 = umin+du*0.5;
+  real[int,int] xy(3,1);
+  int[int] be(1);
+   real[int] p(3); // x, y, r .. 
+  for( int i=0; i < nbiso; ++i)
+  {
+    int nbc= isoline(Th,u,xy,close=0,iso=u0,beginend=be,smoothing=0.1);
+    int nholes =0; 
+    cout << " iso " << u0 << " " << nbc << endl;
+ 
+    real[int,int] h(3,nbc); 
+    for( int j =0; j < nbc; ++ j)
+    {
+        real ray=Rdisque(j,xy,be,p,eps);
+        if( (ray >0) && (ray < Dl0) ) 
+        {   
+            p[2]=ray; 
+            h(:,nholes)=p; 
+            nholes++; 
+            cout << " holes = " << nholes << " P " << p[0] << " " << p[1] << " R " << p[2] <<endl; 
+        }
+    }
+    holes.resize(3,nholes); 
+    holes = h;
+    u0 += du; 
+  }
+}
+
+
+
+Vh<complex> u0 = sqrt( rhoTF);
+Vh ur = real(u0); 
+plot(ur,wait=wait);
+real[int] c=[1];
+real cost=1000; 
+Vh2 [uur,uui] = [ real(u0), imag(u0)] ; 
+Vh2 [uur0,uui0] ;
+real cpu0;
+
+// initialisation 
+OmegaC=Omega; // Just force centrifuge 
+Omega=0; // init no rotation 
+Vh  u,us; 
+ 
+for(int step=0; step<2; ++step)
+{ 
+  cout << " ## IPOPT Step =" << step << " / " << nbcas <<   " Omega =" << Omega << " g =" << g << endl;
+  cpu0 = clock();
+  int ok=0;
+  mesh Th0= Th; 
+  int ntol = 0,nadep=0;
+  for(int kk=1,nok=0;kk<= nbopt; ++kk)
+  {  
+    real err = 1, tol = 1;
+    
+    if(nadep <errs.n  )
+     Th=adaptmesh(Th,[uur,uui],err=(err=errs[nadep]),nbvx=100000,hmax=Rmax*2*pi/M,anisomax=1);
+  
+    [uur,uui] = [uur,uui] ;
+    
+   
+    ok=IPOPT(J,dJ,hJ,Constraint,dConstraint,
+         uur[],clb=c,cub=c,tol=(tol=tols[ntol]), maxiter=maxiter,
+         objvalue=cost);
+    if(ok < -1000) ok = -1;
+    cout << kk << " IPOPT = " << ok << " J = " << cost << " Th.nv =" << Th.nv 
+         << " Omega =" << Omega << " g =" << g << " tol = " << tols[ntol] << " cpu ="  << clock()-cpu0 << " s" + "  tol =" + tol + " Aerr = "+err  << endl; 
+    Vh uu= sqrt(square(uur)+square(uui));
+    if( ok) plot(uu,wait=wait, cmm="ok="+ok+ ", OmegaC =" + Omega+ " g=" + g + " kk " + kk+ " J =" + cost + "  tol =" + tol + " Aerr = "+err  ,dim=3, WindowIndex=1); 
+    if( ok==0) 
+    {
+    // Vh uu= sqrt(square(uur)+square(uui));
+     
+ // ana
+  if(step==1)
+  {
+	  try{
+	  savemesh(Th,"/tmp/bec-Th.msh");
+	  { ofstream fu("/tmp/bec-u.txt"); fu<< uu[] << us[] << endl; 
+	  }} catch(...){ ;}
+   Vh u0 = us-uu;
+  // plot(u0,dim=3, wait=1);
+ //  plot(u, dim=3, wait=1);
+
+   real[int,int] holes(5,1); 
+
+//real[int,int]  holes(3,1);
+    QnuHole(Th,u0[],holes); 
+    
+     if( holes.m > 3)
+     {
+     mesh Thc = triangulate(holes(0,:),holes(1,:)); 
+    plot(Thc,uu,wait=1,cmm=" Omega =" + Omega+ " g=" + g + " kk " + kk+ " J =" 
+           + cost + "  tol =" + tol + " Aerr = "+err  ,dim=3); 
+    plot(Thc,u0,wait=1,cmm=" Omega =" + Omega+ " g=" + g + " kk " + kk+ " J =" 
+           + cost + "  tol =" + tol + " Aerr = "+err  ,dim=3); 
+     }
+  }   
+  else
+       plot(uu,wait=wait, cmm=" OmegaC =" + Omega+ " g=" + g + " kk " + kk+ " J =" + cost + "  tol =" + tol + " Aerr = "+err  ,dim=3); 
+ 
+    }
+    
+    if( (ntol == tols.n-1) && (nadep == errs.n-1) && ok==0) break; 
+    if(ok==0 ) nok++;
+    ntol = min(nok,tols.n-1); 
+    if(errs.n) nadep = min(nok/2,errs.n-1);
+  
+  }
+  cout << " --- IPOPT = " << ok << " J = " << cost << " Th.nv =" << Th.nv << " Omega =" << Omega<< " g =" << g  << " cpu ="  << clock()-cpu0 << " s" <<  endl; 
+   
+  Vh uu= sqrt(square(uur)+square(uui));
+  plot(uu,wait=wait, cmm=" Omega =" + Omega+ " g =" + g + " J =" + cost + "  ok =" + ok ,dim=3);
+  if( sameth0 )
+  {
+    Th=Th0;
+    [uur,uui] = [uur,uui] ;
+  }
+  assert(ok==0);
+  // initialisation 
+  if(step==0)
+  {
+   Omega=OmegaC; 
+   OmegaC=0;
+   us = uu;
+  }
+  u=uu; 
+}
+
+

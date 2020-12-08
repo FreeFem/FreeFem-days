@@ -1,0 +1,57 @@
+verbosity=1;
+func g=cos(2*x)*cos(2*y); // valeur au bord
+int nn=10;
+int[int] l1111=[1,1,1,1]; // 
+mesh Th=square(nn,nn,[x*pi,y*pi],label=l1111);  // mesh definition of $\Omega$
+fespace Vh(Th,P1);      // finite element space
+fespace Ph(Th,P1dc);      // for  optimization  to store 1 + dx(u)^2+dy(u)^2
+Vh u=g; //  the current value of the solution
+
+Ph alpha; // of store  $ 1 + (|\nabla u|^2)$
+
+// the fonctionnal to minimise
+func real J(real[int] & xx)
+  {
+    Vh u;u[]=xx; // trick to transform a arry in function ....
+    real r=int2d(Th)( sqrt(1 +dx(u)*dx(u) + dy(u)*dy(u) ) ) ;
+    cout << "J(x) =" << r << " " << xx.min <<  " " << xx.max << endl;
+    return r;
+  }
+  
+// the grad of the fonctionnal $l^2$
+func real[int] dJ(real[int] & xx)
+  {
+    Vh u;u[]=xx; 
+    Ph alpha=sqrt(1. +dx(u)*dx(u) + dy(u)*dy(u) ); // optimization 
+    varf au(uh,vh) = int2d(Th)( 1./alpha*( dx(u)*dx(vh) + dy(u)*dy(vh) ) )
+     + on(1,uh=0);
+     xx= au(0,Vh);
+    return xx; // warning no return of local array  
+  }
+
+ varf vlap(uh,vh) = int2d(Th)( ( dx(uh)*dx(vh) + dy(uh)*dy(vh) ) )+ on(1,2,3,4,uh=0);
+ matrix A=vlap(Vh,Vh,solver=sparsesolver);
+ // the grad of the fonctionnal in norm $H^1$
+ func real[int] dJH1(real[int] & xx)
+   {
+     Vh u;u[]=xx; 
+     Ph alpha=sqrt(1. +dx(u)*dx(u) + dy(u)*dy(u) ); // optimization 
+     varf au(uh,vh) = int2d(Th)( 1./alpha*( dx(u)*dx(vh) + dy(u)*dy(vh) ) )
+      + on(1,uh=0);
+      real[int] rhs= au(0,Vh);
+	  xx = A^-1*rhs;
+     return xx; // warning no return of local array  
+   }
+  // initial value
+ 
+ verbosity=1;
+ u=0.; 
+ 
+  Vh onGamma=0;
+  varf vonGamma(u,v)=int1d(Th)(v/lenEdge);
+  onGamma[]=vonGamma(0,Vh);
+  onGamma = onGamma !=0; //  1 on Gamma , 0 other 
+  u=  u * (1-onGamma) + onGamma*g;	
+  int conv=NLCG(dJ,u[],nbiter=300,eps=1e-5,verbosity=5);
+  plot(u,dim=3,fill=1); 
+  cout << " the  surface =" << J(u[])  << endl;

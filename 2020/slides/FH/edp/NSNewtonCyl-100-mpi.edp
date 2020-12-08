@@ -1,0 +1,295 @@
+// NBPROC 4 
+// PARAM  -cas 2  -nNewton 1 -ngp
+// usage :
+//  ff-mpirun -np 8 NSNewtonCyl-100-mpi.edp args
+/* args can are:
+   -ns                no output of script 
+   -cas 1|2|3         case of benchmark  or Reynorl integer)
+   -n nbseg           nb of seg on input edge ..  
+   -ndt  ndt         nb time step par period 
+   -nNewton nNx      number of of iteration in Newtow loop.    
+ */
+// Author: F. Hecht  .. 
+// jan 2012 Stationnary imcompressible Navier Stokes Equation with Newton method.
+//  a round a 2d Cylinder 
+//  Benchmark  
+// http://www.mathematik.tu-dortmund.de/lsiii/cms/papers/SchaeferTurek1996.pdf
+//  
+//  Thank to Macarena Gómez Mármol <macarena@us.es>
+// need version 3.21 ****  for pipe pluging 
+// otherwise remove line with  pgnuplot 
+// corresponding to gnuplot visualization
+// --------------------------------------------------
+include "getARGV.idp"
+load "MUMPS_FreeFem"
+load "shell"
+load "scotch"
+load "pipe"
+
+int cas = getARGV("-cas",1);; // 1, 2 or 3 ..
+int n=getARGV("-n",15); //  mesh size ...
+int ndt=getARGV("-ndt",25); 
+int nNewton=getARGV("-nNewton",2); ; // nb iteration de Newton 
+bool  gplt = usedARGV("-ngp")<=0 && (mpirank==0) && (cas!=1) ; // 
+
+real Tend = 8.;  
+bool save=0; 
+real cpu0=mpiWtime() ; 
+string data="./d";//"2D-"+cas+"-"+n;
+if(mpirank==0) mkdir(data);
+string fgnup =data+"/fld2-"+cas+".gp";
+string fdata = data+"/sol-cas-";
+string fTh = data+"/Th-"+cas+".msh";
+
+pstream  pgnuplot(gplt ? "gnuplot": "cat" );
+ 
+//   parameter ... 
+real D=0.1;
+real H=0.41;
+
+real cx0 = 0.2, cy0 = 0.2; // center of cyl. 
+real xa = 0.15, ya=0.2, xe = 0.25,ye =0.2;// point for pressure..
+//Definición del dominio 
+border fr1(t=0,2.2){x=t; y=0; label=1;}
+border fr2(t=0,H){x=2.2; y=t; label=2;}
+border fr3(t=2.2,0){x=t; y=H; label=1;}
+border fr4(t=H,0){x=0; y=t; label=1;}
+border fr5(t=2*pi,0){x=cx0+D*sin(t)/2; y=cy0+D*cos(t)/2; label=3;}
+
+//plot(fr1(n)+fr2(n)+fr3(n)+fr4(n)+fr5(n));
+mesh Th;
+
+if(mpirank==0)
+{
+  Th=buildmesh(fr1(5*n)+fr2(n)+fr3(5*n)+fr4(n)+fr5(-n*3));
+  int[int] nupart(Th.nt);
+  nupart=0; 
+  if(mpisize>1)
+    scotch(nupart, Th, mpisize);
+  Th=change(Th,fregion= nupart[nuTriangle]);
+  savemesh(Th,fTh);
+  plot(Th,wait=0);
+
+}
+broadcast(processor(0),Th); 
+// partition of the mesh ...
+// for computation of the Strouhal number
+include "func-max.idp"
+real hsize = D*pi/n; // size of the mesh ???? 
+
+// bounding box for the plot 
+func bb=[[0,H/4],[H*2,3*H/4]];
+
+//  operator 
+macro Grad(u1,u2) [ dx(u1),dy(u1), dx(u2),dy(u2)]// 
+macro UgradV(u1,u2,v1,v2) [ [u1,u2]'*[dx(v1),dy(v1)] , [u1,u2]'*[dx(v2),dy(v2)] ]// 
+macro div(u1,u2)  (dx(u1)+dy(u2))//
+//  FE Space 
+fespace Xh(Th,P2);fespace Mh(Th,P1);
+fespace Wh(Th,[P2,P2,P1]);
+fespace Rh(Th,P1dc);
+Xh u1,u2,v1,v2;
+Xh up1,up2;
+Xh upp1,upp2;
+Mh p,q,pp;
+real coefv =1, vtheta=0;  
+real Um= 1.5;// max volicite case 2,3 (Rey 100) 
+if( cas>3) 
+  {
+    
+    Um = cas*1.5/100.;
+    cas =2;
+  }
+func  Ub = Um*2./3.; 
+real nu = 1e-3; 
+func Rey = Ub*D/nu;
+func ccdrag = 2./ square(Ub) /D ;
+func ccfreq = D/Ub; 
+real freq = 0.3/ccfreq; // frequence theorique
+// initial guess..
+u1=0;
+u2=0;
+real T=0; // current time 
+real strouhal;
+// velocity BC .. 
+func coefV = (cas<3)? 1 : sin(pi*min(T/8.,1.));
+func U1 = 4.*Um*y*(H-y)/(H*H) * coefv ;
+func U2 = 0 ;
+
+// stop test for Newton 
+real eps=1e-8*Um;
+//  choise of time step ..
+int  mdt = rint(Tend*freq*ndt);
+real dt = Tend/mdt;//  ntd  pas de temps pas periode 
+if(mpirank==0) cout << " dt =" << dt << " CFL = " << Um*dt/hsize <<  endl; 
+
+verbosity=0;
+Xh dclt1;// diff CL in tem 
+// BDF2 schema  order 2 in time ... 
+real[int] beta=[1.5, -2., +0.5], ab=1./dt*beta  ; 
+
+if(cas ==1) 
+{ // static case
+  Um = 0.3;
+  Tend=0;
+  ab=0; // no time .. 
+  nNewton = 20; 
+}
+// init..
+int iter=0;
+if(mpirank==0) {
+        ofstream f(fgnup);// clean the file ..   
+ }
+   
+// loop in time if need ..
+while(1) 
+{	
+    real err=0;
+    T += dt;
+    iter++;
+    coefv  =  coefV;// coef in velocty ..
+   
+    upp1[]=up1[];
+    upp2[]=up2[];
+
+    up1[]=u1[];
+    up2[]=u2[];
+    
+    // change of B.C due to time ..
+    varf vonu1(u,v) = on(1,u=U1-u1);
+    dclt1[] =vonu1(0,Xh,tgv=1); // just BC on label 1
+    u1[] += dclt1[]; // Add increment of BC on u1    
+
+    if(mpirank==0)  
+       cout <<  " T = " << T 
+            << " iter = " << iter 
+            << " coef Velocity  = " << coefv 
+            << " delta velocity  = " << dclt1[].linfty   <<endl;
+     	
+	for( n=0;n< nNewton ;n++) // Newton Loop 
+	{
+	   varf Oseen([du1,du2,dp],[v1,v2,q]) =
+		   int2d(Th,mpirank) ( 
+		                ab[0]*[du1,du2]'*[v1,v2]
+		              + nu*(Grad(du1,du2)'*Grad(v1,v2) )
+		              + UgradV(du1,du2, u1, u2)'*[v1,v2]
+		              + UgradV( u1, u2,du1,du2)'*[v1,v2]
+		              - div(du1,du2)*q - div(v1,v2)*dp 
+		              - 1e-8*dp*q // stabilization term 
+		             )
+		+ int2d(Th,mpirank) (    
+		                 ab[0]*[u1,u2]'*[v1,v2]
+		                +ab[1]*[up1,up2]'*[v1,v2]
+		                +ab[2]*[upp1,upp2]'*[v1,v2]
+		                + nu*(Grad(u1,u2)'*Grad(v1,v2) )
+		                + UgradV(u1,u2, u1, u2)'*[v1,v2]
+		                - div(u1,u2)*q - div(v1,v2)*p 
+		                - 1e-8*p*q 
+		             )
+	    + on(1,3,du1=0,du2=0)
+	    ;
+	    matrix Al=Oseen(Wh,Wh,solver=sparsesolver),A;
+	    real [int] bl = Oseen(0,Wh),b(bl.n);
+	    Wh [w1,w2,wp];
+	    mpiAllReduce(Al,A,mpiCommWorld,mpiSUM);
+	    mpiAllReduce(bl,b,mpiCommWorld,mpiSUM);
+	    set(A,solver=sparsesolver);
+        w1[]=A^-1*b;
+	    u1 = u1 - w1;
+	    u2 = u2 - w2;
+	    p = p - wp;
+	    real Lu1=u1[].linfty,  Lu2 = u2[].linfty , Lp = p[].linfty;
+	    err= w1[].linfty/Lu1 + w2[].linfty/Lu2 + wp[].linfty/Lp;
+	    if(mpirank==0)  cout << T << " " << n << " err = " << err << " / " << eps 
+	                    << " rey  =" << Rey << " U1 max = " << u1[].max <<endl;
+	    if(err < eps) break; // converge 
+	    if( n>3 && err > 100.) break; //  Blowup ????           
+	}
+   if(cas==1) 
+    {
+        assert( err <eps ); 
+        plot([u1,u2],p,  coef = 0.02/u1[].max, bb=bb,wait=1, cmm=" cas 1 "); 
+    }
+    // compute the Drag and lift Coef ... 
+    varf von1(u,v) = on(3 ,u= 1); 
+    v1[] = von1(0,Xh,tgv=1);
+    v2[] =0; 
+    real cdrag =     -int2d(Th,mpirank) (    
+                         ab[0]*[u1,u2]'*[v1,v2]
+		                +ab[1]*[up1,up2]'*[v1,v2]
+		                +ab[2]*[upp1,upp2]'*[v1,v2]
+		                + nu*(Grad(u1,u2)'*Grad(v1,v2) )
+		                + UgradV(u1,u2, u1, u2)'*[v1,v2]
+		                - div(v1,v2)*p 
+		                
+		             ) ;
+    v2[] = v1[];
+    v1[]=0;
+    real clift =     int2d(Th,mpirank) (    
+                         ab[0]*[u1,u2]'*[v1,v2]
+		                +ab[1]*[up1,up2]'*[v1,v2]
+		                +ab[2]*[upp1,upp2]'*[v1,v2]
+		                + nu*(Grad(u1,u2)'*Grad(v1,v2) )
+		                + UgradV(u1,u2, u1, u2)'*[v1,v2]
+		                - div(v1,v2)*p 
+		                
+		             ) ;
+		             
+    real drag,lift,Cd=0,Cl=0,Ta;
+    mpiAllReduce(clift,lift,mpiCommWorld,mpiSUM);  
+    mpiAllReduce(cdrag,drag,mpiCommWorld,mpiSUM);  
+    if(iter >2)
+    {
+    Cd = ccdrag*drag;
+    Cl = ccdrag*lift; 
+    }
+    // end of compute the Drag and lift Coef 
+    
+    Ta = T/ccfreq; // The adimensional time ..
+    real Deltap = p(xa,ya) - p(xe,ye) ; // the Deltap
+    strouhal = AddStrouhal(iter,Ta,Cl);
+    AddMaxO2(Cd,iter,mxdrag,mxdragi);   
+    AddMaxO2(Cl,iter,mxlift,mxlifti);   
+    real Cdx = mxdrag.max, Clx = mxlift.max; 
+   if(mpirank==0) {
+        {
+        ofstream f(fgnup,append);
+        f << T << " " << drag << " " << lift << " " 
+          << Ta << " " << Cd << " " << Cl    << " " << Deltap <<"   " << mpiWtime()-cpu0 << " " 
+          << iter <<  "  " << strouhal << endl;
+        }
+     real Td = max((int(Ta)-20),0); //  period  = 3 en Ta 
+     if(cas==3) Td=0; 
+     if(gplt) {
+        pgnuplot << "set title \"Rey = " +Rey + ", Strouhal= "+strouhal+",  T = "
+                       + T + ", cas = " + cas << ", Newton It. : "+nNewton+"\";\n";
+        pgnuplot << "plot ["+Td+":] \""+fgnup+"\" u 4:5 w l t \"Cd\", \""
+                    +fgnup+"\"  u 4:6 w l t \"Cl\","+Cdx+",   "+ Clx << endl;
+        flush(pgnuplot); 
+     }
+    }
+ 
+    
+    
+    // plot curl of the flow preetty ...
+    Rh curlu = -dy(u1)+ dx(u2);
+    plot(curlu,fill=1,/* bb=bb,*/nbiso=20, cmm = " T = " + T+" / "+Tend+" s + "); 
+    
+    upp1[] = up1[] -u1[];
+    upp2[] = up2[] -u2[];
+    
+    real errt = upp1[].linfty + upp2[].linfty; 
+    if(mpirank==0)  cout << " errt = " << errt<< " T = " << T <<  " Strouhal  " << strouhal  <<endl; 
+    if(mpirank ==0 && save)
+    {
+        ofstream f(fdata+"-"+iter+".txt");
+        f << T << endl;
+        f << u1[] << endl;
+        f << u2[] << endl;
+        f << p[] << endl; 
+    }
+    if( errt < 1e-5) break; // stop if steady state 
+    if(T>Tend*1.0000001) break; // stop after final time ..
+}
+
+
