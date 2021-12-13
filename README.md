@@ -2,15 +2,15 @@
 
 ## 2021
 
-[the index ](https://github.com/FreeFem/FreeFem-days/blob/master/2021/index.html))
+[the index ](https://htmlpreview.github.io/?https://github.com/FreeFem/FreeFem-days/blob/master/2021/index.html)
 
 ## 2020
 
-[the index ](https://github.com/FreeFem/FreeFem-days/blob/master/2020/index.html))
+[the index ](https://htmlpreview.github.io/?https://github.com/FreeFem/FreeFem-days/blob/master/2020/index.html)
 
 ## 2019
 
-[the index ](https://github.com/FreeFem/FreeFem-days/blob/master/2019/index.html))
+[the index ](https://htmlpreview.github.io/?https://github.com/FreeFem/FreeFem-days/blob/master/2019/index.html)
 
 
 | Speaker | Day 1 - 2019 |
