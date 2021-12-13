@@ -1,5 +1,39 @@
 # FreeFem Days Conference - previous editions archives
 
+## 2021
+
+[the index ](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2021/index.html))
+
+## 2020
+
+[the index ](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2020/index.html))
+
+## 2019
+
+[the index ](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2019/index.html))
+
+
+| Speaker | Day 1 - 2019 |
+| ------- | ------------ |
+| F. Hecht (LJLL, Sorbonne Université) | FreeFEM and news ([PDF and examples](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2019/slides/FH-edp.zip))|
+|A. Fourmont (Alpines, Inria) |  New Border Meshes and FEM (Surface, Line) ([slides](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2019/slides/talk-AF.pdf))|
+|X Claeys1, P-H Tournier2 (LJLL, Sorbonne1,CNRS2 ) |  BEM in FreeFEM with BemTool, Htool ([slides](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2019/slides/talk-PHT.pdf))|
+|P. Jolivet ( (IRIT / CNRS) |  New PETSc/SELPc interface: new linear solver, eigen value problem, ... ([slides](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2019/slides/talk-PJ.pdf))|
+|Qarnot Computing anywhere | Presentation of parallel facility, ... ([slides](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2019/slides/talk-QT.pdf))|
+
+| Speaker | Day 2 - 2019 |
+| ------- | ------------ |
+|A. Suzuki (Cybermedia Center, Osaka University) | An industrial application of a free boundary problem with contact angle and volume constraint. ([slides](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2019/slides/talk-AS.pdf))|
+| Houssam Houssein (Airthium, LJLL) |  Frictionless contact problem for hyperelastic materials with interior point optimizer ([slides](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2019/slides/talk-HH.pdf))|
+| G. Sadaka (LMRS, Rouen) | Parallel 2D and 3D numerical simulations of melting with convection. ([slides](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2019/slides/talk-GS.m4v))|
+| N. Meunier (LaMME,Université d'Évry) |  A model of cell motility and numerical simulations ([no  slides]) |
+| Pierre Mollo (Université de Reims) | Reduced Basis with Freefem++. Applications to Stokes problem ([slides](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2019/slides/talk-PM.pdf))|
+| Mojtaba Barzegari (PhD, KU Leaven) |High-performance numerical simulation of biodegradation process with moving boundaries ([slides](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2019/slides/talk-MB.pdf))| 
+| Quentin Tessier (Airthium) | A new FreeFEM plot interface ([slides](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2019/slides/talk-QT.pdf))|
+| Paolo Piersanti (Institute of Mathematics and Scientific Computing, Karl-Franzens-Universit ̈at Graz, Austria) |Existence, uniqueness, and numerical analysis of a time-dependent problem for linearly elastic flexural shells ([slides](https://www.ljll.math.upmc.fr/hecht/ftp/ff++days/2019/slides/talk-PP.pdf))|
+
+
+
 ## 2018
 
 | Speaker | Day 1 - 2018 |
