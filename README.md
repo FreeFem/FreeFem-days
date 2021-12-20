@@ -1,18 +1,18 @@
 # FreeFem Days Conference - previous editions archives
 
-     [ FreeFEM channel  Retrieve videos here]   (https://www.youtube.com/channel/UCJlw6LHQt7UWXrH2uzGYZWw) 
+[FreeFEM channel,  Retrieve videos here]   (https://www.youtube.com/channel/UCJlw6LHQt7UWXrH2uzGYZWw) 
 
 ## 2021
 
-[the index ](https://htmlpreview.github.io/?https://github.com/FreeFem/FreeFem-days/blob/master/2021/index.html)
+[The page ](https://htmlpreview.github.io/?https://github.com/FreeFem/FreeFem-days/blob/master/2021/index.html)
 
 ## 2020
 
-[the index ](https://htmlpreview.github.io/?https://github.com/FreeFem/FreeFem-days/blob/master/2020/index.html)
+[The page ](https://htmlpreview.github.io/?https://github.com/FreeFem/FreeFem-days/blob/master/2020/index.html)
 
 ## 2019
 
-[the index ](https://htmlpreview.github.io/?https://github.com/FreeFem/FreeFem-days/blob/master/2019/index.html)
+[The page ](https://htmlpreview.github.io/?https://github.com/FreeFem/FreeFem-days/blob/master/2019/index.html)
 
 
 | Speaker | Day 1 - 2019 |
