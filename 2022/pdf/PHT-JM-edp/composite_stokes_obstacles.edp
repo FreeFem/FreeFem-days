@@ -1,0 +1,85 @@
+// composite stokes obstacles.
+load "../../plugin/mpi/bem"
+load "../../plugin/mpi/MUMPS"
+macro grad(u) [dx(u),dy(u)]//
+macro Grad(u1,u2) [ grad(u1), grad(u2)]//
+macro div(u1,u2) (dx(u1)+dy(u2))//
+
+
+real ly=3;
+real xInflow=-2;
+real xOutflow=10;
+
+//func inflow = sin(pi*y/ly);
+//func inflow = 10*cos( (pi/2)*y/ly);
+func inflow = abs( (y-ly)*(y+ly) );
+
+border a0(t=ly, -ly){x=xInflow; y=t; label=1;}
+border a1(t=xInflow, xOutflow){x=t; y=-ly; label=2;}
+border a4(t=-ly,ly){x=xOutflow; y=t; label=3;} 
+border a5(t=1, 0){x=xInflow+(xOutflow-xInflow)*t; y=ly; label=2;}
+
+border b(t=0, 2*pi){x=0.3+0.3*cos(t); y=0.3*sin(t); label=2;} plot(b(30)); //to see a plot of the border mesh
+
+int nn= 8;
+int nny= (2*ly)*nn;
+int nnx= (xOutflow-xInflow)*nn;
+int nncircle = 4*nn*(2.0*pi*0.3);
+
+
+mesh Th=buildmesh( a0(nny) + a1(nnx) + a4(nny) + a5(nnx) + b(-nncircle) );
+
+mesh ThU=Th; //trunc(Th,1,split=2);
+mesh ThP=Th;
+
+fespace Uh(ThU,[P1]);
+fespace Ph(Th,P1);
+fespace Vhvect(Th,[P1,P1,P1]);
+fespace Vh(<Uh,Uh,Ph>);
+
+Uh u1;
+Uh u2;
+Ph p;
+
+// inflow boundary  (label 1): [u1,u2]( xInflow, y) = [ 10*(y-ly)*(y+ly), 0];
+// outflow boundary (label 3): grad(u).n + \partial_{n} p = 0 
+
+varf Stokes ( [u1,u2,p], [v1,v2,q])
+= int2d(ThU)( (Grad(u1,u2):Grad(v1,v2)) ) + int2d(ThU)( - div(u1,u2)*q - div(v1,v2)*p ) + int2d(ThP)(-1e-10*p*q) 
+
++ int2d(ThU)(1000*v1+v2)
++ on(1,u1=inflow,u2=0) + on(2,u1=0,u2=0);
+
+// varf rhsStokes ( [u1,u2,p], [v1,v2,q]) = on(1,u1=inflow,u2=0) + on(2,u1=0,u2=0);
+
+matrix A = Stokes(Vh,Vh,solver=sparsesolver,master=-1);
+real[int] b1 = Stokes(0,Vh);
+
+real[int] sol = A^(-1)*b1;
+
+[u1[],u2[],p[]] = sol; // dispatch the solution
+
+//u1[] = sol(0:(Uh.ndof-1));
+//u2[] = sol(Uh.ndof:(Uh.ndof+Uh.ndof-1));
+//p[] = sol((Uh.ndof+Uh.ndof):(sol.n-1));
+
+plot( u1, cmm="u1", fill=1 );
+plot( u2, cmm ="u2", fill=1);
+plot( p, cmm ="p" ,fill=1 );
+plot( [u1,u2],  cmm="vector", fill=1);
+
+cout << "divegence check::" << int2d(Th)( dx(u1)+dy(u2) ) << endl;
+cout << "divegence check::" << int1d(Th,1)( u1 ) + int1d(Th,3)( -u1 )<< endl;
+
+// streamlines
+Uh psi, phi;
+solve streamlines (psi, phi) = int2d(ThU)(
+          dx(psi)*dx(phi)
+        + dy(psi)*dy(phi)
+    )
+    + int2d(ThU)(
+        - phi*(dy(u1) - dx(u2))
+    )
+    + on(1, 2, 3, 4,5, psi=0)
+    ;
+plot( psi,  cmm="vector", nbiso=29);

@@ -1,0 +1,71 @@
+load "MUMPS"
+// composite stokes periodic problem
+
+macro grad(u) [dx(u),dy(u)]//
+macro Grad(u1,u2) [ grad(u1), grad(u2)]//
+macro div(u1,u2) (dx(u1)+dy(u2))//
+
+mesh Th=square(80,80,[2*pi*x,2*pi*y],flags=3);
+mesh ThU=trunc(Th,1,split=2);
+mesh ThP=Th;
+
+fespace UhPerio(ThU,[P1],periodic=[[2,y],[4,y] ]); 
+fespace Uh(ThU,[P1]);
+fespace Ph(Th,P1);
+
+
+fespace Vh(<UhPerio,Uh,Ph>);
+
+UhPerio u1;
+Uh u2;
+Ph p;
+
+func fu1 = sin(x)*cos(y);
+func fu2 = -cos(x)*sin(y);
+
+func fp = 2*cos(x)*cos(y);
+func ff = -4*cos(x)*sin(y);
+
+varf Stokes ( [u1,u2,p], [v1,v2,q])
+= int2d(Th)( (Grad(u1,u2):Grad(v1,v2)) ) + int2d(Th)( - div(u1,u2)*q - div(v1,v2)*p ) + int2d(Th)(-1e-10*p*q  ) 
++ int2d(Th) ( [0,ff(x,y)]'*[v1,v2] ) 
++ on(1,2,3,4,u2=fu2(x,y)) + on(1,2,3,4,u1=fu1(x,y));
+
+matrix A = Stokes(Vh,Vh,solver=sparsesolver);
+real[int] b1 = Stokes(0,Vh);
+real[int] sol = A^(-1)*b1;
+
+[u1[],u2[],p[]]=sol;
+
+plot( u1, cmm="u1" );
+plot( u2, cmm="u2");
+plot( p,  cmm="p" );
+
+fespace VhU(ThU,P1);
+fespace VhP(ThP,P1);
+VhU ue1=fu1;
+// plot(ue1,cmm="u1_exacte");
+
+VhU ue2=fu2;
+// plot(ue2,cmm="u2_exacte");
+
+VhP pe=fp;
+// plot(pe,cmm="p_exacte");
+
+
+VhU dU1= u1-ue1;
+VhU dU2= u2-ue2;
+VhP dP= p-pe;
+// plot( dU1, cmm="diff u1" );
+// plot( dU2, cmm ="diff u2");
+// plot( dP, cmm ="diff p" );
+
+{
+cout << " int2d(Th) (dx(fu1)+dy(fu2))=" << int2d(Th) (dx(ue1)+dy(ue2)) << endl;
+
+cout << "test error " << endl;
+cout << "error L2 (u)= int2d(Th)" << int2d(Th) ( (u1-ue1)^2 + (u2-ue2)^2 ) << endl;
+cout << "error L2 (p)= int2d(Th)" << int2d(Th) ( (p-pe)^2 ) << endl;
+cout << "error L2 rel (u)= int2d(Th)" << int2d(Th) ( (u1-ue1)^2 + (u2-ue2)^2 )/ int2d(Th)( ue1^2+ue2^2 ) << endl;
+cout << "error L2 rel (p)= int2d(Th)" << int2d(Th) ( (p-pe)^2 )/ int2d(Th)(  pe^2 ) << endl;
+}
