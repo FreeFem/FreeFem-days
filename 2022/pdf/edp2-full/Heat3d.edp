@@ -1,0 +1,113 @@
+// NBPROC 4
+// PARAM -n 20 -ns
+load "MUMPS"
+load "msh3"
+load "medit"
+load "metis"
+load "scotch"
+include "getARGV.idp"
+verbosity=0;
+func f= 1. ; // right hand side function
+func g=0.; ; // boundary condition function
+func u0= 0;
+real dt=getARGV("-dt",0.01);
+int nn=getARGV("-n",20);
+int imax=getARGV("-niter",10);
+int op=getARGV("-op",1);
+int pplot=getARGV("-plot",0);
+int withscotch=1; 
+
+mesh Th2D=square(nn,nn);
+int[int] refm=[1,1,2,1,3,1,4,1];
+int[int] refu=[0,1];
+mesh3 Th=buildlayers(Th2D,nn,zbound=[0.,1.],labelmid=refm,labelup=refu,labeldown=refu);
+
+
+// to slip integral on each processor 
+// set a region number of a processor number 
+int npart= mpisize;
+int[int] nupart(Th.nt);
+nupart=0; 
+if(mpirank==0 && npart>0 && mpirank>1)
+{
+  if( withscotch) scotch(nupart, Th, npart); // without weight
+  else metisdual(nupart,Th,npart); 
+}
+broadcast(processor(0),nupart);// 
+
+if(op) Th=change(Th,fregion=nupart[nuTriangle]);
+else Th=change(Th,fregion=0);
+
+int reg= op ? mpirank : 0;
+//  end of trick
+cout << "  *** Th: vol " << Th.mesure << "  " << int3d(Th,reg)(1.) << endl;
+fespace Vh(Th,P2) ; // P1 FE space
+Vh uh=u0 ; // unkown and test function.
+
+
+real temps=clock();
+
+real time1,time2,time6;
+time1=clock();
+
+// compute only on region number = processor number 
+varf vlaplace(uh,vh) = // definition de problem
+      int3d(Th,reg)( uh*vh+ dt*(dx(uh)*dx(vh) + dy(uh)*dy(vh)+ dz(uh)*dz(vh)) ) // bil. form
+    + int3d(Th,reg)( dt*vh*f) + on(1,uh=g) ;
+varf vmasse(u,v) = int3d(Th,reg)(u*v);
+varf von1(uh,vh) = on(1,uh=1) ;
+
+matrix A;
+if(op || mpirank==0)
+    A = vlaplace(Vh,Vh) ;
+time1=clock()-time1;
+// reduce the matrice to get the full matrice 
+// warning the tgv number is now mpisize*tgv for B.C.
+time6=clock(); time6 = clock()-time6;
+time2=clock();
+if(op) set(A, solver = sparsesolver,master=-1);
+else   set(A, solver = sparsesolver,master=0);
+
+time2=clock()-time2;
+
+real time3=clock();
+matrix M = vmasse(Vh,Vh);
+time3=clock()-time3;
+
+real [int] b(A.n),bb(A.n) ;
+real[int] bcl= vlaplace(0,Vh) ; // The B.C vector   
+real[int] Gamma = von1(0,Vh,tgv=1);  // 
+
+real time4=0,time5=0;
+
+for(int i=0 ;i<imax;i++)
+{
+
+real time4tmp=clock();
+b = M*uh[];
+b += bcl ; 
+time4=time4+(clock()-time4tmp);
+real time5tmp=clock();
+uh[] = A^-1*b ; // resolution
+time5=time5+(clock()-time5tmp);
+if(mpirank==0)
+        cout << "  -- time " << (i+1)*dt << " ||uh|| " << uh[].linfty << " ||b|| " << b.linfty << endl;
+
+}
+//savesol("Heat-Time-"+imax+"-nn-"+nn+"-superludist.sol",Th,uh);
+//savemesh(Th,"Heat-Time-"+imax+"-nn-"+nn+"-superludist.mesh");
+if( mpirank==0 && pplot) medit("Heat",Th,uh);
+ cout << mpirank << "  Time resolution " << clock()-temps << endl 
+ << mpirank << " ======================================" << endl
+ << mpirank << " matrix A                    " << time1 << endl
+ << mpirank << " factorization               " << time2 << endl
+ << mpirank << " mass matrix                 " << time3 << endl
+ << mpirank << " RHS  (Matrix vector Product with mass matrix)  " << endl
+ << mpirank << "                             " << time4/imax << endl
+ << mpirank << " solving                     " << time5/imax  << endl
+ << mpirank << " all                         " << clock()-temps << endl
+ << mpirank << " ======================================" << endl;
+
+
+
+

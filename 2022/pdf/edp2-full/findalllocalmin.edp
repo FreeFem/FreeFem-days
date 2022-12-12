@@ -1,0 +1,12 @@
+mesh Th=square(50,50,[x*2-1,y*2-1]);
+load "isoline"
+fespace Vh(Th,P1), Ph(Th,P0); 
+int k =2;
+Vh u= sin(k*pi*x)*sin(k*pi*y);
+plot(u, wait=1);
+Ph r; 
+int[int] lm=findalllocalmin(Th,u[],r[]);
+plot(r,u,fill=1,wait=1);
+// to see where is the minimuns 
+Ph mx= Th(lm[real(r)]).x -x, my= Th(lm[real(r)]).y -y;
+plot([mx,my],u,wait=1,fill=0);

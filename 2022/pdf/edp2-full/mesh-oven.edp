@@ -1,0 +1,76 @@
+real x0=-10,x1=10;
+real y0=-10,y1=10;
+real ix0=-5,ix1=5;
+real iy0=-5,iy1=5;
+
+int ext=1;
+
+// sens trigo
+border up(t=x1,x0){x=t;y=x1;label=ext;}
+border down(t=x0,x1){x=t;y=x0;label=ext;}
+border left(t=y1,y0){x=x0;y=t;label=ext;}
+border right(t=y0,x1){x=x1;y=t;label=ext;}
+
+border iup(t=ix1,ix0){x=t;y=ix1;label=0;}
+border idown(t=ix0,ix1){x=t;y=ix0;label=0;}
+border ileft(t=iy1,iy0){x=ix0;y=t;label=0;}
+border iright(t=iy0,ix1){x=ix1;y=t;label=0;}
+
+real pas = 0.4;
+int nx = (x1-x0)/pas;
+int ny = (y1-y0)/pas;
+int inx = -(ix1-ix0)/pas;
+int iny = -(iy1-iy0)/pas;
+
+func  bfour= up(nx)+down(nx)+left(ny)+right(ny);
+real R=1,cxx=8,cyy=8;
+real[int] cx=[-cxx,cxx,0,  0,-cxx,+cxx];
+real[int] cy=[cyy,cyy,cyy,  -cyy,-cyy,-cyy];
+int nbresitor=cx.n;
+// multi border 
+border Ci(t=2*pi,0;i){x=cx[i]+R*cos(t);y=cy[i]+R*sin(t);label=0;}
+//EOM Resitor
+// the 6 resitor
+
+mesh Th;
+{
+int nbc = -2*pi*R/pas;
+int[int] nc(6); nc=nbc;
+func btout = up(nx)+down(nx)+left(ny)+right(ny)
+           + iup(inx)+idown(inx)+ileft(ny)+iright(iny)
+           + Ci(nc);
+plot(btout,wait=1);
+ Th=buildmesh(btout);
+
+
+/*  put good label on sub domain */
+int[int] refchange(2*(6+2));
+int kcr=0;
+int[int]  regr(6);
+for(int i=0;i<6;++i)
+  {   
+   regr[i]=Th(cx[i],cy[i]).region;
+   refchange[kcr++]= regr[i];
+   refchange[kcr++]= i;	
+  }
+int regi =   Th(0,0).region;
+refchange[kcr++]=regi;
+refchange[kcr++]=nbresitor;
+
+int rege =   Th(x0+0.1,y0+0.1).region;
+cout << " regr = " << regr << " , " << regi << " " << rege << endl;
+refchange[kcr++]=rege;
+refchange[kcr++]=nbresitor+1;
+verbosity=10;
+fespace Ph(Th,P0);
+Ph ref=region;
+plot(ref,value=1,wait=1,fill=1);
+cout << "refchange = " << refchange << endl;
+int[int] refchangeE=[1,1];
+Th=change(Th,reft=refchange,refe=refchangeE);// bug if no refe correct v 3.0-5
+ref=region+0.5;
+real[int] viso=[0,1,2,3,4,5,6,7,8];
+plot(ref,value=1,wait=1,fill=1,viso=viso,ps="oo/oven.eps");
+verbosity=2;
+}
+savemesh(Th,"oo/oven.msh");

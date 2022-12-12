@@ -1,0 +1,72 @@
+
+load "ppm2rnm" load "isoline" load "shell"
+string lac="Ali-Bouchta-B", lacjpg =lac+".png", lacpgm =lac+".pgm";
+// convert Ali-Bouchta.png -channel R  -separate  Ali-Bouchta-B.png
+if(stat(lacpgm)<0)  exec("convert -channel Blue 	"+lacjpg+" "+lacpgm);
+
+real AreaLac =  400*4047.; // 400 acre  $m^2 bof bof ...$
+real hsize= 10; 
+real[int,int] Curves(3,1);
+int[int] be(1);
+int nc;// nb of curve 
+{  
+  real[int,int] ff1(lacpgm); // read  image and set to an rect. array 
+  int nx = ff1.n, ny=ff1.m; // grey value beetween 0 to 1 (dark)
+  // build a Cartesian mesh such that the origne is qt the right place.
+  mesh Th=square(nx-1,ny-1,[(nx-1)*(x),(ny-1)*(1-y)]);   
+   // warning  the numbering is of the vertices (x,y) is 
+   // given by $  i = x/nx + nx* y/ny $
+  fespace Vh(Th,P1);
+  Vh f1; f1[]=ff1; //  transforme array in finite element function.
+  plot(f1,cmm="image",wait=1,nbiso=20,value=1,fill=1);
+  real iso =0.78;//0.0777;//0.3; // try some value to get correct iso
+  real[int] viso=[iso];
+  plot(f1,viso=viso,wait=1,cmm="image");
+  
+  
+  nc=isoline(Th,f1,iso=iso,close=0,Curves,beginend=be,smoothing=.1,ratio=0.5); 
+  verbosity=1; 
+  cout << " nc == " << nc << endl;
+  // the 3th longuest isolines 
+for(int i=0; i<min(3,nc);++i)
+{
+    int i1=be(2*i),i2=be(2*i+1)-1;
+    cout <<i<< " " <<  i1 << " "<< i2;
+    plot(f1,viso=viso,[Curves(0,i1:i2),
+       Curves(1,i1:i2)], wait=1,cmm=i);
+}
+
+}
+int[int] iii=[0];//  chose to  componante second and  third 
+int[int] NC=[-500];// put 300 seg on each componant
+
+border G(t=0,1;i) {  P=Curve(Curves,be(2*iii[i]),be(2*iii[i]+1)-1,t);  label= iii[i];} 		
+
+plot(G(NC),wait=1); 
+mesh Th=buildmesh(G(NC));
+plot(Th,wait=1,grey=0);
+real scale = sqrt(AreaLac/Th.area);
+Th=movemesh(Th,[x*scale,y*scale]); // resize the  mesh to have the correct scale 
+cout << " Th.area = " << Th.area << " m^2 " << " == " << AreaLac <<  "   m^2 " << endl ;
+
+// a computation for the fun ..
+{
+    macro Grad(u) [dx(u),dy(u)]//
+    fespace Vh(Th,P1);
+    varf vP(u,v) = int2d(Th)( Grad(u)'*Grad(v)) + on(1,2,3,u=0); 
+    varf vM(u,v) = int2d(Th)( u*v)  ;
+
+    matrix A=vP(Vh,Vh,solver=UMFPACK);   
+    matrix B=vM(Vh,Vh);
+
+    int nev=20;  // number of computed eigen valeu close to sigma
+
+    real[int] ev(nev); // to store nev eigein value
+    Vh[int] eV(nev);   // to store nev eigen vector
+
+
+    int k=EigenValue(A,B,sym=true,sigma=0,value=ev,vector=eV,tol=1e-10,maxit=0,ncv=0);
+
+    for (int i=0;i<min(k,nev);i++)
+      plot(eV[i],dim=3,fill=1,cmm="Eigen  Vector "+i+" valeur =" + ev[i]  ,wait=1,value=1);
+}

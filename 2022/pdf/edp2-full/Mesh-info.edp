@@ -1,0 +1,115 @@
+ // ------------------------------------------------------------
+{  // get mesh information (version 1.37)
+  mesh Th=square(2,2);
+  // get data of the mesh 
+  int nbtriangles=Th.nt;
+  cout << " nb of Triangles = " << nbtriangles << endl;
+  for (int i=0;i<nbtriangles;i++)
+    for (int j=0; j <3; j++)
+      cout << i << " " << j << " Th[i][j] = "
+	   << Th[i][j] << "  x = "<< Th[i][j].x  << " , y= "<< Th[i][j].y 
+	   << ",  label=" << Th[i][j].label << endl;
+	    
+//   Th(i)   return   the vextex i of Th
+//   Th[k]   return   the triangle k of Th.
+//   Th.be(i)  return  the boundary element 
+  fespace femp1(Th,P1);
+  femp1 Thx=x,Thy=y; 
+  // get vertices information : 
+  int nbvertices=Th.nv;
+  cout << " nb of vertices = " << nbvertices << endl;
+  for (int i=0;i<nbvertices;i++)
+	cout << "Th(" <<i  << ") : "   // << endl;	
+	     << Th(i).x << " " << Th(i).y  << " " << Th(i).label // version 2.19 
+	     << "       old method: " << Thx[][i] << " " << Thy[][i] << endl;
+
+// method to find information of point (0.55,0.6) 
+  int it00 = Th(0.55,0.6).nuTriangle;// then triangle numbe 
+  int nr00 = Th(0.55,0.6).region;
+  
+  real area00 = Th[it00].area; // new in version 2.19 
+  real nrr00 = Th[it00].region; // new in version 2.19 
+  real nll00 = Th[it00].label; // same as region in this case.
+      
+ //Hack  to get a triangle contening point x,y
+  //     or   region number
+  // -----------------------------------------
+  fespace femp0(Th,P0);
+  femp0 nuT; // a P0 function  to get triangle numbering
+    for (int i=0;i<Th.nt;i++)
+     nuT[][i]=i; 
+  femp0 nuReg=region; // a P0 function to get the region number
+  //  inquire 
+  int it0=nuT(0.55,0.6); //  number of triangle Th's contening point (0.55,0,6);
+  int nr0=nuReg(0.55,0.6); //  number of region of Th mesh contening point (0.55,0,6);
+  // dump  
+  cout << "  point (0.55,0,6) :triangle number " << it00 << " " << it00 
+       << ", region = " << nr0 << " == " << nr00 << ",  area K " << area00 << endl;
+
+  // new method to get boundary inforamtion 
+ 
+  // version >3.4-1
+  // --------- new stuff -----------------
+  int k=0,l=1,e=1;
+  Th.nbe ; // return the number of boundary element \hfilll
+  Th.be(k);   // return the boundary element k $\in \{0,...,Th.nbe-1\}$ \hfilll
+  Th.be(k)[l];   // return the vertices l $\in \{0,1\}$ of  boundary element k \hfilll
+  Th.be(k).Element ;   // return the triangle contening the  boundary element k \hfilll
+  Th.be(k).whoinElement ;   // return the egde number of triangle contening the  boundary element k \hfilll
+  Th[k].adj(e) ; // return adjacent triangle to k by edge e, and change the value of e to \hfilll
+  // the corresponding edge in the adjacent triangle
+  Th[k] == Th[k].adj(e) ;// non adjacent triangle return the same 
+  Th[k] != Th[k].adj(e) ;// true adjacent triangle 
+  
+  cout << " print mesh connectivity " << endl;
+  int nbelement = Th.nt; 
+  for (int k=0;k<nbelement;++k)
+    cout << k << " :  " << int(Th[k][0]) << " " << int(Th[k][1]) << " " <<  int(Th[k][2])
+	 << " , label  " << Th[k].label << endl; 
+  //  
+  
+  for (int k=0;k<nbelement;++k)
+    for (int e=0,ee;e<3;++e) 
+      //  remark FH hack:  set ee to e, and ee is change by method adj, 
+      //  in () to make difference with  named parameters. 
+      {
+	    cout << k <<  " " << e << " <=>  " << int(Th[k].adj((ee=e))) << " " << ee  
+	     << "  adj: " << ( Th[k].adj((ee=e)) != Th[k]) << endl;  
+      }
+      // note :     if k == int(Th[k].adj(ee=e)) not adjacent element 
+
+
+  int nbboundaryelement = Th.nbe; 
+  Th.be;
+    for (int k=0;k<nbboundaryelement;++k)
+      cout << k << " : " <<  Th.be(k)[0] << " " << Th.be(k)[1] << " , label " << Th.be(k).label 
+	   <<  " tria  " << int(Th.be(k).Element) << " " << Th.be(k).whoinElement <<  endl; 
+    
+}
+//   test to catch bogus boundary ( just a test)
+{
+int err;
+real c0,c1;
+c0=0;
+c1=0;
+mesh Th;
+for( int i=0;i<=4;i++)
+{
+    c1=sin(i*pi/8);
+try 
+{
+err=0; 
+border a(t=0,2*pi){ x=cos(t); y=sin(t);label=1;}
+border b(t=0,2*pi){ x=c0+0.3*cos(t); y=c1+0.3*sin(t);label=2;}
+plot(a(50)+b(30),wait=1);
+Th   = buildmesh(a(50)+b(30));
+}
+catch(...)
+{
+  err=1;
+  plot(a(50)+b(30),wait=1,cmm="bogus border ",ps="oo/bogusborder.eps");  
+}
+if(err==0)
+  plot(Th,wait=1,cmm="mesh ok");
+}
+}

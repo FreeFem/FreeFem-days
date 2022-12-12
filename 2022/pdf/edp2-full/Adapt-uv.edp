@@ -1,0 +1,34 @@
+border C(t=0,2*pi){x=cos(t);y=sin(t);};
+
+mesh Th= buildmesh(C(20));
+func  u = ( (10*x^3+y^3) +  tanh(500*(sin(5*y)-2*x) )); 
+func  v = ( (10*y^3+x^3) +  tanh(5000*(sin(5*x)-2*y)  ));
+
+real xz = 0.5, yz = 0.3 , dz=0.05;
+func bb=[[xz-dz,yz-dz],[xz+dz,yz+dz]];
+int nn = Th.nv;
+ plot(Th, cmm = 0 + " nv =" + Th.nv, ps="../plots/aTh-"+0+".eps" );
+ 
+for(int iter=1;iter < 20; ++iter )
+{
+  Th = adaptmesh(Th,[u,v],err=0.06,nbvx=50000,thetamax=30);
+  if(abs(Th.nv - nn) < nn*0.005) break; 
+  nn = Th.nv;
+  plot(Th, cmm = iter + " nv =" + Th.nv, ps="../plots/aTh-"+iter+".eps" );
+  plot(Th, cmm = iter + " nv =" + Th.nv, ps="../plots/zTh-"+iter+".eps",   bb = bb,wait=1 ,WindowIndex=1);
+
+}
+//   plot ... 
+fespace Vh(Th,P1);
+Vh uh=u,vh=v;
+
+load "msh3" 
+meshS Thu= movemesh23(Th,transfo=[x,y,u/10]);Thu=change(Thu,fregion=1);
+meshS Thv= movemesh23(Th,transfo=[x,y,v/10]);Thv=change(Thv,fregion=2);
+
+
+plot(uh,dim=3, cmm="uh",wait=1,fill=1);
+plot(vh,dim=3, cmm="vh",wait=1,fill=1);
+plot(Thu,Thv,wait=1);
+//plot(Thv,wait=1);
+load "medit" medit("Thu",Thu,Thv); 

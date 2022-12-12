@@ -1,0 +1,45 @@
+load "msh3" 
+load "medit"
+load "tetgen"
+ func meshS Sphere(real R,real h,int L,int orientation)
+  {
+    mesh  Th=square(10,20,[x*pi-pi/2,2*y*pi]);  //  $]\frac{-pi}{2},frac{-pi}{2}[\times]0,2\pi[ $
+    //  a paratrization of a sphere 
+    func f1 =cos(x)*cos(y);
+    func f2 =cos(x)*sin(y);
+    func f3 = sin(x);
+    //  de  partiel derivatrive of the parametrization DF
+    func f1x=-sin(x)*cos(y);   
+    func f1y=-cos(x)*sin(y);
+    func f2x=-sin(x)*sin(y);
+    func f2y=cos(x)*cos(y);
+    func f3x=cos(x);
+    func f3y=0;
+    // $  M = DF^t DF $ for mesh adaptation ..
+    func m11=f1x^2+f2x^2+f3x^2;
+    func m21=f1x*f1y+f2x*f2y+f3x*f3y;
+    func m22=f1y^2+f2y^2+f3y^2;
+    
+    func perio=[[4,y],[2,y],[1,x],[3,x]];  // to store the periodic condition 
+     
+    real hh=h/R;// hh  taille du maille sur la shere unite. 
+    real vv= 1/square(hh);
+    verbosity=2;
+    Th=adaptmesh(Th,m11*vv,m21*vv,m22*vv,IsMetric=1,periodic=perio);
+    Th=adaptmesh(Th,m11*vv,m21*vv,m22*vv,IsMetric=1,periodic=perio);
+    Th=adaptmesh(Th,m11*vv,m21*vv,m22*vv,IsMetric=1,periodic=perio);
+    Th=adaptmesh(Th,m11*vv,m21*vv,m22*vv,IsMetric=1,periodic=perio);
+    plot(Th,wait=1);
+    int[int] ref=[0,L];  
+   
+    meshS  ThS= movemesh23(Th,transfo=[f1*R,f2*R,f3*R],orientation=orientation,label=ref);
+    return ThS;
+ }
+  
+meshS ThS =Sphere(1,0.1,7,1); 
+plot(ThS,wait=1);
+medit("sp",ThS);
+
+real[int] dd=[0,0,0,1,0.1^3/6];
+mesh3 Th=tetg(ThS,regionlist=dd); 
+medit("Th",Th); 

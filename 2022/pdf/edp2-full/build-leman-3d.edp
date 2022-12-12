@@ -1,0 +1,84 @@
+load "msh3"
+load "medit"
+real meshsize=500; 
+real x0 = 2.500e6 , y0 = 1.11e6; 
+int nbp = 60250;
+//  parametre lissage 
+string[int] affuent = ["rhone aval leman","Rhone Amont","Aubonne","Drance","Venoge","Autre"];
+real[int,int] Paffuent= [ //  Position des affuents ...
+[2500474.11 ,1118034.57 ],
+[2555372.09 ,1138286.87 ],
+[2519591.16 ,1145983.41 ], 
+[2529261.85 ,1139618.99],
+[2538850.37 ,1150718.82]
+];
+int nba = Paffuent.n; 
+real[int,int] Pa = Paffuent;
+Pa(:,0) -= x0;
+Pa(:,1) -= y0;
+real[int] da(Pa.n);da=0. ;
+border Aff(t=0,pi*2;i)
+{
+	real x0 = Pa(i,0),y0 = Pa(i,1);
+	
+	x = x0 + (meshsize+da[i])*cos(t);
+	y = y0 + (meshsize+da[i])*sin(t);
+	label = i+2;
+	
+}
+mesh Th2 =readmesh("Leman-ThT.msh");
+fespace Vh(Th2,P1);
+Vh deep; 
+real[int] zL; 
+{
+	ifstream ff("Leman-deep1.txt");
+	ff >> deep[] ;
+	ifstream fz("Leman-zL.txt");
+	int n; 
+	fz>> n;
+	zL.resize(n); 
+	fz.seekg(0);
+	fz >> zL ; 
+
+}
+real deepmax = deep[].min;
+cout << " deep max = " << 	deepmax << endl;  
+plot(deep,wait=1);
+// clean 
+
+Th2= change(Th2,rmInternalEdges=1,fregion=0);
+plot(Th2,wait=1);
+Th2 =adaptmesh(Th2,meshsize,IsMetric=1,nbvx = Th2.nv,errg=0.1); 
+Th2 =adaptmesh(Th2,meshsize,IsMetric=1,nbvx = Th2.nv,errg=0.1); 
+Th2 =adaptmesh(Th2,meshsize,IsMetric=1,nbvx = Th2.nv,errg=0.1); 
+
+for [i,dai:da]
+ dai=dist(Th2)(Pa(i,0),Pa(i,1),0.);
+ cout <<" dist aff bord: " << da << endl; 
+ int[int] Na(Pa.n); Na=12;
+ mesh Tha = buildmesh(Aff(Na));
+ int[int] nrega(nba*2);
+ for(int i=0; i<nba; ++i)
+   { nrega[2*i]= Tha(Pa(i,0), Pa(i,1) ).region;
+ 	 nrega[2*i+1]= i+1; 
+  }
+ Tha= change(Tha,region=nrega);
+ 
+plot(Th2,Tha,wait=1);
+int nn = 30; 
+int[int] rup=[0,20,1,20,2,20,3,20,4,20,5,20],  rdown=[0,10,1,1,2,2,3,3,4,4,5,5], rmid=[0,0,1,0,2,0,3,0,4,0,5,0];
+Th2=change(Th2,flabel=chi(Tha)(x,y)*Tha(x,y).region, fregion=chi(Tha)(x,y)*Tha(x,y).region);
+cout <<"label = " <<  labels(Th2);
+plot(Th2,wait=1);
+mesh3 Th=buildlayers(Th2,nn,
+  coef= max(deep/deepmax,1./nn),
+  zbound=[deep,0],
+  reffacemid=rmid, 
+  reffaceup = rup,
+  reffacelow = rdown);
+  savemesh(Th,"Leman-"+meshsize+".mesh");
+  savemesh(Th2,"Leman"+meshsize+"-2d.msh");
+ Th =  movemesh(Th,[x,y,z*10]);
+  
+ plot(Th,wait=1);
+ medit("Leman-Th",Th);

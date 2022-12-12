@@ -1,0 +1,31 @@
+load "bfstream"
+
+real[int] b(10), bb(1);
+for (int i = 0; i < b.n; ++i)
+	b[i] = i+pi;
+cout << " " << b << endl;
+int kk=100;
+{
+	ofstream f("bfstreamExample.dt");
+	f.write(134);
+	f.write(1.346888);
+	f.write(b);
+	f.write(kk);
+	writeint(f,10);
+}
+b = 0;
+
+{
+	real r;
+	int i,kk,i4;
+	ifstream f("bfstreamExample.dt");
+	f.read(i);
+	f.read(r);
+	f.read(bb);
+	f.read(kk);
+	readint(f,i4);
+	
+	cout << i << " " << r << " "<< i4 <<  endl;
+	cout << bb << endl;
+	//cout << b << endl;
+}

@@ -1,0 +1,72 @@
+
+load "msh3"
+load "MUMPS_seq"  
+verbosity=0;
+
+real E =  2.e11 ;// 72e9;
+real nu = 0.3;
+real rho = 8000;//2700;//
+real freq0 = 100; 
+real mu = E/(2*(1+nu));
+real lambda = E*nu/((1+nu)*(1-2*nu));
+real R1 = 1.8, R2 = R1+ 0.4, L = 10;
+int nn = 40, nz = 20;
+border cc1(t=0,2*pi){ x = R1*cos(t); y=R1*sin(t); }
+border cc2(t=0,2*pi){ x = R2*cos(t); y=R2*sin(t); }
+mesh Th2 =  buildmesh(cc1(-nn)+cc2(nn));
+plot(Th2, wait=1);  
+mesh3 Th= buildlayers(Th2,nz,zbound=[0,L]);
+plot(Th, wait=1); 
+
+macro Strain(u1,u2,u3)  [dx(u1),dy(u2),dz(u3),(dz(u2)+dy(u3)),(dz(u1)+dx(u3)),(dy(u1)+dx(u2))] // EOM
+
+
+real shift = 1; // make a shift because 0 mode ... 
+real C11=  2*mu  + lambda  ; 
+real C12 =  lambda ;
+real C44=  2*mu;
+func Amat = [  [C11, C12, C12, 0. , 0., 0. ],
+               [C12, C11, C12, 0. , 0., 0. ],
+               [C12, C12, C11, 0. , 0., 0. ],
+               [0. , 0. , 0.,  C44, 0., 0. ],
+               [0. , 0. , 0.,  0. , C44,0. ],
+               [0. , 0. , 0.,  0. , 0. ,C44]
+             ];
+
+fespace Vh(Th,[P1,P1,P1]);
+func dr=dy; 
+func r=y; 
+
+
+  
+varf vLame([u1,u2,u3],[v1,v2,v3])=
+  int3d(Th)(  (Strain(v1,v2,v3)'*(Amat*Strain(u1,u2,u3))  
+  - ([u1,u2,u3]'*[v1,v2,v3]*rho*shift) ))
+  ;
+varf vMass([u1,u2,u3],[v1,v2,v3])=
+  int3d(Th)( ( [v1,v2,v3]'*[u1,u2,u3]*rho ) );
+ 
+matrix A= vLame(Vh,Vh,solver=sparsesolver); 
+matrix B= vMass(Vh,Vh,solver=CG,eps=1e-20); 
+
+int nev=20;  // number of computed eigen valeu close to sigma
+
+real[int] ev(nev); // to store nev eigein value
+Vh[int] [eu1,eu2,eu3](nev);   // to store nev eigen vector
+
+
+int k=EigenValue(A,B,sigma=shift,sym=true,value=ev,vector=eu1,tol=1e-20);
+
+k=min(k,nev); //  some time the number of converged eigen value 
+              // can be greater than nev;
+int nerr=0;
+for (int i=0;i<k;i++)
+{
+    real e = ev[i] ;
+    real freq = sqrt(abs(e))/(pi*2) ;
+  cout << i << " ev " <<  e << " freq = " << freq  << "Hz, " <<endl;   
+  real coef= 1/eu1[i][].linfty;
+  mesh3 Thm=movemesh(Th,[x+eu1[i]*coef,y+eu2[i]*coef,z+eu3[i]*coef]);
+ plot(Thm,wait=1,cmm=i+"/"+k+"coef  amplification = "+coef +" freq " + freq + "Hz"  , fill=1);
+}
+assert(nerr==0);

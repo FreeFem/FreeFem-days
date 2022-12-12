@@ -1,0 +1,33 @@
+load "isoline" load "shell"
+include "fit-ipopt.idp"
+mesh Th("BEC-f.msh");
+mesh The("oo/The.msh");
+fespace Vh(Th,P1), Ph(Th,P0); 
+fespace Ve(The,P1), Pe(The,P0); 
+Vh u ; 
+{  ifstream f("oo/u2P1.txt");
+  f >> u[]; 
+}
+
+real aire = int2d(Th,levelset=1e-3-u)(1.);
+func r=sqrt(x*x+y*y); 
+Vh pr=r;
+real R = pr[].max; 
+// fin init ..
+mesh Th1d=square(1000,1,[x*R,y]);
+
+fespace V1d(Th1d,P1,periodic=[[1,x],[3,x]]);
+ Vh u20,u2=u*u; 
+ Ve ue=u;
+	varf vM1d(u,v) = int1d(Th1d,1)((dx(u)*dx(v))*1e-3)+ int2d(The,mapu=[sqrt(x*x+y*y),0],mapt	=[sqrt(x*x+y*y),0])(u*v);
+	matrix M=vM1d(V1d,V1d,solver=UMFPACK);
+	varf vb1d(uuuu,v) = int2d(The,mapt=[sqrt(x*x+y*y),0])(u*v);
+	real[int] b1d=vb1d(0,V1d); 
+    V1d u1dt;
+	u1dt[]=M^-1*b1d;
+    u20 = u1dt(sqrt(x*x+y*y),0);
+	plot(u20,u,wait=1,dim=3); 
+	Vh u1 = min(u / max(u20,1e-3),2.);
+	plot(u1,fill=1, wait=1);
+	plot(ue,wait=1); 
+	plot(ue,u20,wait=1); 

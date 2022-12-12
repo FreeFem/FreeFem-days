@@ -1,0 +1,21 @@
+int nn=100;
+ mesh Th=square(nn,nn,[x*2*pi,y*2*pi]);
+ Th=trunc(Th, abs(x-pi)>pi/5 || abs(y-pi)>pi/5, label=5);
+ plot(Th,wait=1);
+fespace Vh(Th,P1);
+Vh u,up,v;
+func g = cos(4*x)*cos(4*y);
+u = 0; 
+for(int i=0; i< 100; ++i)
+{
+    up[]=u[]; // set the previous value by coping the arruy of DoF
+	solve Pb(u,v) = int2d(Th)( (dx(u)*dx(v) + dy(u)*dy(v) )
+	         / sqrt( 1+ (dx(up)*dx(up) + dy(up)*dy(up) )) )
+	+on(1,2,3,4,u=g)
+	+ on(5,u=1);
+	real area = int2d(Th)( sqrt(1+ (dx(u)*dx(u) + dy(u)*dy(u) )));
+	real err= sqrt(int2d(Th)( (u-up)^2));
+	cout << i << " surface = "<< area<< " err L2 = " << err <<endl;
+	plot(u, dim=3,fill=3, cmm=i+" area="+area+" err= "+err);
+	if(err<1e-8) break; 
+}

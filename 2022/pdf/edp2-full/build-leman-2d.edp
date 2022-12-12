@@ -1,0 +1,329 @@
+load "bfstream"
+load "msh3"
+load "Isoline"
+load "Curvature"
+load "./CleanIso3d"
+func real LapSmothing(real[int,int] &p, int close,int nit,real omega)
+{
+	real a = 1 , b = 1., sa2b = a+2*b;
+	// x = x  (1-omega)  + (a*x + 2b*x') (omega)
+	//  x ( (1-omega) + a * omega) + ( 2b*x') (omega)
+	
+	a =  a/sa2b + (1-omega);
+	b = omega*b/sa2b;
+	
+	real[int,int] q=p;
+	int n=p.m,i0=0, i1= p.n-1;
+	if( ! close) i0++;
+	else n--;
+	real err=0; 
+	for(int it = 0; it <nit; ++ it )
+	{
+		q = p; 
+		for(int i=i0; i<i1; ++i)
+		{
+			int ip = (i-1+n)%n;
+			int is = (i+1)%n;
+			q(:,i)  = a*p(:,i);
+			q(:,i) += b*p(:,ip);
+			q(:,i) += b*p(:,is); 
+		}
+		if( close) q(:,n) = q(:,0); 
+		p -= q;
+		err = p.linfty;
+		p = q;
+		cout << " iter "<< it << " err = "<< err << endl; 
+	}
+	return err; 
+}
+
+macro grad(u) [dx(u),dy(u)]//
+real meshsize= 100; 
+real shift= meshsize/4., deltaiso = shift/4; // metre 
+real lbmin = meshsize*20; // ????
+ifstream of("/Users/hecht/Desktop/EnCours/Leman-3d/leman-op/of.dt");
+// 
+int nbz = 31;
+meshL[int]  ThL(31);
+real[int] zL(nbz);// true .. 
+ThL[0] = readmeshL("/Users/hecht/Desktop/EnCours/Leman-3d/leman-op/ThL-0.mesh");
+ThL[0] = change(ThL[0],fregion=0);
+zL[0]=0.; 
+real[int,int] xyz(3,1);
+int[int][int] lp;
+int nbb;
+real[int] uz;
+{
+int[int] pbc(1);
+real[int] zc(1);
+real[int] xxx(1),yyy(1),zzz(1);
+int nbp;
+of.read(pbc) ;
+of.read(zc) ;
+of.read(nbp);
+of.read(xxx) ;
+of.read(yyy) ;
+of.read(zzz);
+cout << " nb curve = " << pbc.n-1 << endl; 
+cout << " xx "<< xxx.min << " " << xxx.max << endl;
+cout << " yy "<< yyy.min << " " << yyy.max << endl;
+cout << " zz "<< zzz.min << " " << zzz.max << endl;
+xyz.resize(3,nbp);
+xyz(0,:)=xxx;
+xyz(1,:)=yyy;
+xyz(2,:)=zzz;
+int nbuz = Unique(zc,uz);
+cout << " nb z = " << nbuz << " " << uz << endl; 
+nbb=SortIsolines(xyz,pbc,0.1,lp);
+}
+
+
+
+ cout << " nbb =" << nbb << " " << lp.n << endl;
+ int nbzok=1; 
+ int dbg =0; 
+ for(int iz = 1; iz < nbz; iz++)
+ {
+ real zmin = -10*iz-5 , zmax =  -10*iz+5;
+
+real[int,int][int] lpP(nbb);
+//real[int,int] pp(3,nbp+lp.n*2);
+int np=0; 
+int k0=0;
+int kp=0;
+
+
+int[int] bpp(nbb+1);
+real[int] zb(nbb+1);
+
+//nbb=10; 
+int[int] NN(nbb);
+cout << " nb branch " << nbb << endl; 
+int kb =0; // long branch ok 
+bool oneclose=false;
+for(int b = 0; b<  nbb; ++b)
+{   
+	real lg = 0,zz; 
+	
+	int nlg = lp[b].n;
+	 if(dbg) cout << "  ** branch " << b << " lg " << nlg <<  " ::: ";
+	int k=0,pe=-1;
+	lpP[kb].resize(3,nlg);
+	real xx0,xx1,yy0,yy1,X0,Y0; 
+	for(int j= 0; j< nlg; ++j)
+	{
+		int i = lp[b][j];
+		//cout << i <<  endl;
+	        xx1=xyz(0,i);
+		yy1=xyz(1,i);
+		zb[kb]= zz = xyz(2,i);
+		if(j) lg += dist(xx1-xx0,yy1-yy0);
+		else {X0=xx1;Y0=yy1;}	
+		lpP[kb](0,j)=xx1;
+		lpP[kb](1,j)=yy1;
+		lpP[kb](2,j)= lg;
+		kp++;
+		xx0=xx1;
+	        yy0=yy1;  	
+	}
+	bpp[kb+1]=kp;
+	int iz = -zz/10;
+	bool close = dist(X0-xx0,Y0-yy0)<0.1;	
+	if(0) LapSmothing(lpP[kb],close,4,1.);
+        setcurveabcisse(lpP[kb]);
+        if(dbg || abs(zz+10) < 1. ) cout << b <<  " lg " << lg << " " << " nlg " << nlg  << " zb " << zb[kb]  << " close = "<< close <<  endl;
+	if( lg > lbmin && nlg > 3 && zmin < zb[kb] && zb[kb] < zmax )
+	{
+          oneclose =oneclose || close;
+ 	  int nn = lg/ meshsize;
+	  NN[kb]=-max(nn,1);
+	  kb++;
+	}	
+}
+if(!kb) continue;
+//lpP.resize(kb);  Boggus !!!!!
+NN.resize(kb);
+zb.resize(kb);
+cout << " nb ok"<< kb << " " << oneclose << endl; 
+cout << zb << endl;
+border BC(t=0,1;i)
+{
+   P=Curve(lpP[i],t);
+   z = zb[i];
+   label = nbzok ;  
+   region = nbzok ;  
+}
+
+if( kb && oneclose ) {
+mesh Th=buildmesh(BC(NN));
+zL[nbzok]=zb[kb-1];
+ThL[nbzok++]=extract(Th);
+assert(zb.min == zb.max);
+plot(ThL[0],ThL[nbzok-1],wait=0,dim=2,cmm=" iz = "+iz+" Z0"+ zb[0]+ " Z1 "+ zb[kb-1] + " :: " ); 
+}
+}
+ThL.resize(nbzok);
+zL.resize(nbzok);
+nbz = nbzok; 
+cout << " nb d'iso "<< nbz << endl; 
+
+// verif des intersection
+int ww = 0; // wait ..
+// for debbug to see the crossing ..
+border DB(t=0,1)
+{
+	x=39617.1; y=40290.5;
+label = 11;}
+
+
+
+for(int iz=1; iz< nbz; ++iz)
+{
+	real z0 = zL[iz];
+	real z1 = zL[iz-1];
+	cout << " see   z0 " << z0 << " curve  crossing  with " << z1  << " curve "<< endl;
+	assert(z0<z1);
+	plot(ThL[iz-1],ThL[iz],wait=ww,dim=2,cmm=" z:"+z0+" "+z1);
+	meshL Lh0 = ThL[iz];// 
+	meshL Lh1 = ThL[iz-1];
+	mesh Th0=buildmesh(Lh0);
+	mesh Th1=buildmesh(Lh1);//  outside fixe 
+	meshL Lh01;
+	mesh Th01 ;
+	fespace Vl0(Lh0,[P1,P1]);
+	fespace Vl1(Lh1,[P1,P1]);
+	fespace Wl0(Lh0,P1);
+	fespace Wl1(Lh1,P1);
+	//  def continuous normal 
+	Wl0 d10 =  (1.-2.*chi(Th1))*dist(Lh1);
+	Wl1 d01 =  (2.*chi(Th0)-1.)*dist(Lh0);;
+	cout << " bound d10 " << d10[].min << " " << d10[].max << endl; 
+	d10 = max(-meshsize*4,d10);
+	d01 = max(-meshsize*4,d01);
+	meshL LL00 = change( Lh0, fregion = 10); 
+	plot(d10,d01,Lh1, wait=ww, dim=2, cmm=" d2 "  , value = 1);
+	int ok = !( d10[].max > -deltaiso && d01[].max> -deltaiso) ;
+	if( !ok) try {
+		 Lh01 = Lh1+Lh0;
+	         Th01 = buildmesh(Lh01);
+	        ok =1;
+        }
+	catch(...) {;}
+	cout << " d 1/0  "<< d10[].max << "do 0/1  " << d01[].max << "  ok  = " << ok << endl;
+	
+	if(!ok) // ||( d10[].max > -deltaiso && d01[].max> -deltaiso) ) // auto intersection .=> move Th0..
+	   for(int it=0; 1;++it) {  
+		cout << it << " see   z0 " << z0 << " curve  crossing  with " << z1  << " curve d max "<< d10[].max << " " << d01[].max <<endl;
+		 d10 =  (1.-2.*chi(Th1))*dist(Lh1);
+		 d01 =  (2.*chi(Th0)-1.)*dist(Lh0);;
+
+		d10[] +=  shift ;   
+		d01[] +=  shift ;   
+		Wl0 ddn1 = -(max(d10,0.)+max(d01,0.))/2., ddm,ddn;
+		solve smoot(ddn,ddm) = int1d(Lh0) ( ddn*ddm + 1.*grad(ddn)'*grad(ddm)) - int1d(Lh0)(ddn1*ddm);
+   		//plot(ddn,wait=ww,dim=2,cmm="dnn  "+ ddn[].max +" " + ddn[].min );
+		Vl0 [nx,ny];
+		Vl1 [n1x,n1y],[mx,my]; 
+		meshL LL = change( Lh0, fregion = 10); 
+		solve vn([n1x,n1y],[mx,my]) = int1d(Lh1)( [n1x,n1y]'*[mx,my]) -int1d(Lh1)( [Tl.y,-Tl.x]'*[mx,my]) ; 
+		[nx,ny]=[n1x,n1y];
+		
+		Lh0 = movemesh(Lh0,[x+ddn*nx,y+ddn*ny,z]);
+		plot(Lh0,LL,Lh1,ddn,wait=ww,cmm=" d01 "+it,dim=2);
+		Th0=buildmesh(Lh0);
+		
+	        d10 =  (1-2*chi(Th1))*dist(Lh1);
+	        d01 =  (2*chi(Th0)-1)*dist(Lh0);;
+
+		d10 = max(-deltaiso*2,d10);
+		d01 = max(-deltaiso*2,d01);
+		
+		cout << " d 1/0  "<< d01[].max << "do 0/1  " << d10[].max << endl;
+
+		real d0mxs = d10[].max;		
+		real d1mxs = d01[].max;		
+		cout << iz << " dist  "<< d0mxs << " " << d1mxs << "  // delta : " << deltaiso <<  endl;
+                real[int] vv(20);
+		for [i,vi:vv]
+		vi = -meshsize + i*(meshsize)/5.;
+		
+		//plot(LL00,ThL[iz-1],ThL[iz],Lh0,d01,d10, nbiso=30, wait=ww,dim=2,cmm=zL[iz],DB(1));
+		if (d0mxs < -deltaiso && d1mxs < -deltaiso) break;
+		//  verif maillage 
+		int ok = 0;//!( d10[].max > -deltaiso && d01[].max> -deltaiso);
+		if( !ok) try {
+		 Lh01 = ThL[iz-1]+Lh0;
+		 Th01 = buildmesh(Lh01);
+		ok =1;
+	        }
+		catch(...) {;}
+		if(ok) break;
+		assert(it < 10); // 
+	}
+	ThL[iz]= Lh0; 
+	meshL Tl = ThL[iz-1]+ ThL[iz];
+	plot(Tl, wait=ww,dim=2,DB(1));
+	mesh Th2 = buildmesh(Tl);
+	plot(Th2,wait=ww,cmm=" z "+ zL[iz]);
+}
+meshL Lt =gluemesh(ThL); 
+
+mesh Tt =buildmesh(Lt);
+fespace Vt(Tt,P1);
+
+plot(Tt,wait=1); 
+Vt deep,v;
+int[int] lab= labels(Tt);
+deep=0; 
+
+solve Lap(deep,v)= int2d(Tt)( grad(deep)'*grad(v)) + on (lab, deep=zL[label]);
+plot(deep,wait=1); 
+cout <<"deep min/max = " <<  deep[].min << " " << deep[].max << endl; 
+savemesh(Tt,"Leman-ThT.meshb");
+{
+	ofstream ff("Leman-deep1.txt");
+	ff << deep[] << endl; 
+	ofstream fz("Leman-zL.txt");
+	fz << zL << endl; 
+	
+}
+/*
+deep =0; 
+int[int] reg = regions(Tt);
+int [int] nreg(reg.n*2);
+for [ ir,r:reg]
+{
+	mesh Tr = trunc(Tt,region==r);
+	int[int] lab= labels(Tr);
+	int i0 = lab.min , i1 = lab.max;
+	cout <<" region " <<  r << " " << lab.min << " " << lab.max << endl ;
+	nreg[2*ir]=r;
+	nreg[2*ir+1]=lab.min;	
+	fespace Vr(Tr,P1);
+	Vr hh;
+	if( i0 != i1)
+	{
+	Vr d0 = dist(ThL[i0]);
+	Vr d1 = dist(ThL[i1]);
+	
+	// plot(d0,d1,wait=1,cmm = i1+" " + i0 + " " + r );
+	 hh = (zL[i1]*(d0+0.1)+zL[i0]*(d1+0.1))/(d0+d1+0.2);
+        }
+	else 
+	hh = zL[i1];
+	plot(hh, wait=0,cmm = i1+" " + i0 + " " + r );
+	deep = min(deep,hh*chi(Tr));
+	
+}
+
+plot(deep, fill =1, wait=1);
+cout <<"deep min/max = " <<  deep[].min << " " << deep[].max << endl; 
+//ZLqqsqqsxqdqxqs(Tt,"ThT.msh");
+{
+	ofstream ff("deep2.txt");
+	ff << deep[] << endl; 
+	ofstream fz("zL.txt");
+	fz << zL << endl; 
+	
+}
+*/

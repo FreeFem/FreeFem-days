@@ -1,0 +1,30 @@
+mesh Th=square(10,10,[1*x,y]); 
+plot(Th,wait=1); 
+fespace Vh(Th,P2); 
+fespace Ph(Th,P1); 
+
+Vh u1,u2,v1,v2;
+Ph p,q;
+real f1=1,f2=0; 
+
+macro DD(u,v) [ dx(u),dy(v), (dx(v)+dy(u))*0.5, (dx(v)+dy(u))*0.5 ] // 
+macro Grad(u,v) [ dx(u),dy(v), dx(v), dy(u) ] // 
+macro div(u1,u2) (dx(u1)+dy(u2) ) //
+ 
+solve PMeca( [u1,u2,p],[v1,v2,q] ) =
+int2d(Th) ( 2*DD(u1,u2)'*DD(v1,v2) - div(v1,v2)*p -div(u1,u2)*q)
++ on(1,3,u1=0,u2=0) -  int1d(Th,2,4)([f1,f2]'*[v1,v2])
+//+on(2,4,u2=0)
+; 
+
+cout << u1[].linfty << " " <<  u2[].linfty << " "<< p[].linfty << endl;
+
+plot([u1,u2],p, wait=1,coef= 0.1/( u1[].linfty +  u2[].linfty), cmm=" meca 1"  );
+
+solve PMath( [u1,u2,p],[v1,v2,q] ) =
+int2d(Th) ( Grad(u1,u2)'*Grad(v1,v2) - div(v1,v2)*p -div(u1,u2)*q)
++ on(1,3,u1=0,u2=0) -  int1d(Th,2,4)([f1,f2]'*[v1,v2]); 
+cout << u1[].linfty << " " <<  u2[].linfty << " "<< p[].linfty << endl;
+
+plot([u1,u2],p, wait=1,coef= 0.1/( u1[].linfty +  u2[].linfty), cmm=" Math 1"  );
+

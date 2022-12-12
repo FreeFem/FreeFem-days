@@ -1,0 +1,207 @@
+load "msh3"
+load "ff-Ipopt"
+
+verbosity=0;
+real CUB = 0.5;// bound dx(f) 
+real XUB = 0.2;// bound f
+real H = 1;// Hauteur 
+int NX = 20; // Nb pas 
+real epais=0.1;
+real vdent = -1.0; // vitesse dent .. => repere va vitesse -vdent  no Ur 
+real alpha = 0.0;
+
+func fclab =  (x>0.999)*2 + (x<0.001)*1;// 2 border label 
+int[int] ll=[1];
+mesh Th0 = square(NX,NX*H,[x,y*H]);
+meshL ThL = extract(Th0,refedge=ll); 
+ThL = change(ThL, flabel = fclab); //  Straight Mesh 
+
+fespace WhL(ThL,P1);
+fespace PhL(ThL,P0);
+WhL X0=0.15*sin(x*pi*2); // Donnee  initial ...
+
+mesh Th = Th0;
+meshL ThC = ThL; //  Curve Mesh 
+int ltop = 30,ltop2=30; // pas de cl  u1 en haut
+
+fespace Wh(Th,[P2,P2,P1],periodic=[[2,y],[4,y]]);
+fespace Vh(Th,P1,periodic=[[2,y],[4,y]]);
+fespace WhC(ThC,P1); // Add FH 
+
+Vh  fu,fu1,fu2;
+
+WhL hm,fm,uL,vL,uu,vv,theta,thetap,cgm;
+real[int] bgm(WhL.ndof);
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//		creation des matrices FEM 1D dont on a besoin
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+varf varcder(uL,vL) = int1d(ThL)(dx(uL)*dx(vL));
+varf varcvol(uL,vL) = int1d(ThL)(1*vL);
+matrix mCder = varcder(WhL,WhL);
+real[int] aCvol = varcvol(0,WhL);
+matrix mDx = interpolate(PhL,WhL,t=0,op=1); 
+varf vL2ThL(u,v)   = int1d(ThL)(u*v); 
+varf vL2ThLdx(u,v) = int1d(ThL)(dx(u)*v); 
+matrix M11=vL2ThL(WhL,WhL,solver=sparsesolver); 
+matrix M1dx=vL2ThLdx(WhL,WhL); 
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//					Script Frefem optim - Quadratic cost
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+real mu = 1.0;
+real eps = 1e-7; 
+
+macro grad(u) [dx(u),dy(u)]//
+macro Grad(u,v) [grad(u),grad(v)]//
+macro SGrad(u,v) [[dx(u), 0.5*(dx(v)+dy(u))], [0.5*(dx(v)+dy(u)), dy(v)]] //
+macro div(u1,u2) (dx(u1)+dy(u2)) //
+macro UrGrad(u,v) [-dx(u)*vdent,-dx(v)*vdent]//  
+
+Wh [u1,u2,p];
+Wh [up1,up2,pp] = [vdent,0,0];
+Wh [v1,v2,q];
+Wh [w1,w2,g];
+u1[]=0;
+int iter0=0;
+
+
+func real J(real[int] &X)
+{
+	iter0++;
+	real cost = 0;
+	//changement maillage
+	fm[] = X;
+	//gm = dx(fm);
+	
+	cgm[]= M11^-1*(bgm=M1dx*fm[]); // proj L2 de dx ..
+	
+	Th = movemesh(Th0,[x,fm+y*(H-fm)/H]);
+	
+	solve Stokes( [u1,u2,p],[v1,v2,q] ) =
+	int2d(Th)(2*mu*(SGrad(u1,u2):SGrad(v1,v2)) - div(u1,u2)*q - div(v1,v2)*p - eps*p*q)
+	+ on(1,u1=0,u2=vdent*cgm)
+	;
+	cost = -int1d(Th,3)(u1) + alpha*int1d(Th,1)(1.0);
+
+	plot(Th,[u1,u2],cmm=" J= "+cost +" " +iter0);
+	return cost;
+}
+
+
+func real[int] dJ(real[int] &X)
+{
+	real[int] dJ(WhL.ndof);
+	//changement maillage
+	fm[] = X;
+	func gm = dx(fm);
+	cgm[]= M11^-1*(bgm=M1dx*fm[]); // proj L2 de dx ..
+		
+	Th = movemesh(Th0,[x,fm+y*(H-fm)/H]);
+	ThC = movemesh(ThL,[x,fm+y*(H-fm)/H]);; 
+	//meshL Tbb  =extract(Th,refedge=ll);
+
+	solve Stokes( [u1,u2,p],[v1,v2,q] ) =
+	int2d(Th)(2*mu*(SGrad(u1,u2):SGrad(v1,v2)) - div(u1,u2)*q - div(v1,v2)*p - eps*p*q)
+	+ on(1,u1=0,u2=vdent*cgm)
+	;
+
+	solve StokesAdjoint( [v1,v2,q],[w1,w2,g] ) = //adjoint problem
+	int2d(Th)(2*mu*(SGrad(v1,v2):SGrad(w1,w2)) - div(w1,w2)*q - div(v1,v2)*g  - eps*q*g)
+	- int1d(Th,3)(w1)
+	+ on(1,v1=0,v2=0)
+	;
+	
+	// C'est a partir de la qu'il faut regarder : interpolation de \sigma(v,q)\vec{n} sur le bord pour 
+	// calculer \int_{\Gamma} \sigma(v,q)\vec{n}( (0,g') - \nabla u \cdot \phi) )\,ds
+
+	func uk = vdent*(q - 2*mu*dy(v2) + mu*gm*( dx(v2)+dy(v1) )); 
+	// uk et vk sont P1 alors que (v1,v2) est (P2,P2) et q P1
+	
+	func vk = - gm*( -q*dy(u1) + 2*mu*dx(v1)*dy(u1) + mu*dy(u2)*( dx(v2) + dy(v1) ))
+	   + ( mu*dy(u1)*( dx(v2)+dy(v1) ) + 2*mu*dy(v2)*dy(u2) - q*dy(u2) ) ;
+
+	varf vMassC(u,v) = int1d(ThC,qforder=3)(u*v);
+	varf vb1(u,v) = int1d(ThC)(uk*v);
+	varf vb2(u,v) = int1d(ThC)(vk*v);
+	matrix Mc = vMassC(WhC,WhC); 
+	  
+	real[int] bc1 = vb1(0,WhC);
+	real[int] bc2 = vb2(0,WhC);
+	  
+	// on interpole donc par des fonctions P1 continues des fonctions qui sont P1 discontinues, qu'on cherche ensuite sur le bord
+	// avec uL et vL qui sont des elements finis P1 sur le bord (0,1)
+	
+	uL[] = Mc^-1*bc1;
+	vL[] = Mc^-1*bc2;
+	// on ecrit ensuite la formulation variationnelle int_0^1 \phi_1 g' + \phi_2 g \, dt sur le bord (0,1) qui ne varie pas 
+	// par changement de variable sur l'abscisse curviligne
+	varf vargrad(uu,vv) = int1d(ThL)(vL*vv + uL*dx(vv));
+	real[int] tabgrad = vargrad(0,WhL);
+	dJ = tabgrad;
+	
+	return dJ;
+}
+
+func real[int] C(real[int] &X)
+{
+	real[int] cont(1+PhL.ndof);
+	fm[] = X;
+	// contraintes volumes \int_0^a f(x)^2 \,dx < M
+	cont[0] = int1d(ThL)(fm);
+	// \vert f'(x) \vert \leq M
+	cont(1:PhL.ndof) = mDx*X;
+	return cont;
+}
+
+matrix dc;
+func matrix jacC(real[int] &X)
+{
+	real[int,int] dcc(1,WhL.ndof); dcc = 0.0;
+	dcc(0,:) = aCvol;
+	dc = dcc;
+	dc = [[dcc],[mDx]]; // [contrainte voilume,contrainte perim]
+	return dc;
+}
+
+real[int] start(WhL.ndof);
+real[int] xub(WhL.ndof); 
+real[int] xlb(WhL.ndof); 
+real[int] cub(1+PhL.ndof); 
+real[int] clb(1+PhL.ndof);
+
+//Bornes variables
+xub= XUB;
+xlb= -XUB;
+cub=  CUB;
+clb= -CUB;
+
+xub[0] = 0.0;
+xlb[0] = 0.0;
+xub[WhL.ndof-1] = 0; //0.4/WhL.ndof;
+xlb[WhL.ndof-1] = 0; // -0.4/WhL.ndof;
+clb[0] = 0.0;
+cub[0] = 0.0;
+
+start=X0[];
+cout << "COUT" << J(X0[]) << endl;
+cout << "GRAD-J" << dJ(X0[]) << endl;
+cout << "CONT" << C(X0[]) << endl;
+cout << "JAC_G " << jacC(X0[]) << endl;
+
+IPOPT(J,dJ,C,jacC,start,lb=xlb,ub=xub,clb=clb,cub=cub,tol=1e-6);
+
+X0[] = start;
+	
+
+
+
+
+
+
+

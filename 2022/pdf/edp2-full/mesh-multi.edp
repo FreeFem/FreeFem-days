@@ -1,0 +1,16 @@
+ int nn=30;
+ real dd=0.3; 
+ real[int,int] XX=[[0,0],[1,0],[1,dd],[dd,dd],[dd,1],[0,1]]; 
+ int[int] NN=[nn,nn*dd,nn*(1-dd),nn*(1-dd),nn*dd,nn]; 
+  border bb(t=0,1;i) 
+  {
+// i is the the index variable of the multi border loop 
+// ii is the new index mod n 
+    int ii = (i+1)%XX.n; real t1 = 1-t;
+    x =  XX(i,0)*t1 + XX(ii,0)*t;
+    y =  XX(i,1)*t1 + XX(ii,1)*t;
+    label = 1; ; 
+  }
+plot(bb(NN),wait=1);
+mesh Th=buildmesh(bb(NN));
+plot(Th,wait=1);

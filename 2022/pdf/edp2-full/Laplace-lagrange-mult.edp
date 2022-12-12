@@ -1,0 +1,42 @@
+/*
+   solving   laplace operator with neumam boundary condition
+   with 1D lagrange multiplier
+   
+   The variationnal form is
+   find (u,l) such that
+
+   $\forall (v,m)   a(u,v) + b(u,m) + b(v,l) = L(v) $
+   where $b(u,m) = int u*m dx$
+   
+*/
+//load "MUMPS_seq" 
+mesh Th=square(10,10);
+fespace Vh(Th,P1);     // P1 FE space
+int n = Vh.ndof;
+int n1 = n+1;
+
+ Vh uh; real l;     // unkown function. 
+ func f=x-y+1;       //  right hand side function 
+macro Grad(u) [dx(u),dy(u)]//EOM
+varf va(uh,vh) = int2d(Th)(Grad(uh)'*Grad(vh)); //  bilinear form
+varf vL(uh,vh)= int2d(Th)( f*vh )  ; // linear form 
+varf vb(uh,vh)= int2d(Th)(1.*vh);
+
+matrix A=va(Vh,Vh);
+
+real[int] b=  vL(0,Vh), B = vb(0,Vh); 	
+
+// the block matrix
+verbosity=4;
+matrix AA = [ [ A ,  B ] ,
+              [ B',  0 ] ] ;
+
+
+// build the block rhs 
+real[int] bb = [ b, 0.];
+set(AA,solver=UMFPACK);
+real[int] x = AA^-1*bb; // solve the linear systeme 
+[uh[],l] = x;  // set the value 
+cout << " l = " << l <<  " ,  b(u,1)  =" << B'*uh[]  << endl;  
+plot(uh,wait=1);
+

@@ -1,0 +1,138 @@
+load "ff-ipopt"
+verbosity=1;
+mesh Th("Thopt.msh");
+fespace Vh(Th,P1);
+Vh u,ur,ui,ut; 
+Vh<complex> uc; 
+{ ifstream f("Thoptu.txt"); f >> u[];f >> uc[]; }
+u[] /= u[].max ; 
+u = u*u;
+ur = real(uc);
+ui = imag(uc);
+ut = arg(uc);
+ plot(ut, fill=1,wait=1);
+ plot([ui,ur],uc,wait=1); 
+ 
+NewMacro BestFit(Vh,up1,wplot,data)
+ {
+	 mesh Th=Vh.Th; 
+	 int wait=0;
+	 Vh ufit; 
+	 ufit[]=up1;
+ real[int] alpha(7); // x0,y0, a,b,c, A, B
+ 
+macro f(r2) (1.-exp(r2))//
+macro f1(ff) log(1.-(ff)) // 
+macro df(r2,dr2) (dr2*-exp(r2))//
+func xx =alpha[0]-x;
+func yy =alpha[1]-y;
+func axx =  alpha[2]*xx*xx;
+func ayy =  alpha[3]*yy*yy;
+func axy =  alpha[4]*xx*yy;
+
+func r2 = axx+ayy+axy; 
+func d0r2 = (2*xx)*alpha[2]  + alpha[4]*yy;
+func d1r2 = (2*yy)*alpha[3]  + alpha[4]*xx; 
+func d2r2 = xx*xx ; 
+func d3r2 = yy*yy ; 
+func d4r2 = xx*yy ; 
+func cc = alpha[5]+alpha[6]*(x*x+y*y);
+func d5cc = 1.;
+func d6cc = (x*x+y*y);
+
+func phialpha   = f(r2)*cc;
+
+func d0phialpha = df(r2,d0r2)*cc;
+func d1phialpha = df(r2,d1r2)*cc;
+func d2phialpha = df(r2,d2r2)*cc;
+func d3phialpha = df(r2,d3r2)*cc;
+func d4phialpha = df(r2,d4r2)*cc;
+func d5phialpha = f(r2)*d5cc;
+func d6phialpha = 0;//f(r2)*d6cc;
+
+real aa = int1d(Th)(1.); 
+real ab = int1d(Th)(d6cc); 
+real bb = int1d(Th)(d6cc*d6cc); 
+real uu = int1d(Th)(ufit); 
+real ub = int1d(Th)(ufit*d6cc);
+/*  aa ab
+    ab bb
+*/
+real det22 = aa*bb - ab*ab; 
+real a05 =  (bb*uu - ab*ub) /det22;
+real a06 =  (-ab*uu + aa*ub) /det22;
+
+real ux = uu/aa; 
+real um =ux/2;
+real l0 = int1d(Th,levelset=ufit-um)(1.);
+real x0 = int1d(Th,levelset=ufit-um)(x)/l0;
+real y0 = int1d(Th,levelset=ufit-um)(y)/l0;
+alpha[0]=x0;
+alpha[1]=y0;
+alpha[2]=1;
+alpha[3]=1;
+alpha[4]=0;
+alpha[5]=a05;
+alpha[6]=a06;
+
+real r20 = int1d(Th,levelset=ufit-um)(xx*xx+yy*yy)/l0;
+
+// um  sim (alpha[0]*f(r20*alpha[3])
+
+real s0 =  f1(um/ux)/r20 ;
+cout << " s0 = " <<  s0 << " " << r20  <<" "<< endl; 
+alpha[2]=s0;
+alpha[3]=s0;
+
+Vh phi, phi0 = phialpha;
+cout << "alpha = " <<  alpha << endl; 
+ if(wplot) plot(ufit,phi0, wait=wait);
+ 
+//plot(phi0, wait=1);
+
+real[int]  data0 = alpha;
+
+ func real J(real[int] & dat){
+   alpha=dat; 
+   return int2d(Th)(square(ufit-phialpha)) ;
+ }
+ real[int] dataJ(alpha.n);
+func real[int]  dJ(real[int] & dat){
+	
+   alpha=dat;
+ 	dataJ[0]=int2d(Th)(-2*(ufit-phialpha)*d0phialpha) ;
+ 	dataJ[1]=int2d(Th)(-2*(ufit-phialpha)*d1phialpha) ;
+ 	dataJ[2]=int2d(Th)(-2*(ufit-phialpha)*d2phialpha) ;
+ 	dataJ[3]=int2d(Th)(-2*(ufit-phialpha)*d3phialpha) ;
+ 	dataJ[4]=int2d(Th)(-2*(ufit-phialpha)*d4phialpha) ;
+ 	dataJ[5]=int2d(Th)(-2*(ufit-phialpha)*d5phialpha) ;
+ 	dataJ[6]=int2d(Th)(-2*(ufit-phialpha)*d6phialpha) ;
+   return dataJ; 
+ }
+ real[int] fitdata=data0;
+//  int r=0; 
+ int r = IPOPT(J,dJ,fitdata,printlevel=0);
+// methode d edescent simple (verif gradiant ???
+	if( !r ) fitdata =data0; 
+real rho =0.01;
+for(int i=0; i< 000; ++i)
+{
+	real[int] d=fitdata,dd =dJ(d);
+	cout << " J ="  << J(fitdata) << " " << fitdata << " "<< dd << endl;
+	fitdata -= dd*rho;
+}
+ cout <<  r << " " << data <<"\n data0 " << data0 <<endl; 
+
+ cout << " J =" << J(fitdata) <<" // " << fitdata[0] << " " << fitdata[1] 
+                             << " / " << fitdata[2] << " " << fitdata[3]<<" " << fitdata[4] 
+							 << " / " << fitdata[5] << " " << fitdata[6]<<endl; 
+ phi=phialpha;
+ if(wplot) plot(ufit, phi,dim=3,wait=wait, cmm="J ="+J(fitdata));
+ data.resize(fitdata.n);
+ data=fitdata;
+}
+EndMacro
+
+
+real[int] data(1);
+BestFit(Vh,u[],1,data);
