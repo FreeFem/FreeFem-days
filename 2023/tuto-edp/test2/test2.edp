@@ -1,0 +1,32 @@
+real x0=0,x1=pi;
+real y0=-2,y1=2;
+real y0c=sin(x0),y1c=sin(x1);
+ func real ff(real t) { return sin(2*t);}
+border bbot(t=x0,x1){ x=t; y=y0;label=1;}
+border btop(t=x1,x0){ x=t; y=y1;label=1;}
+border bright0(t=y0,y0c){ x=x1; y=t;label=2;}
+border bright1(t=y0c,y1){ x=x1; y=t;label=2;}
+border bleft1(t=y1,y0c){ x=x0; y=t;label=2;}
+border bleft0(t=y0c,y0){ x=x0; y=t;label=2;}
+border bsin(t=x0,x1){ x=t; y=ff(t);label=0;}
+
+int nn= 100;
+int nnt= 50;
+ 
+plot(bbot(nn)+btop(nn)+bright0(nn)+bright1(nn)+bleft0(nn)+bleft1(nn)+bsin(nn));
+mesh Th= buildmesh(bbot(nnt)+btop(nnt)+bright0(nnt)+bright1(nnt)+bleft0(nnt)+bleft1(nnt)+bsin(nn*2));
+plot(Th,wait=1);
+
+int regtop = Th(0.01,1.99).region; 
+int regbot = Th(0.01,-1.99).region; 
+cout << " reg " << regtop << " " << regbot << endl; 
+
+fespace Vh(Th,P1);
+Vh u,v;
+real[int] Kappa=[100,0,1];
+func f0 = x;
+func f2 = y;
+macro grad(u) [dx(u),dy(u)]//
+solve Pb(u,v) = int2d(Th)(Kappa[region]* grad(u)'*grad(v)) - int2d(Th,0)(f0*v) -  int2d(Th,2)(f2*v) + on(1,u=0);
+
+plot(u,wait=1);

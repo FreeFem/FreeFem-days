@@ -1,0 +1,4 @@
+macro file()"a1.idp"//
+string  a;
+include file
+cout << a << endl;  

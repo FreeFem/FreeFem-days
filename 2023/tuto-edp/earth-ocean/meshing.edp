@@ -1,0 +1,63 @@
+load "ppm2rnm"
+load "msh3"
+load "medit"
+load "mmg"
+include "MeshSurface.idp"
+
+// Parameters
+bool wait = false;
+int pourcent = 30;
+real hsizekm  = 100 ; // Km  
+real hsize=2*pi*hsizekm/40000;// rad. 
+string figName = "Carte.pgm";
+//  
+exec("convert -quality 50 -resize "+pourcent+"% Carte1.png Carte.png");
+exec("convert Carte.png "+figName);
+// Read PPM (method 1)
+real[int, int] img1(figName); //Read image and set to an array
+img1-= 0.3;
+int nx = img1.n, ny = img1.m;
+mesh Th1 = square(nx-1, ny-1, [pi*2*(nx-1)*(x)/(nx-1)-pi, pi*(ny-1)*(1-y)/(ny-1)-pi/2]);
+real[int] bb(4);
+boundingbox(Th1,bb);
+cout << " bb = " << bb << endl; 
+fespace Vh1(Th1,P1);
+Vh1 c3;
+c3[]=img1;
+
+plot(c3,wait=1);
+real R=1; 
+
+func rr = dist(x,y);
+func theta= atan(z,max(rr,1e-8));
+func phi = atan(y,x);
+
+func X = R*cos(x)*cos(y);
+func Y = R*cos(y)*sin(x);
+func Z = R*sin(y);
+
+real Risoex= 0.5*sqrt(2.+sqrt(1+sqrt(5.))/2);// triangle size 1. 
+real areaT = hsize*hsize*sqrt(3)/2.;
+real areaS= 4*pi*R*R;
+int nn = R*Risoex/hsize; // sqrt(areaS/areaT/20.); 
+cout << "nn=" <<nn << " ~ " << (2*pi*R*Risoex/5)/hsize << " " << R*Risoex/hsize<<  endl; 
+meshS Th=change(Sphere20(1.,nn,1,0),fregion=0,flabel=0,rmInternalEdges=1);// sphere of  Raduis 1  
+//plot(Th,wait=1);
+//medit("Th",Th);
+fespace Vh(Th,P1); 	
+Vh v;
+Vh car=c3(phi,theta);
+medit("T",Th,car);
+cout << " after " << car[].min   << " " << car[].max << endl;
+//Th=mmgs(Th,hmin=hsize,hmax=hsize,hgrad=1.1);
+Th=mmgs(Th,metric=car[],ls=0.,iso=1);
+plot(Th,wait=1);
+car=max(car,0); 
+
+
+medit("Th",Th,car);
+
+plot(car,wait=1);
+//medit("car",Th,car);
+
+

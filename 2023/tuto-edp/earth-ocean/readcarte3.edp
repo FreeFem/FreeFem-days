@@ -1,0 +1,145 @@
+load "ppm2rnm"
+load "isoline"
+load "Curvature"
+include "MeshSurface.idp"
+
+// convert -quality 50 -resize 30%  toto.png toto.pgm
+// Parameters
+bool wait = false;
+string figName = "carte3.pgm";
+real[int,int] Curves(3,1);
+int[int] be(1);
+real hsize= 1e-2;
+int nc;// nb of curve
+// Read PPM (method 1)
+real[int, int] img1(figName); //Read image and set to an array
+int nx = img1.n, ny = img1.m;
+mesh Th1 = square(nx-1, ny-1, [2*(nx-1)*(x-0.5)/(nx-1), (ny-1)*(0.5-y)/(ny-1)]);
+real[int] bb(4);
+boundingbox(bb,Th1);
+cout << bb << endl;
+//Warning:
+// the numbering of the vertices (x,y) is
+// given by i = x/nx + nx* y/ny
+fespace Vh1(Th1, P1);
+//fespace Vhr(Thr, P1);
+Vh1 f1,fs;
+
+f1[] = -img1;
+// on va symetrise su le bord 
+Vh1 x1=x;
+func aa = min(1., (10*(-x+1)+0.5));
+
+fs = aa;
+cout << x1[].min << " " << x1[].max << endl;
+
+cout << fs[].min << " " << fs[].max << endl;
+//plot(fs,wait=1);
+fs = f1(x,y)*aa + f1(-x,y)*(1-aa);
+
+
+f1[]=fs[]; 
+if(0){
+mesh Th2=movemesh(Th1,[x+2,y]);
+fespace Vh2(Th2,P1);
+Vh2 f2;
+f2[]=f1[]
+;
+plot(f1,f2,wait=1);
+}
+
+//fr[] = f1[];
+plot(f1, cmm="method 1", wait=wait);
+
+nc=isoline(Th1,f1,iso=-0.2,close=1,Curves,beginend=be);//,smoothing=0,ratio=0.5);
+plot([Curves(0,:),Curves(1,:)],wait=1);
+
+//cout << be << endl; 
+//  split border off the square 
+int k2=be(2*2), k3=be(2*2+1)-1;
+plot([Curves(0,k2:k3),Curves(1,k2:k3)],wait=1);
+int kr0=-1,kl0=-1,kt0=-1;
+int kr1=-1,kl1=-1,kt1=-1;
+for(int k=k2;k<k3;++k)
+{
+//	if( k< k2+10)  cout << Curves(0,k)  << " " << Curves(1,k) << endl;
+if( abs(Curves(0,k)-1)< 1e-5) // x==1 min 
+{ 
+	  if(kr0<0) kr0=k;
+	  else if( Curves(1,k) < Curves(1,kr0))  kr0=k;
+}
+
+if( abs(Curves(0,k)+1)< 1e-5) 
+{ 
+  if(kl0<0) kl0=k;
+  else if( Curves(1,k) < Curves(1,kl0))  kl0=k;
+}
+
+}
+cout <<k2 << " " << k3 <<  " kr = "<< kr0  <<  " " << Curves(0,kr0) << " " << Curves(1,kr0)<< endl;
+cout <<k2 << " " << k3 <<  " kl = "<< kl0  <<  " " << Curves(0,kl0) << " " << Curves(1,kl0)<< endl;
+real Ymn = (Curves(1,kr0)+Curves(1,kl0))/2;
+Curves(1,kr0)=Ymn;
+Curves(1,kl0)=Ymn;
+assert(kl0<kr0);
+real[int,int] Cb(3,kr0-kl0+1);
+for(int i=0;i<Cb.m;++i)
+Cb(:,i)=Curves(:,kl0+i);
+setcurveabcisse(Cb);
+for(int i=0;i<Cb.m;++i)
+  Curves(:,kl0+i)=Cb(:,i);
+be(2*2)= kl0;
+be(2*2+1)= kr0+1;
+border left(t=0.5,Ymn){ x= -1; y= t; label=100;}
+border right(t=Ymn,0.5){ x= 1; y= t; label=101;}
+border top(t=1,-1){ x= t; y= 0.5; label=99;}
+int Nlr = (0.5-Ymn)/hsize;
+int Ntp = 2/hsize;
+//exit(0);
+verbosity=1;
+int nb = min(nc,10);
+// the longuest isoline
+int ic0=be(0), ic1=be(1)-1;
+int[int] NC(nb);
+for(int i=0; i< nb; ++i)
+{
+	real sgn = -1;
+	if( i) sgn=1; // do by hand to go fast (no a got method)..
+	if( i==1 ) sgn=-1;
+	if( i==3 ) sgn=-1;
+	if( i==5 ) sgn=-1;
+	if( i==7 ) sgn=-1;
+	if( i==8 ) sgn=-1;
+	if( i==10 ) sgn=-1;
+	int j0= be(2*i);	
+	int j= be(2*i+1)-1;
+        NC[i] = sgn*(j-j0);
+	NC[i] = sgn*Curves(2,j)/hsize;
+	cout << i << " " << aa << endl; 
+ //  cout << j << " " << Curves(0,j) << " " <<  Curves(1,j) << " " << Curves(2,j) << endl;
+}
+border G(t=0,1;i) {int j=t*abs(NC[i])+be(2*i);
+	//x=Curves(0,j); y= Curves(1,j); 
+	 P= Curve(Curves,be(2*i),be(2*i+1)-1,t); 
+	   label= 1+i;}
+
+  
+ cout << NC << endl;
+// NC=-100;
+
+
+plot(G(NC)+left(Nlr)+right(Nlr)+top(Ntp),wait=1);
+mesh Th=buildmesh(G(NC)+left(Nlr)+right(Nlr)+top(Ntp),fixeborder=1);
+plot(Th,wait=1);
+
+cout << regions(Th) << endl;
+for(int i=0; i< 50; ++i)
+cout << " surf " << i << " " << int2d(Th,i)(1. )<< endl;
+//Th=trunc(Th,region!=3); // remove amerique
+plot(Th,wait=1);
+cout << regions(Th) << endl;
+
+cout << labels(Th) << endl;
+cout << int1d(Th,100)(1/lenEdge) << " == " << int1d(Th,101)(1/lenEdge) << endl;
+fespace Vhp(Th,P1,periodic=[[100,y],[101,y]]);
+savemesh(Th,"Th-carte2.msh");

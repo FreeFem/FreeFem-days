@@ -1,0 +1,50 @@
+int nn= 10;
+mesh  Th = square (nn*2,nn,[x*2,y]);
+ plot(Th,wait=1);
+ 
+ fespace Vh(Th,P2);
+ fespace Ph(Th,P1);
+ 
+fespace  Wh(Th,[P2,P2,P1,P1]);
+Wh [u1,u2,p,T],[v1,v2,q,TT];
+Wh [up1,up2,pp,Tp];
+
+macro grad(u) [dx(u),dy(u)]//
+macro Grad(u) [grad(u#1),grad(u#2)]//
+macro div(u) (dx(u#1)+dy(u#2))//
+macro Ugradv(U,v)([U#1,U#2]'*grad(v))// 
+macro UgradV(U,V)[Ugradv(U,V#1),Ugradv(U,V#2)]// 
+
+// NS with fixed points iteration
+int niter = 50;
+
+real nu = 0.01; 
+real kappa = 0.01, beta =1;
+func U1= 1; 
+[u1,u2,p,T]=[0,0,0,0]; 
+real epsp = 1e-9; 
+real err=0; 
+real tol = 1e-4;
+for (int iter=0; iter< niter;++iter)
+{
+	up1[]=u1[]; // save u1,u2,p ,T
+	solve Osen([u1,u2,p,T],[v1,v2,q,TT]) = 
+	int2d(Th)( UgradV(up,u)'*[v1,v2] + nu*(Grad(u):Grad(v)) - div(u)*q -div(v)*p - epsp*p*q
+	- beta*T*v2
+	+Ugradv(up,T)'*TT + kappa*grad(T)'*grad(TT)	
+	)
+	+ on(1,2,3,4,u1=0,u2=0)
+	+ on(2,T=1) + on(4,T=0)
+	;
+	up1[] -= u1[]; 
+	err = up1[].linfty ; 
+	cout << iter << " "<< err << endl;
+	if( err < tol ) break; 
+	plot([u1,u2],T, wait=1);
+	
+  
+}
+
+
+
+ 
