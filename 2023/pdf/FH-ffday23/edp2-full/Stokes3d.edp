@@ -1,0 +1,52 @@
+load "MUMPS_seq"
+int nn=8;
+include "cube.idp"
+    int[int]  Nxyz=[10,10,10];
+    real [int,int]  Bxyz=[[0,1],[0,1],[0,1]];
+    int [int,int]  Lxyz=[[1,1],[1,1],[1,2]];
+mesh3 Th=Cube(Nxyz,Bxyz,Lxyz);
+fespace VVh(Th,[P2,P2,P2,P1]);
+
+macro grad(u) [dx(u),dy(u),dz(u)]// EOM
+macro Grad(u1,u2,u3) [ grad(u1),grad(u2),grad(u3)] //
+macro D(u1,u2,u3) [ 
+[   ( dx(u1)          )     , ( dx(u2) + dy(u1) )*0.5 , ( dx(u3) + dz(u1) )*0.5 ] , 
+[   ( dy(u1) + dx(u2) )*0.5 , ( dy(u2)          )     , ( dy(u3) + dz(u2) )*0.5 ] , 
+[   ( dz(u1) + dx(u3) )*0.5 , ( dz(u2) + dy(u3) )*0.5 , ( dz(u3)          )     ] 
+] // 
+macro div(u1,u2,u3) (dx(u1)+dy(u2)+dz(u3)) //EOM
+macro ugrad(u1,u2,u3,v) (u1*dx(v)+u2*dy(v)+u3*dy(v)) //EOM
+macro Ugrad(u1,u2,u3,v1,v2,v3) 
+[ugrad(u1,u2,u3,v1),
+ugrad(u1,u2,u3,v2),
+ugrad(u1,u2,u3,v3) ]  //EOM 
+
+VVh [u1,u2,u3,p];
+VVh [v1,v2,v3,q];
+
+solve vStokes([u1,u2,u3,p],[v1,v2,v3,q]) = 
+  int3d(Th,qforder=3)(   
+              ( D(u1,u2,u3):D(v1,v2,v3) )
+             - div(u1,u2,u3)*q - div(v1,v2,v3)*p 
+             - 1e-8*q*p 
+                     ) 
+  + on(2,u1=4*(1-x)*(x)*(y)*(1-y),u2=0,u3=0)
+  + on(1,u1=0,u2=0,u3=0)
+ ;
+
+
+
+
+plot(p,fill=1,wait=1,nbiso=20);
+// build cut...
+mesh T2d=square(8,8);
+fespace V2d(T2d,P2);
+V2d ux,uz,p2;
+for(int i=1;i<5;i++)
+{
+ real yy=i/5.;
+ ux= u1(x,yy,y);
+ uz= u3(x,yy,y);
+ p2= p(x,yy,y);
+ plot([ux,uz],p2,cmm=" cut y = "+yy,wait= 1);
+}

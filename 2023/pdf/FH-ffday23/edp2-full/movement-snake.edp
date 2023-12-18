@@ -1,0 +1,13 @@
+real V =1;
+real[int]  XX(1000),YY(1000);
+for [i,XXi:XX]
+	XXi = i*2.*pi/(XX.n-1);
+
+real t = 0, dt = 0.1;
+for(int iter=0; iter < 1000; ++iter)
+{
+  t += dt; 	
+  for [i,YYi:YY] 
+  YYi = sin( XX[i]+ V*t);
+  plot([XX,YY],cmm=t);
+}

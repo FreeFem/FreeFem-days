@@ -1,0 +1,32 @@
+load "msh3"
+load "medit"
+load "tetgen"
+mesh Th("Leman-ThT.msh");
+real scale=50;
+fespace Vh(Th,P1);
+Vh deep;
+{
+	ifstream ff("Leman-deep1.txt");
+	ff >> deep[]; 
+//	ofstream fz("zL.txt");
+//	fz << zL << endl; 
+}
+Th=change(Th,fregion=0,flabel=0,rmInternalEdges=1);
+plot(Th);
+real[int] bb(4);
+boundingbox(Th,bb);
+//real[int] domaine = [bb[],0,-0.1,1,volumetet];
+deep=deep;
+deep=deep*scale;
+meshS ThS=movemesh23(Th,transfo=[x,y,deep],orientation=-1);
+int[int] lab=labels(ThS);
+meshL ThL = extract(ThS,label=lab);
+plot(ThL);
+mesh Thup=buildmesh(ThL);
+real maxval = deep[].max;
+meshS ThupS=movemesh23(Thup,transfo=[x,y,maxval],orientation=1);
+plot(ThupS);
+meshS ThLeman3DS= ThupS+ThS;
+plot(ThLeman3DS);
+medit("Th",ThLeman3DS);
+mesh3 ThLeman3D = tetg(ThLeman3DS);//,regionlist=domaine);

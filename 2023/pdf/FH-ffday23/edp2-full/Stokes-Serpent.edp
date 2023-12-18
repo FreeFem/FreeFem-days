@@ -1,0 +1,68 @@
+// idee faire bouge f
+real vR  = -1 ; // 0 ou -1 ....
+//  
+int nx = 10, ny = nx;
+real Htop = 1; // Hauteur du canal.. 
+real epais=0.2; //propotionnel a la periode 
+real vdent = -1; // vitesse dent .. => repere va vitesse -vdent  no Ur 
+int ww=1,plt=1; 
+real nper = 1 , omega = 2*pi*nper, xd = 0. ;
+func fy=  epais*sin(xd+x*omega);
+func dfy= omega*epais*cos(xd+x*omega);
+
+func Ux = vdent; // la vitesse en Ux est la vitesse de la dent 
+func Uy = -vdent*dfy; // la vitesse vertical telle U=[Ux,Uy] sont tangent au bord .. mouvement exterieur 
+
+mesh Th = square(nx,ny,[x/nper,y],flags=0);
+ Th = movemesh(Th,[x,-fy+y*(Htop+fy)]);
+ Th = adaptmesh(Th,1./(nx*nper),IsMetric=1,periodic=[[2,y],[4,y]],nbvx=1000000);
+ Th = adaptmesh(Th,1./(nx*nper),IsMetric=1,periodic=[[2,y],[4,y]],nbvx=1000000);
+
+if(plt) plot(Th,wait=ww);
+
+fespace Wh(Th,[P2,P2,P1],periodic=[[2,y],[4,y]]);
+fespace Vh(Th,P1,periodic=[[2,y],[4,y]]);
+macro grad(u) [dx(u),dy(u)]//
+macro Grad(u,v) [grad(u),grad(v)]//
+macro SGrad(u,v) [[dx(u), 0.5*(dx(v)+dy(u))], [0.5*(dx(v)+dy(u)), dy(v)]] //
+macro div(u1,u2) (dx(u1)+dy(u2)) //
+macro UrGrad(u,v) [dx(u)*-vR,dx(v)*-vR]//  convection  vitesse de repere 
+macro UgradV(u1,u2,v1,v2) [ [u1,u2]'*[dx(v1),dy(v1)] , [u1,u2]'*[dx(v2),dy(v2)] ]//  convection  vitesse / u
+
+real mu =200;
+real mu2 =mu*2;
+
+Wh [u1,u2,p];
+Wh [uR1,uR2,pR];
+Wh [v1,v2,q];
+u1[]=0;
+real eps = 0; // inutil car il y a un C.L de Neuman 
+// verif que u.n dans le repere mobile [Ux,Uy]
+cout << " err de tangence =" << int1d(Th,1)(abs( [N.x,N.y]'*[Ux,Uy])) << endl;
+
+solve Stokes2( [u1,u2,p],[v1,v2,q] ) = 
+  int2d(Th)( UgradV(-vR,0,u1,u2)'*[v1,v2]+mu2*(SGrad(u1,u2):SGrad(v1,v2))  - div(u1,u2)*q -div(v1,v2)*p - eps*p*q)
+//  + on(3,u2=0)
+  + on(1,u1=vdent-vR,u2=Uy)  
+; 
+real VVV = vR ?  vdent : -vdent;
+[uR1,uR2,pR] = [ u1+VVV,u2,p];
+Vh U = dist(u1,u2);
+real u1top = int1d(Th,3)(u1)/int1d(Th,3)(1.);// U moyen sur bord Haut
+real u2top = int1d(Th,3)(u2)/int1d(Th,3)(1.);// U moyen sur bord Haut
+
+plot([u1,u2],wait=ww,value=1, cmm=" Vitesse dans le Repere R^c" );
+plot([uR1,uR2],wait=ww,value=1,cmm=" Vitesse dans le Repere R^o" );
+
+cout << " flux a maximise 2 ="<< int1d(Th,2)(u1) <<  " ==  " <<  int1d(Th,4)(u1) 
+<< " " << (-vdent*0.5)*(1.-2.*epais)<< " u1top = " << u1top <<endl; 
+real lx = int1d(Th,3)(1.); 
+{
+	ofstream fout("save.txt",append);
+	fout <<vdent << " " << Htop << " " << epais << " "  << xd  << " " << u1top << " "<< u2top << endl; 
+} 
+
+
+
+
+

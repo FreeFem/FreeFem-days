@@ -1,0 +1,35 @@
+load "msh3"
+load "medit"
+load "Element_HCT"
+load "MUMPS_seq"
+
+mesh Th2 =readmesh("Leman-ThT.msh");
+fespace Vh(Th2,P1);
+Vh deep1;
+fespace Vhct(Th2,HCT); 
+Vhct [deep,deepx,deepy];
+Vhct [v,vx,vy];
+
+real[int] zL; 
+{
+	ifstream ff("Leman-deep1.txt");
+	ff >> deep1[] ;
+	ifstream fz("Leman-zL.txt");
+	int n; 
+	fz>> n;
+	zL.resize(n); 
+	fz.seekg(0);
+	fz >> zL ; 
+
+}
+real pena = 1e3;
+macro bilaplacien(u, v) (dxx(u)*dxx(v) + dyy(u)*dyy(v) + 2.*dxy(u)*dxy(v))	// end of macro
+int[int] lab= labels(Th2);
+real deepmax = deep[].min;
+cout << " deep max = " << 	deepmax << endl;  
+solve Lap([deep,deepx,deepy],[v,vx,vy],solver="CG")= int2d(Th2)( bilaplacien(deep,v)) 
++ int1d(Th2,lab,qforder=2)( pena*deep*v)
+- int1d(Th2,lab,qforder=2)( pena*zL[label]*v)
+//+ on (lab, deep=zL[label])
+;
+plot(deep,wait=0);

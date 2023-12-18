@@ -1,0 +1,22 @@
+
+macro grad(u) [dx(u),dy(u)]//
+macro Grad(u1,u2) [ grad(u1), grad(u2)]//
+macro div(u1,u2) (dx(u1)+dy(u2))//
+
+int nn = 30; // number of edge in each direction
+mesh Th=square(nn,nn,flags=3);
+mesh ThP=Th;                    // Pressure mesh
+mesh ThU=trunc(ThP,1,split=2);  // Velocity mesh
+
+fespace Uh(ThU,[P1,P1]);
+fespace Ph(ThP,P1);
+
+Uh [u1,u2],[v1,v2];
+Ph p,q;
+
+solve Stokes ( <[u1,u2],[p]>, <[v1,v2],[q]>) = int2d(ThU)( (Grad(u1,u2):Grad(v1,v2)) )
++ int2d(ThU)( - div(u1,u2)*q - div(v1,v2)*p )
++ int2d(ThP)( -1e-10*p*q )
++ on(1,2,3,4,u1=label==3,u2=0);
+
+plot( [u1,u2],p , cmm="u1" );

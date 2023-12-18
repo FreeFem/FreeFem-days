@@ -1,0 +1,19 @@
+mesh Th = trunc(square(10,10),x<.5 | y<0.5);
+plot(Th,wait=1);
+fespace Vh(Th,P1);
+Vh u,v;
+real error=0.01;
+problem Probem1(u,v,solver=CG,eps=1.0e-6) =
+    int2d(Th)( u*v*1.0e-10+  dx(u)*dx(v) + dy(u)*dy(v)) 
+  + int2d(Th)( (x-y)*v);
+int i;
+for (i=0;i< 5;i++)
+{   
+  Probem1; 
+   cout << u[].min << " " << u[].max << endl; 
+   plot(u,wait=1);
+   Th=adaptmesh(Th,u,err=error);
+   plot(Th,wait=1);
+  u=u;
+  error = error/2;
+} ;

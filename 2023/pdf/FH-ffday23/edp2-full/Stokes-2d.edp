@@ -1,0 +1,20 @@
+// Cavity problem
+mesh Th=square(50,50,[x,y]); 
+plot(Th,wait=1); 
+fespace Vh(Th,P2); 
+fespace Ph(Th,P1); 
+
+Vh u1,u2,v1,v2;
+Ph p,q;
+real f1=1,f2=0; 
+real epsr=1e-8;
+macro DD(u,v) [ dx(u),dy(v), (dx(v)+dy(u))*0.5, (dx(v)+dy(u))*0.5 ] // 
+macro Grad(u,v) [ dx(u),dy(v), dx(v), dy(u) ] // 
+macro div(u1,u2) (dx(u1)+dy(u2) ) //
+ 
+solve Stokes( [u1,u2,p],[v1,v2,q] ) =
+int2d(Th) ( Grad(u1,u2)'*Grad(v1,v2) - div(v1,v2)*p -div(u1,u2)*q -epsr*p*q)
++ on(1,2,4, u1=0,u2=0) + on(3,u1=1,u2=0); 
+
+plot([u1,u2],wait=1,value=1);
+plot(p,wait=1,value=1);

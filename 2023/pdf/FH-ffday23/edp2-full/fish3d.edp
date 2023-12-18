@@ -1,0 +1,27 @@
+
+load "msh3"; load "medit"; load "tetgen";
+//   fish Bounding box:  x:[-304.528  304.528]  y:[-32.5996  32.4831]  z:[-70.7567  66.5233]
+include "MeshSurface.idp"
+real x0=-200,y0=0,z0=0;
+
+meshS Thb=movemeshS(Sphere20(10,3,1),transfo=[x+x0,y+y0,z+z0]);
+meshS Ths("Fish3d_s.mesh"); // read skin fish mesh ..
+Ths = change(Ths,fregion=1) +  change(Thb,fregion=2); 
+plot(Ths,wait=1);
+real hh = 10; // the final  mesh size 
+real[int] domaine = [0,0,0,1,hh^3/6.];
+mesh3 Th=tetg(Ths,switch="paAAYYQq1",regionlist=domaine);
+fespace Xh(Th,P2);
+macro Grad(u) [dx(u),dy(u),dz(u)] // EOM
+Xh p,q; 
+solve laplace(p,q,solver=CG) =
+   int3d(Th)( Grad(p)'*Grad(q)    )
+   -  int3d(Th) ( 1*q)
+   + on(2,p=2)
+   ;
+     
+
+plot(p,fill=1,wait=1,value=0,nbiso=50);  
+medit("fish3d",Th,p);
+
+// 
