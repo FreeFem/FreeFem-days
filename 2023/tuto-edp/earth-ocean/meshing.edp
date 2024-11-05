@@ -7,7 +7,7 @@ include "MeshSurface.idp"
 // Parameters
 bool wait = false;
 int pourcent = 30;
-real hsizekm  = 100 ; // Km  
+real hsizekm  = 50 ; // Km  
 real hsize=2*pi*hsizekm/40000;// rad. 
 string figName = "Carte.pgm";
 //  
