@@ -2,6 +2,18 @@
 
 [FreeFEM channel,  Retrieve videos here](https://www.youtube.com/channel/UCJlw6LHQt7UWXrH2uzGYZWw) 
 
+## 2024
+
+[The page ](https://htmlpreview.github.io/?https://github.com/FreeFem/FreeFem-days/blob/master/2024/index.html)
+
+## 2023
+
+[The page ](https://htmlpreview.github.io/?https://github.com/FreeFem/FreeFem-days/blob/master/2023/index.html)
+
+## 2022
+
+[The page ](https://htmlpreview.github.io/?https://github.com/FreeFem/FreeFem-days/blob/master/2022/index.html)
+
 ## 2021
 
 [The page ](https://htmlpreview.github.io/?https://github.com/FreeFem/FreeFem-days/blob/master/2021/index.html)
