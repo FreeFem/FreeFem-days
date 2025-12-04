@@ -1,0 +1,7 @@
+## Numerical study of sapflow measurement in vegetal combining microwave heat pulse and thermal imaging (TIMFLOW method)
+## Christophe Coillot    christophe.coillot@umontpellier.fr
+
+## University de montpellier / CNRS 
+
+
+*Abstract:* Numerical study of sapflow measurement in vegetal combining microwave heat pulse and thermal imaging (TIMFLOW method) (authors : C. Coillot, L. Faye, H.. Louche, A. Penarier, P. Nouvel, B. Clair, F. Do.) Sapflow measurment in tree and plants gives informations about their health in their environment. This knowledge is especially relevant in the context of the climate change where the thermal and hydric stresses are more and more pregnant. In this aim we have developed a sapflow method measurment combining microwave heat pulse and infrared thermal imaging. (TIMFLOW method). To investigate the response of the TIMFLOW method in a more quantitative way and explore its potential and limits we have modeled TIMFLOW method using freefem. In this presentation we will describe the physical model implemented and the parameters of the simulation. The 2D simulation results and the link with experimental datas will be discussed. We will conclude wiith the status of the 3D simulation aiming to approach more realistic conditions.

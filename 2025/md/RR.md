@@ -1,0 +1,7 @@
+## Optimization of a 2D Molten Salt Reactor benchmark with FreeFEM 
+## MR Ruggero Rosselli  ruggero.rosselli@cea.fr
+
+## CEA Saclay
+
+
+*Abstract:* Due to the nature of Molten Salt Reactors (MSRs), a great effort is dedicated to the development of high-fidelity multi physics tools to accurately take into account the interactions between the different physics at play. While sensitivity analysis procedures exist and are common for "single physics" problems, such as Generalized Perturbation Theory (GPT) for neutronics, such procedures are less common for multi physics problems. The goal is then to develop an efficient adjoint sensitivity analysis method for a coupled neutronics - thermal hydraulics MSR. First, the 2D neutronics - thermal hydraulics benchmark problem is calculated with FreeFEM, using the native Lagrange elements. The results obtained are compared to those available in the literature, showing acceptable discrepancies (with maxima of about 2%). Then, choosing a specific response function, the adjoint problem is implemented in FreeFEM. The adjoint sensitivities of the response function are calculated with respect to the input parameters of the problem and compared to finite differences calculations, showing excellent agreement. FreeFEM proves to be an excellent, flexible tool to implement adjoint methods for reactor physics problems.

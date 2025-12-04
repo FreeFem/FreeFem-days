@@ -1,0 +1,7 @@
+## Hemodynamic Modeling of Cerebral Aneurysms: Coupling 4D Flow MRI and Finite Element Simulations
+## Ms Esther Fontaine  esther.fontaine@univ-reims.fr
+
+## LMR -- UMR9008 -- Université de Reims Champagne-Ardenne
+
+
+*Abstract:*  Abstract: Cerebral aneurysms, i.e. localized dilations of the arterial wall, pose a critical clinical challenge due to their potential to rupture, causing subarachnoid hemorrhages and severe ischemic complications. This work aimed to improve the prediction of cerebral aneurysms evolution by integrating Magnetic Resonance Imaging (MRI) into Computational Fluid Dynamics (CFD), based on the finite element method in FreeFEM++. To validate this MRI-to-CFD pipeline, a vascular phantom was employed. Anatomical and velocity data were extracted from 4D Flow MRI sequences to reconstruct vessel geometry and quantify blood flow. The vessel geometries were subsequently meshed, and fluid simulations were performed and compared with MRI velocity fields to refine the computational model. Numerical simulations were performed using the steady dimensionless Stokes equations on high-resolution meshes, requiring parallel implementation for computational efficiency. The resulting 3D flow fields, obtained from models with and without aneurysms, will be presented and analyzed, along with derived hemodynamic markers relevant to aneurysm evolution.
